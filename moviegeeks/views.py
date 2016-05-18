@@ -1,7 +1,7 @@
 import json
 
 from django.shortcuts import render
-from moviegeeks.models import Movie
+from moviegeeks.models import Movie, Genre
 
 
 def index(request):
@@ -9,8 +9,11 @@ def index(request):
     #todo: add paginater
     api_key = get_api_key()
 
+    genres = Genre.objects.all().values('name').distinct()
+    print(genres)
     movies = Movie.objects.all()[:16]
     context_dict = {'movies': movies,
+                    'genres': genres,
                     'api_key': api_key}
     return render(request, 'moviegeek/index.html', context_dict)
 

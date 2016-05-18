@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Movie GEEKs</title>
+
+    <!-- Bootstrap -->
+    <link href="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+    <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+    <script>
+
+        function getinfo(movieid, title) {
+            url = 'https://api.themoviedb.org/3/find/tt' + movieid + '?external_source=imdb_id&api_key={{ api_key }}'
+            $.getJSON(url,
+                      function(result) {
+
+                        if (result.movie_results != null)
+                        {
+                            img_tag =  document.getElementById('src_' + movieid)
+                            image_url = 'http://image.tmdb.org/t/p/w500/'
+                            + result.movie_results[0].poster_path
+
+                            $('#movies').append(
+                            "<div class='col-sm-3' style='height: 150px'>" +
+                            "      <img class='img-responsive' style='padding: 0px 0px 0px 0px;height: 150px' src=" + image_url + "/>" +
+                            "</div>"
+                            )
+                        }
+                      }
+            )
+          }
+        {% if movies %}
+            {% for movie in movies %}
+                {% if movie.movie_id %}getinfo('{{movie.movie_id}}', '{{movie.title}}');{% endif %}
+            {% endfor %}
+        {% endif %}
+    </script>
+</head>
+<body>
+    <div class="container">
+        <nav class="navbar navbar-inverse no-padding">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle"
+                        data-toggle="collapse" data-target=".navbar-collapse">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="index.html">Movie GEEKs</a>
+            </div>
+        </nav>
+        <div class="row">
+            <div class="col-sm-2 sidebar">
+                <div class="well">
+                    <strong>Genres</strong><br/>
+                    <ul class="nav nav-sidebar">
+                    {% if genres %}
+                    {% for genre in genres %}
+                        <li> {{ genre.name }} </li>
+                    {% endfor %}
+                    {% endif %}
+                    </ul>
+
+                </div></div>
+
+            <div id="movies" class="col-sm-8 main max-size"></div>
+        </div>
+    </div>
+
+</body>
+</html>
