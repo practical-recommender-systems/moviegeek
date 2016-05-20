@@ -20,7 +20,7 @@ into the database configured in Django.
 * run the following two commands to create the dbs.
   * `python manage.py makemigrations`
   * `python manage.py migrate`
-* run `populate_moviegeek.py` to populate the db.
+* run `populate_moviegeek.py` to populate the db. (WARNING: this might take some time.)
 * start the web server by doing python manage.py runserver.
 * go to http://docs.themoviedb.apiary.io/# and create an api_key
 * create a file in the root of the directory called "`.prs`" and add 
