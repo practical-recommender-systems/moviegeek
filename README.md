@@ -1,8 +1,10 @@
 # moviegeek
 
-This is the next version of the django website used in the book 
-["Practical Recommender Systems"](https://www.manning.com/books/practical-recommender-systems)
+The MovieGEEKs is a movie site implemented to accompany my book
+["Practical Recommender Systems"](https://www.manning.com/books/practical-recommender-systems).
 It is used in the book to show how recommender systems work, and how you can implement them. 
+
+The book is still being written, and so this is still under construction.
 
 # installation guide:
 
@@ -16,10 +18,10 @@ into the database configured in Django.
 * download code
 * update settings with db connections.
 * run the following two commands to create the dbs.
-** python manage.py makemigrations
-** python manage.py migrate
-* run populate_moviegeek.py to populate the db.
+.. `python manage.py makemigrations`
+.. `python manage.py migrate`
+* run `populate_moviegeek.py` to populate the db.
 * start the web server by doing python manage.py runserver.
 * go to http://docs.themoviedb.apiary.io/# and create an api_key
-* create a file in the root of the directory called ".prs" and add 
-{ "themoviedb_apikey": <INSERT YOUR APIKEY HERE>}.
+* create a file in the root of the directory called "`.prs`" and add 
+`{ "themoviedb_apikey": <INSERT YOUR APIKEY HERE>}`.
