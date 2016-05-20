@@ -18,8 +18,8 @@ into the database configured in Django.
 * download code
 * update settings with db connections.
 * run the following two commands to create the dbs.
-.. `python manage.py makemigrations`
-.. `python manage.py migrate`
+  * `python manage.py makemigrations`
+  * `python manage.py migrate`
 * run `populate_moviegeek.py` to populate the db.
 * start the web server by doing python manage.py runserver.
 * go to http://docs.themoviedb.apiary.io/# and create an api_key
