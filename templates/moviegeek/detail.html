@@ -1,0 +1,41 @@
+{% extends "moviegeek/base.html" %}
+{% block content %}
+<script>
+
+        function getinfo(movieid) {
+            url = 'https://api.themoviedb.org/3/find/tt' + movieid + '?external_source=imdb_id&api_key={{ api_key }}'
+
+            $.getJSON(url,
+                      function(result) {
+                        title_div = document.getElementById('title')
+                        title_div.innerHTML = '<strong>' + result.movie_results[0].title + '</strong>'
+
+
+                        image_url = 'http://image.tmdb.org/t/p/w500/'
+                            + result.movie_results[0].poster_path
+
+                        img_tag = document.getElementById('poster').setAttribute('src', image_url)
+
+                        document.getElementById('overview').innerHTML = "<p>" + result.movie_results[0].overview + "</p>"
+                        document.getElementById('release_date').innerHTML = result.movie_results[0].release_date + "</p>"
+
+
+                      } )}
+        getinfo('{{ movie_id }}')
+</script>
+
+<div class="container">
+    <div class="row">
+        <div class="col-sm-8">
+            <div id="img" class="col-sm-6">
+                <img id="poster" class="img-responsive" src="_" alt="movie poster"/>
+            </div>
+            <div class="col-sm-6">
+                <div id="title">title</div>
+                <div id="release_date"></div>
+                <div id="overview"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}

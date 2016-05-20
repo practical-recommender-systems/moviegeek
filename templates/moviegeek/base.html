@@ -19,36 +19,8 @@
     <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
     <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
-    <script>
-
-        function getinfo(movieid, title) {
-            url = 'https://api.themoviedb.org/3/find/tt' + movieid + '?external_source=imdb_id&api_key={{ api_key }}'
-            $.getJSON(url,
-                      function(result) {
-
-                        if (result.movie_results != null)
-                        {
-                            img_tag =  document.getElementById('src_' + movieid)
-                            image_url = 'http://image.tmdb.org/t/p/w500/'
-                            + result.movie_results[0].poster_path
-
-                            $('#movies').append(
-                            "<div class='col-sm-3' style='height: 150px'>" +
-                            "      <a href='" + movieid + "'>" +
-                            "       <img class='img-responsive' style='padding: 0px 0px 0px 0px;height: 150px' src=" +
-                            image_url + "/></a>" +
-                            "</div>"
-                            )
-                        }
-                      }
-            )
-          }
-        {% if movies %}
-            {% for movie in movies %}
-                {% if movie.movie_id %}getinfo('{{movie.movie_id}}', '{{movie.title}}');{% endif %}
-            {% endfor %}
-        {% endif %}
-    </script>
+    <meta charset="UTF-8">
+    <title>Title</title>
 </head>
 <body>
     <div class="container">
@@ -71,14 +43,13 @@
                     <ul class="nav nav-sidebar">
                     {% if genres %}
                     {% for genre in genres %}
-                        <li> <a href=".?genre={{genre.name}}">{{ genre.name }}</a> </li>
+                        <li> <a href="/movies/?genre={{genre.name}}">{{ genre.name }}</a> </li>
                     {% endfor %}
                     {% endif %}
                     </ul>
-
                 </div></div>
 
-            <div id="movies" class="col-sm-8 main max-size"></div>
+            {% block content %}{% endblock content %}
         </div>
     </div>
 
