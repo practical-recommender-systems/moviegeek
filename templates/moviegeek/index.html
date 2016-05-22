@@ -1,44 +1,61 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Movie GEEKs</title>
+{% extends "moviegeek/base.html" %}
 
-    <!-- Bootstrap -->
-    <link href="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css" rel="stylesheet">
-
-    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
-    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
-    <!--[if lt IE 9]>
-      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
-      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
-    <![endif]-->
-    <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
-    <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
-    <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+{% block head %}
     <script>
 
-        function getinfo(movieid, title) {
-            url = 'https://api.themoviedb.org/3/find/tt' + movieid + '?external_source=imdb_id&api_key={{ api_key }}'
+        function getinfo(movie_id, title) {
+            url = 'https://api.themoviedb.org/3/find/tt' + movie_id + '?external_source=imdb_id&api_key={{ api_key }}'
             $.getJSON(url,
                       function(result) {
 
                         if (result.movie_results != null)
                         {
-                            img_tag =  document.getElementById('src_' + movieid)
+                            img_tag =  document.getElementById('src_' + movie_id)
                             image_url = 'http://image.tmdb.org/t/p/w500/'
                             + result.movie_results[0].poster_path
 
-                            $('#movies').append(
-                            "<div class='col-sm-3' style='height: 150px'>" +
-                            "      <a href='" + movieid + "'>" +
-                            "       <img class='img-responsive' style='padding: 0px 0px 0px 0px;height: 150px' src=" +
-                            image_url + "/></a>" +
-                            "</div>"
-                            )
+                            a = document.createElement("a");
+                            a.setAttribute('href', "/movies/" + movie_id);
+                            a.setAttribute('onclick', "add_impression('more_details', " + movie_id + ")")
+                            a.innerHTML= 'more details'
+
+                            popover_div = '<div style="width: 200px;">' +
+                                          '<strong>released:</strong> ' + result.movie_results[0].release_date + '<br />' +
+                                          '<strong>language:</strong> ' + result.movie_results[0].original_language + '<br />' +
+                                          '<strong>avg tweet rating</strong>: '+ result.movie_results[0].vote_average + '<br />' +
+                                          a.outerHTML
+                                          '</div>'
+                            popover_content = 'amazing film <br/>' + a.outerHTML
+
+                            img = document.createElement("img");
+                            img.setAttribute('id', movie_id + 'popover');
+                            img.setAttribute('src', image_url);
+                            img.setAttribute('style','padding: 0px 0px 0px 0px;height: 150px')
+                            img.setAttribute('title', title);
+
+                            // img.setAttribute('data-html', 'true');
+                            // img.setAttribute('data-toggle','popover');
+                            // img.setAttribute('data-trigger','focus');
+                            // img.setAttribute('data-contentid', movie_id);
+                            // img.setAttribute('data-content', popover_content);
+
+                            div = document.createElement("div");
+                            div.setAttribute('class', 'col-sm-3');
+                            div.setAttribute('style', 'height: 150px');
+                            div.appendChild(img)
+
+                            // div.appendChild(a);
+
+                            // Add popover
+                            document.createElement("div");
+
+                            $('#movies').append(div)
+
+                            $('#' + movie_id + 'popover').popover({
+                                html: true,
+                                content: popover_div,
+                                trigger: 'click'
+                            })
                         }
                       }
             )
@@ -48,39 +65,10 @@
                 {% if movie.movie_id %}getinfo('{{movie.movie_id}}', '{{movie.title}}');{% endif %}
             {% endfor %}
         {% endif %}
+
     </script>
-</head>
-<body>
-    <div class="container">
-        <nav class="navbar navbar-inverse no-padding">
-            <div class="navbar-header">
-                <button type="button" class="navbar-toggle"
-                        data-toggle="collapse" data-target=".navbar-collapse">
-                    <span class="sr-only">Toggle navigation</span>
-                    <span class="icon-bar"></span>
-                </button>
-                <a class="navbar-brand" href=".">Movie GEEKs</a>
-            </div>
-        </nav>
-        <!-- end of top -->
+{% endblock head %}
 
-        <div class="row">
-            <div class="col-sm-2 sidebar collapse navbar-collapse">
-                <div class="well">
-                    <strong>Genres</strong><br/>
-                    <ul class="nav nav-sidebar">
-                    {% if genres %}
-                    {% for genre in genres %}
-                        <li> <a href=".?genre={{genre.name}}">{{ genre.name }}</a> </li>
-                    {% endfor %}
-                    {% endif %}
-                    </ul>
-
-                </div></div>
-
-            <div id="movies" class="col-sm-8 main max-size"></div>
-        </div>
-    </div>
-
-</body>
-</html>
+{% block content %}
+    <div id="movies" class="col-sm-8 main max-size"></div>
+{% endblock content %}

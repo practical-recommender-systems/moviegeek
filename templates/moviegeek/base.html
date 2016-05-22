@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -8,6 +9,8 @@
 
     <!-- Bootstrap -->
     <link href="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css" rel="stylesheet">
+
 
     <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
@@ -17,8 +20,27 @@
     <![endif]-->
     <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
     <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
-    <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.2/jquery.min.js"></script>
+    <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+
+    <script>
+        function add_impression(event_type, content_id) {
+            $.ajax({
+                 type: 'POST',
+                 url: '/collect/log/',
+                 data: {
+                        "csrfmiddlewaretoken": "{{ csrf_token }}",
+                        "event_type": event_type,
+                        "user_id": {{ user_id }},
+                        "content_id": content_id,
+                        "session_id": '{{ session_id }}'
+                        },
+                 fail: function(){
+                     console.log('log failed(' + event_type + ')')
+                    }
+            })};
+    </script>
+      {% block head %}{% endblock head %}
     <meta charset="UTF-8">
     <title>Title</title>
 </head>
@@ -43,7 +65,8 @@
                     <ul class="nav nav-sidebar">
                     {% if genres %}
                     {% for genre in genres %}
-                        <li> <a href="/movies/?genre={{genre.name}}">{{ genre.name }}</a> </li>
+                        <li> <a href="/movies/?genre={{genre.name}}"
+                                onclick="add_impression('genre:{{genre.name}}', {{ user_id }}, 0)">{{ genre.name }}</a> </li>
                     {% endfor %}
                     {% endif %}
                     </ul>
@@ -52,6 +75,10 @@
             {% block content %}{% endblock content %}
         </div>
     </div>
-
+    <script>
+    $(function () {
+      $('[data-toggle="popover"]').popover()
+    })
+    </script>
 </body>
 </html>

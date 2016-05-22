@@ -20,5 +20,6 @@ from moviegeeks import views
 urlpatterns = [
     url(r'^$', views.index, name='index'),
     url(r'^movies/', include('moviegeeks.urls')),
+    url(r'^collect/', include('collector.urls')),
     url(r'^admin/', admin.site.urls),
 ]

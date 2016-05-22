@@ -16,24 +16,31 @@
 
                         img_tag = document.getElementById('poster').setAttribute('src', image_url)
 
-                        document.getElementById('overview').innerHTML = "<p>" + result.movie_results[0].overview + "</p>"
-                        document.getElementById('release_date').innerHTML = result.movie_results[0].release_date + "</p>"
+                        document.getElementById('overview').innerHTML = result.movie_results[0].overview
+                        document.getElementById('release_date').innerHTML =  result.movie_results[0].release_date
+                        document.getElementById('lan').innerHTML =  result.movie_results[0].original_language
+                        document.getElementById('avg_rating').innerHTML =  result.movie_results[0].rating
 
+                } )}
 
-                      } )}
-        getinfo('{{ movie_id }}')
+        $(document).ready(function() {
+            getinfo('{{ movie_id }}')
+        })
 </script>
 
 <div class="container">
     <div class="row">
         <div class="col-sm-8">
             <div id="img" class="col-sm-6">
-                <img id="poster" class="img-responsive" src="_" alt="movie poster"/>
+                <img id="poster" class="img-responsive" src="" alt="movie poster"/>
             </div>
             <div class="col-sm-6">
-                <div id="title">title</div>
-                <div id="release_date"></div>
-                <div id="overview"></div>
+                <div><strong>Title</strong><p id="title"></p></div>
+                <div><strong>Released:</strong><p id="release_date"></p></div>
+                <div><strong>Description:</strong><p id="overview"></p></div>
+                <div><strong>Language</strong><p id="lan"></p></div>
+                <div><strong>Average rating</strong><p id="avg_rating"></p></div>
+
             </div>
         </div>
     </div>
