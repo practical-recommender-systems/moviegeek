@@ -29,12 +29,19 @@
                             a.setAttribute('onclick', "add_impression({{user_id}}, 'more_details', " + movie_id + ")")
                             a.innerHTML= 'more details'
 
+                            save_for_later_a = document.createElement("a");
+                            save_for_later_a.setAttribute('onclick', "add_impression({{user_id}}, 'save_for_later', " + movie_id + ")")
+                            save_for_later_a.innerHTML = 'save for later';
+
                             popover_div = '<div style="width: 200px;">' +
                                           '<strong>released:</strong> ' + result.movie_results[0].release_date + '<br />' +
                                           '<strong>language:</strong> ' + result.movie_results[0].original_language + '<br />' +
                                           '<strong>avg tweet rating</strong>: '+ result.movie_results[0].vote_average + '<br />' +
-                                          a.outerHTML
+                                          save_for_later_a.outerHTML + '<br />' +
+                                          a.outerHTML +
                                           '</div>'
+
+
                             popover_content = 'amazing film <br/>' + a.outerHTML
 
                             img = document.createElement("img");
