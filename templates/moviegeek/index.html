@@ -2,6 +2,16 @@
 
 {% block head %}
     <script>
+        $(document).ready(function(){
+
+            $('[data-toggle="popover"]').popover();
+
+            $('.movie').on('show.bs.popover', function () {
+              var contentid;
+              contentid = $(this).attr("id");
+              add_impression({{ user_id }}, 'details', contentid);
+            });
+          });
 
         function getinfo(movie_id, title) {
             url = 'https://api.themoviedb.org/3/find/tt' + movie_id + '?external_source=imdb_id&api_key={{ api_key }}'
@@ -15,8 +25,8 @@
                             + result.movie_results[0].poster_path
 
                             a = document.createElement("a");
-                            a.setAttribute('href', "/movies/" + movie_id);
-                            a.setAttribute('onclick', "add_impression('more_details', " + movie_id + ")")
+                            a.setAttribute('href', "/movies/movie/" + movie_id);
+                            a.setAttribute('onclick', "add_impression({{user_id}}, 'more_details', " + movie_id + ")")
                             a.innerHTML= 'more details'
 
                             popover_div = '<div style="width: 200px;">' +
@@ -28,15 +38,16 @@
                             popover_content = 'amazing film <br/>' + a.outerHTML
 
                             img = document.createElement("img");
-                            img.setAttribute('id', movie_id + 'popover');
+                            img.setAttribute('id', movie_id);
+                            img.setAttribute('class', 'movie');
                             img.setAttribute('src', image_url);
                             img.setAttribute('style','padding: 0px 0px 0px 0px;height: 150px')
                             img.setAttribute('title', title);
+                            //img.setAttribute('data-contentid', movie_id);
 
                             // img.setAttribute('data-html', 'true');
                             // img.setAttribute('data-toggle','popover');
                             // img.setAttribute('data-trigger','focus');
-                            // img.setAttribute('data-contentid', movie_id);
                             // img.setAttribute('data-content', popover_content);
 
                             div = document.createElement("div");
@@ -44,14 +55,11 @@
                             div.setAttribute('style', 'height: 150px');
                             div.appendChild(img)
 
-                            // div.appendChild(a);
-
-                            // Add popover
                             document.createElement("div");
 
                             $('#movies').append(div)
 
-                            $('#' + movie_id + 'popover').popover({
+                            $('#' + movie_id).popover({
                                 html: true,
                                 content: popover_div,
                                 trigger: 'click'
@@ -71,4 +79,32 @@
 
 {% block content %}
     <div id="movies" class="col-sm-8 main max-size"></div>
+    <div class="row">
+        {% if movies.has_other_pages %}
+        <ul class="pagination">
+            {% if movies.has_previous %}
+                <li><a href="?page={{movies.previous_page_number }}">&laquo;</a></li>
+            {% else %}
+                <li class="disabled"><span>&laquo;</span></li>
+            {% endif %}
+            {% for i in pages %}
+                {% if i == movies.number %}
+                    <li class="active">
+                        <span>{{ i }} <span class="sr-only">(current)</span></span>
+                    </li>
+                {% else %}
+                    <li>
+                        <a href="?page={{i}}">{{ i}}</a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+            {% if movies.has_next %}
+                <li><a href="?page={{movies.next_page_number}}">&raquo;</a></li>
+            {% else %}
+                <li class="disabled"><span>&raquo;</span></li>
+            {% endif %}
+        </ul>
+        {% endif %}
+
+    </div>
 {% endblock content %}
