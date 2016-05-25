@@ -23,42 +23,27 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.2/jquery.min.js"></script>
     <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
     <script src="{% static "js/collector.js" %}"></script>
-
-      {% block head %}{% endblock head %}
+    <title>User</title>
 </head>
 <body>
-    <div class="container">
-        <nav class="navbar navbar-inverse no-padding">
-            <div class="navbar-header">
-                <button type="button" class="navbar-toggle"
-                        data-toggle="collapse" data-target=".navbar-collapse">
-                    <span class="sr-only">Toggle navigation</span>
-                    <span class="icon-bar"></span>
-                </button>
-                <a class="navbar-brand" href=".">Movie GEEKs</a>
-            </div>
-        </nav>
-        <!-- end of top -->
+<div class='container'>
+<div class='row'>
+<h1>What we know about user(id: {{ user_id }})</h1>
 
-        <div class="row">
-            <div class="col-sm-2 sidebar collapse navbar-collapse">
-                <div class="well">
-                    <strong>Genres</strong><br/>
-                    <ul class="nav nav-sidebar">
-                    {% if genres %}
-                    {% for genre in genres %}
-                        <li> <a href="/movies/genre/{{genre.name}}"
-                                onclick="add_impression('genre:{{genre.name}}', {{ user_id }}, 0)">{{ genre.name }}</a> </li>
-                    {% endfor %}
-                    {% endif %}
-                    </ul>
-                </div></div>
+<h2>Rating data</h2>
+<ul>
+{% for rating in ratings %}
+    <li><a href="/movies/movie/{{ rating.movie_id }}">{{ rating.movie_id }}</a></li>
+{% endfor%}
+</ul>
 
-            {% block content %}{% endblock content %}
-        </div>
-    </div>
-    <script>
-
-    </script>
+<h2>Movie titles</h2>
+<ul>
+{% for movie in movies %}
+    <li><a href="/movies/movie/{{ movie.movie_id }}">{{ movie.title }}</a></li>
+{% endfor%}
+</ul>
+</div>
+</div>
 </body>
 </html>

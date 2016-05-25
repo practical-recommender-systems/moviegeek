@@ -30,6 +30,7 @@ INSTALLED_APPS = [
     'django_extensions',
     'moviegeeks',
     'collector',
+    'analytics',
 ]
 
 MIDDLEWARE_CLASSES = [
