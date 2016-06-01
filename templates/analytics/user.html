@@ -29,18 +29,14 @@
 <div class='container'>
 <div class='row'>
 <h1>What we know about user(id: {{ user_id }})</h1>
-
-<h2>Rating data</h2>
-<ul>
-{% for rating in ratings %}
-    <li><a href="/movies/movie/{{ rating.movie_id }}">{{ rating.movie_id }}</a></li>
-{% endfor%}
-</ul>
+<div>
+  Average rating: {{ avg_rating }} / 10
+</div>
 
 <h2>Movie titles</h2>
 <ul>
 {% for movie in movies %}
-    <li><a href="/movies/movie/{{ movie.movie_id }}">{{ movie.title }}</a></li>
+    <li><a href="/movies/movie/{{ movie.movie_id }}">{{ movie.title }}</a> {{ movie.rating }}/10 </li>
 {% endfor%}
 </ul>
 </div>
