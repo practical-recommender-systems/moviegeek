@@ -3,6 +3,12 @@ from django.shortcuts import render
 from moviegeeks.models import Movie
 from analytics.models import Rating
 
+def index(request):
+
+    context_dict = {}
+    return render(request, 'analytics/index.html', context_dict)
+
+
 def user(request, user_id):
 
     user_ratings = Rating.objects.filter(user_id=user_id).order_by('-rating')
