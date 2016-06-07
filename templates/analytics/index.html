@@ -9,29 +9,100 @@
 
     }
 </style>
+<script src="http://d3js.org/d3.v3.js"></script>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+<script src="http://dimplejs.org/dist/dimple.v2.0.0.min.js"></script>
+<script>
+var margin = {top: 20, right: 0, bottom: 30, left: 50},
+    width = 300 - margin.left - margin.right,
+    height = 300 - margin.top - margin.bottom,
+    maxHeight = height - 30,
+    padding = 5;
+
+function getTopContent() {
+  $.getJSON('api/top_content', function(result) {
+    var ul = document.getElementById("top_content");
+
+    result.forEach(function(element, index, array) {
+      var li = document.createElement("li");
+      li.appendChild(document.createTextNode(element.title + "("  + element.sold + ")"));
+      li.setAttribute("id",element.content_id);
+      ul.appendChild(li);
+    });
+  })
+
+}
+function drawChart(id, endpoint) {
+
+  d3.json("api/"+ endpoint, function(error, eventData) {
+   var canvas = d3.select(id)
+            .append("svg")
+            .attr("width", width)
+            .attr("height", height)
+            .append('g')
+            .attr("class", 'chart');
+
+
+
+    var myChart = new dimple.chart(canvas, eventData);
+    var x = myChart.addCategoryAxis("x", ["event","conversion"] );
+    myChart.addMeasureAxis("y", "count_items" );
+    myChart.addSeries("conversion", dimple.plot.bar);
+    myChart.addLegend(110, 30, 110, 20, "right");
+    myChart.setBounds(30, 30, 180, 130);
+    myChart.draw();
+
+
+    canvas.append("text")
+          .attr("x", myChart._xPixels() + myChart._widthPixels()/2 -110)
+          .attr("y", myChart._yPixels() - 20)
+          .text("Events in sessions with a buy and without");
+  });
+}
+
+function update_statistics() {
+  var today = new Date().toJSON().slice(0,10);
+  $.getJSON('api/get_statistics?date=' + today, function(result) {
+    document.getElementById("items_sold").textContent = result.items_sold;
+    document.getElementById("conversions").textContent = result.conversions + "%";
+    document.getElementById("visitors_month").textContent = result.visitors;
+    document.getElementById("sessions").textContent = result.sessions;
+
+  })
+
+}
+</script>
+
+
 {% endblock head %}
 
 {% block content %}
 <div class="row" id="statistics">
-    <div class="col-sm-4">
+    <div class="col-sm-3">
         <div class="well kpi-box">
-            Number of visitors this month: <br />
-            <strong>0</strong>
+            visitors this month: <br />
+            <result id="visitors_month">0</result>
         </div>
     </div>
-    <div class="col-sm-4">
+    <div class="col-sm-3">
         <div class="well kpi-box">
+             Conversion percentage: <br/>
+            <result id="conversions">0</result>
+        </div>
+    </div>
+    <div class="col-sm-3">
+        <div class="well kpi-box">
+            Sessions this month: <br/>
+            <result id="items_sold">0</result>
+        </div>
+    </div>
+    <div class="col-sm-3">
+        <div class="well kpi-box">
+            Sessions this month: <br/>
+            <result id="sessions">0</result>
+        </div>
+    </div>
 
-             conversion percentage: <br/>
-            <strong>0</strong>
-        </div>
-    </div>
-    <div class="col-sm-4">
-        <div class="well kpi-box">
-            Number of sessions this month: <br/>
-            <strong>0</strong>
-        </div>
-    </div>
 </div>
 <div class="row">
     <div class="col-sm-6">
@@ -42,6 +113,16 @@
     </div>
 </div>
 <div class="row">
-    <div></div>
+    <div>
+
+
+    </div>
 </div>
+<script type="text/javascript">
+update_statistics();
+drawChart("#p1", "events_on_conversions");
+drawChart("#p2", "events_on_conversions");
+getTopContent();
+//attachHistogram("#p2", "events_on_conversions");
+</script>
 {% endblock content %}
