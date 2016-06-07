@@ -25,7 +25,11 @@ function getTopContent() {
 
     result.forEach(function(element, index, array) {
       var li = document.createElement("li");
-      li.appendChild(document.createTextNode(element.title + "("  + element.sold + ")"));
+      var a = document.createElement("a");
+      a.setAttribute('href', "/content/" + element.content_id + "/");
+      a.innerHTML= element.title + "("  + element.sold + ")"
+
+      li.appendChild(a);
       li.setAttribute("id",element.content_id);
       ul.appendChild(li);
     });
@@ -42,8 +46,6 @@ function drawChart(id, endpoint) {
             .append('g')
             .attr("class", 'chart');
 
-
-
     var myChart = new dimple.chart(canvas, eventData);
     var x = myChart.addCategoryAxis("x", ["event","conversion"] );
     myChart.addMeasureAxis("y", "count_items" );
@@ -52,11 +54,10 @@ function drawChart(id, endpoint) {
     myChart.setBounds(30, 30, 180, 130);
     myChart.draw();
 
-
     canvas.append("text")
           .attr("x", myChart._xPixels() + myChart._widthPixels()/2 -110)
           .attr("y", myChart._yPixels() - 20)
-          .text("Events in sessions with a buy and without");
+          .text("Sessions with a buy and without");
   });
 }
 
@@ -92,7 +93,7 @@ function update_statistics() {
     </div>
     <div class="col-sm-3">
         <div class="well kpi-box">
-            Sessions this month: <br/>
+            Items sold this month: <br/>
             <result id="items_sold">0</result>
         </div>
     </div>
@@ -106,16 +107,18 @@ function update_statistics() {
 </div>
 <div class="row">
     <div class="col-sm-6">
-        Buy-not buy per session.
+        <div id="p1" class="well"></div>
     </div>
     <div class="col-sm-6">
 
     </div>
 </div>
 <div class="row">
-    <div>
-
-
+    <div class="col-sm-4">
+        <list>
+            <p>Top 10 content<p>
+            <ul id="top_content"></ul>
+        </list>
     </div>
 </div>
 <script type="text/javascript">

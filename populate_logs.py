@@ -38,6 +38,7 @@ class User:
 
 def select_film(user):
     # todo: Verify that movies are present in new dataset.
+    # todo: content_ids should be strings. to avoid problems with zeros ex 0061350 becomes 61350 if not string.
     films = {
         'action': [145, 2373, 8241, 23, 459, 1240, 7787, 63113, 6534, 57528, 57640, 63181, 57951, 61024, 64508, 58293,
                    61350, 61132, 62999, 64231],

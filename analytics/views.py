@@ -44,6 +44,14 @@ def user(request, user_id):
     return render(request, 'analytics/user.html', context_dict)
 
 
+def content(request, content_id):
+
+    context_dict = {
+        'content_id': content_id,
+    }
+
+    return render(request, 'analytics/content.html', context_dict)
+
 def statistics(request):
     user_by_moviecount = Rating.objects.values('user_id').annotate(movie_count=Count('movie_id')).order_by(
         '-movie_count')
@@ -218,3 +226,4 @@ def monthdelta(date, delta):
     d = min(date.day, [31,
                        29 if y % 4 == 0 and not y % 400 == 0 else 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][m - 1])
     return date.replace(day=d, month=m, year=y)
+
