@@ -1,4 +1,3 @@
 .DS_Store
 .idea/
-data/
 db.sqlite3*

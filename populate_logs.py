@@ -9,7 +9,6 @@ from collector.models import Log
 
 django.setup()
 
-
 SEED = 0
 
 
