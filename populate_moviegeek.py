@@ -18,6 +18,11 @@ def create_movie(movie_id, title, genres):
     movie.title = title_and_year[0]
     movie.year = title_and_year[1][:-1]
 
+    if genres:
+        for genre in genres.split(sep="|"):
+            g = movie.genres.get_or_create(name=genre)[0]
+            #g.save()
+
     movie.save()
 
     return movie
@@ -29,6 +34,11 @@ def download_movies():
     data = response.read()
     return data.decode('utf-8')
 
+def delete_db():
+    print('truncate db')
+    Movie.objects.all().delete()
+    Genre.objects.all().delete()
+    print('finished truncate db')
 
 def populate():
 
@@ -37,16 +47,12 @@ def populate():
     for movie in movies.split(sep="\n"):
         m = movie.split(sep="::")
         if len(m) == 3:
-            movie = create_movie(m[0], m[1], m[2])
 
-            if m[2]:
-                for genre in m[2].split(sep="|"):
-                    g = Genre.objects.get_or_create(name=genre)[0]
-                    g.save()
+            create_movie(m[0], m[1], m[2])
 
-                    movie.genres.add(g)
 
 
 if __name__ == '__main__':
     print("Starting MovieGeeks Population script...")
+    delete_db()
     populate()
