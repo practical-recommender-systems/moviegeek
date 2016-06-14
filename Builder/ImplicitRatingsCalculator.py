@@ -7,8 +7,7 @@ w2 = 50
 w3 = 15
 
 
-def calculate_implicit_ratings_for_user(userid, conn=sqlite3.connect(db)):
-
+def query_log_data_for_user(userid, conn):
     sql = """
     SELECT
         user_id,
@@ -26,27 +25,34 @@ def calculate_implicit_ratings_for_user(userid, conn=sqlite3.connect(db)):
       order by buys desc, details desc, moredetails desc
     """.format(userid)
 
+    c = conn.cursor()
+    return c.execute(sql)
+
+
+def calculate_implicit_ratings_for_user(userid, conn=sqlite3.connect(db)):
+    data = query_log_data_for_user(userid, conn)
+
     ratings = dict()
     maxrating = 0
-    c = conn.cursor()
-    for row in c.execute(sql):
+
+    for row in data:
         content_id = row[1]
         buys = row[3]
         details = row[4]
         moredetails = row[5]
 
-        rating = w1*buys + w2*details + w3*moredetails
+        rating = w1 * buys + w2 * details + w3 * moredetails
         if rating > maxrating:
             maxrating = rating
-        ratings[content_id] = w1*buys + w2*details + w3*moredetails
+        ratings[content_id] = w1 * buys + w2 * details + w3 * moredetails
 
     for content_id in ratings.keys():
-        ratings[content_id] = 10*ratings[content_id] / maxrating
+        ratings[content_id] = 10 * ratings[content_id] / maxrating
 
     return ratings
 
-def save_ratings(ratings, userid, conn):
 
+def save_ratings(ratings, userid, conn):
     for content_id, rating in ratings.items():
         print("saving rating")
         sql = """
@@ -54,13 +60,12 @@ def save_ratings(ratings, userid, conn):
         SET rating = {},rating_timestamp = '{}'
         WHERE user_id = {} and movie_id = {}
         """.format(rating, datetime.datetime.now(), userid, content_id)
-        #print (sql)
+        # print (sql)
         conn.cursor().execute(sql)
 
 
 if __name__ == '__main__':
     print("Calculating implicit ratings...")
-
 
     userid = 1
     conn = sqlite3.connect(db)
