@@ -44,7 +44,7 @@ def calculate_implicit_ratings_for_user(userid, conn=sqlite3.connect(db)):
         rating = w1 * buys + w2 * details + w3 * moredetails
         if rating > maxrating:
             maxrating = rating
-        ratings[content_id] = w1 * buys + w2 * details + w3 * moredetails
+        ratings[content_id] = rating
 
     for content_id in ratings.keys():
         ratings[content_id] = 10 * ratings[content_id] / maxrating

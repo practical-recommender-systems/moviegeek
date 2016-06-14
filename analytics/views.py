@@ -25,20 +25,38 @@ def user(request, user_id):
     movie_dtos = list()
     sum_rating = 0
 
-    for movie in movies.values():
-        id = movie['movie_id']
-        for rating in user_ratings.values():
+    genres = dict()
+
+    for movie in movies:
+        id = movie.movie_id
+
+        for genre in movie.genres.all():
+
+            if genre.name in genres.keys():
+                genres[genre.name] += 1
+            else:
+                genres[genre.name] = 1
+
+        for rating in user_ratings:
 
             # todo: rating.movieid is an integer
-            if rating['movie_id'] == int(id):
-                r = rating['rating']
+            if rating.movie_id == int(id):
+                r = rating.rating
                 sum_rating += r
-                movie_dtos.append(MovieDto(id, movie['title'], r))
+                movie_dtos.append(MovieDto(id, movie.title, r))
+
+                for genre in movie.genres.all():
+
+                    if genre.name in genres.keys():
+                        genres[genre.name] += r
+                    else:
+                        genres[genre.name] = r
 
     context_dict = {
         'user_id': user_id,
-        'avg_rating': sum_rating / float(len(movie_dtos)),
+        'avg_rating': (float(sum_rating) / float(len(movie_dtos))),
         'movies': movie_dtos,
+        'genres': genres,
 
     }
     return render(request, 'analytics/user.html', context_dict)
@@ -67,7 +85,7 @@ class MovieDto(object):
 ###### -------------- old code ------------------
 
 
-def user(request, userid):
+def user2(request, userid):
     context = RequestContext(request, {
         'user': userid,
     })
