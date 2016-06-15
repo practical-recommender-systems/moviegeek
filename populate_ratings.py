@@ -2,6 +2,7 @@ import os
 import urllib.request
 import django
 import datetime
+import decimal
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'prs_project.settings')
 
@@ -12,7 +13,8 @@ from analytics.models import Rating
 
 def create_rating(user_id, content_id, rating, timestamp):
 
-    rating = Rating(user_id=user_id, movie_id=content_id, rating=rating, rating_timestamp = datetime.datetime.fromtimestamp(float(timestamp)))
+    rating = Rating(user_id=user_id, movie_id=content_id, rating=decimal.Decimal(rating),
+                    rating_timestamp=datetime.datetime.fromtimestamp(float(timestamp)))
     rating.save()
 
     return rating

@@ -1,4 +1,5 @@
 import datetime
+from datetime import date, timedelta
 import sqlite3
 
 db = './../db.sqlite3'
@@ -7,7 +8,36 @@ w2 = 50
 w3 = 15
 
 
+def connect_to_db():
+    return sqlite3.connect(db)
+
+
+def calculate_decay(age_in_days):
+    return 1/age_in_days
+
+
+def query_log_for_users(conn):
+    sql = """
+    select distinct(user_id)
+    from collector_log log
+    """
+
+    c = conn.cursor()
+    return c.execute(sql)
+
+
 def query_log_data_for_user(userid, conn):
+    sql = """
+    SELECT *
+    FROM collector_log log
+    WHERE user_id = {}
+    """.format(userid)
+
+    c = conn.cursor()
+    return c.execute(sql)
+
+
+def query_aggregated_log_data_for_user(userid, conn):
     sql = """
     SELECT
         user_id,
@@ -29,8 +59,30 @@ def query_log_data_for_user(userid, conn):
     return c.execute(sql)
 
 
-def calculate_implicit_ratings_for_user(userid, conn=sqlite3.connect(db)):
+def calculate_implicit_ratings_w_timedecay(userid, conn):
+
     data = query_log_data_for_user(userid, conn)
+
+    weights = {{'buy': w1}, {'moredetails': w2}, {'details': w3} }
+    ratings = dict()
+
+    for entry in data:
+        movie_id = entry.movie_id
+        event_type = entry.event
+
+        if movie_id in ratings:
+
+            age = (date.today() - entry.created) // timedelta(days=365.2425)
+
+            decay = calculate_decay(age)
+
+            ratings[movie_id] += weights[event_type]*decay
+
+    return ratings
+
+
+def calculate_implicit_ratings_for_user(userid, conn=connect_to_db()):
+    data = query_aggregated_log_data_for_user(userid, conn)
 
     ratings = dict()
     maxrating = 0
@@ -52,33 +104,54 @@ def calculate_implicit_ratings_for_user(userid, conn=sqlite3.connect(db)):
     return ratings
 
 
-def save_ratings(ratings, userid, conn):
+def save_ratings(ratings, userid, type, conn):
+
+    print("saving ratings")
+    i = 0
     for content_id, rating in ratings.items():
-        print("saving rating")
+
         sql = """
         UPDATE analytics_rating
-        SET rating = {},rating_timestamp = '{}'
+        SET rating = {},rating_timestamp = '{}', type='{}'
         WHERE user_id = {} and movie_id = {}
-        """.format(rating, datetime.datetime.now(), userid, content_id)
+        """.format(rating, datetime.datetime.now(), type, userid, content_id)
         # print (sql)
         conn.cursor().execute(sql)
+
+        i += 1
+
+        if i == 100:
+            print('.', end="")
+            i = 0
+
+
+def calculate_ratings_with_timedecay(conn):
+
+    for user in query_log_for_users(conn):
+        userid = user['user_id']
+        ratings = calculate_implicit_ratings_w_timedecay(userid, conn)
+        save_ratings(ratings, userid, 'implicit_w', conn)
+
+
+def calculate_ratings(conn):
+
+    for user in query_log_for_users(conn):
+        userid = user['user_id']
+        ratings = calculate_implicit_ratings_for_user(userid, conn)
+        save_ratings(ratings, userid, 'implicit', conn)
 
 
 if __name__ == '__main__':
     print("Calculating implicit ratings...")
 
     userid = 1
-    conn = sqlite3.connect(db)
+    conn = connect_to_db()
     # c = conn.cursor()
     #
     # for tables in c.execute("select name from sqlite_master where type = 'table';"):
     #     print(tables[0])
-    ratings = calculate_implicit_ratings_for_user(userid, conn)
-    save_ratings(ratings, userid, conn)
 
     # Save (commit) the changes
+    calculate_ratings(conn)
     conn.commit()
-
-    # We can also close the connection if we are done with it.
-    # Just be sure any changes have been committed or they will be lost.
     conn.close()

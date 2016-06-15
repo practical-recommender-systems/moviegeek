@@ -22,6 +22,7 @@ def index(request):
 def user(request, user_id):
     user_ratings = Rating.objects.filter(user_id=user_id).order_by('-rating')
     movies = Movie.objects.filter(movie_id__in=user_ratings.values('movie_id'))
+    log = Log.objects.filter(user_id=user_id).values()[:20]
     movie_dtos = list()
     sum_rating = 0
 
@@ -40,7 +41,7 @@ def user(request, user_id):
         for rating in user_ratings:
 
             # todo: rating.movieid is an integer
-            if rating.movie_id == int(id):
+            if rating.movie_id == id:
                 r = rating.rating
                 sum_rating += r
                 movie_dtos.append(MovieDto(id, movie.title, r))
@@ -54,9 +55,10 @@ def user(request, user_id):
 
     context_dict = {
         'user_id': user_id,
-        'avg_rating': (float(sum_rating) / float(len(movie_dtos))),
+        'avg_rating': 0 if len(movie_dtos) == 0 else float(sum_rating) / float(len(movie_dtos)),
         'movies': movie_dtos,
         'genres': genres,
+        'logs': list(log),
 
     }
     return render(request, 'analytics/user.html', context_dict)

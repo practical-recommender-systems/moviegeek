@@ -38,7 +38,7 @@
     <ul>
     {% for movie in movies %}
         <li><a href="/movies/movie/{{ movie.movie_id }}">{{ movie.title }}</a> {{ movie.rating }}/10 </li>
-    {% endfor%}
+    {% endfor %}
     </ul>
   </div>
   <div class="row">
@@ -48,6 +48,15 @@
       <li> {{ key }} : {{ value }} </li>
     {% endfor %}
     </ul>
+  </div>
+
+  <div class="row">
+    <h2>Recent Log</h2>
+  <ul>
+    {% for row in logs %}
+      {{ row.content_id }} | {{ row.event }} | {{ row.created }} <br />
+    {% endfor %}
+    <ul>
   </div>
 </div>
 </body>

@@ -5,9 +5,10 @@ import random
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'prs_project.settings')
 
 import django
-from collector.models import Log
 
 django.setup()
+
+from collector.models import Log
 
 SEED = 0
 
