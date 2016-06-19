@@ -1,6 +1,41 @@
 {% extends "moviegeek/base.html" %}
 {% block content %}
 <script>
+        function get_url(movieid) {
+            return 'https://api.themoviedb.org/3/find/tt' + movieid + '?external_source=imdb_id&api_key={{ api_key }}'
+        }
+        function get_seededrecs(movieid) {
+            url = '/rec/association_rule/' + movieid + '/'
+
+            $.getJSON(url,
+                function(result) {
+                    result.data.forEach(function(element, index, array) {
+
+                        $.getJSON(get_url(element.target), function(result) {
+                            image_url = 'http://image.tmdb.org/t/p/w500/'
+                            + result.movie_results[0].poster_path
+
+                            rec_div = document.createElement('div')
+                            rec_div.setAttribute('class', "col-sm-2 img-responsive")
+
+                            a = document.createElement('a')
+                            a.setAttribute('href', '/movies/movie/' + element.target)
+
+                            img = document.createElement('img')
+                            img.setAttribute('src', image_url)
+                            img.setAttribute('class',"img-responsive")
+                            a.appendChild(img)
+
+                            rec_div.appendChild(a)
+
+                            recs = document.getElementById('recs')
+                            recs.appendChild(rec_div)
+
+                        })
+
+                    })
+                });
+        }
 
         function getinfo(movieid) {
             url = 'https://api.themoviedb.org/3/find/tt' + movieid + '?external_source=imdb_id&api_key={{ api_key }}'
@@ -25,24 +60,43 @@
 
         $(document).ready(function() {
             getinfo('{{ movie_id }}')
+
         })
 </script>
 
 <div class="container">
     <div class="row">
         <div class="col-sm-8">
-            <div id="img" class="col-sm-6">
-                <img id="poster" class="img-responsive" src="" alt="movie poster"/>
-            </div>
-            <div class="col-sm-6">
-                <div><strong>Title</strong><p id="title"></p></div>
-                <div><strong>Released:</strong><p id="release_date"></p></div>
-                <div><strong>Description:</strong><p id="overview"></p></div>
-                <div><strong>Language</strong><p id="lan"></p></div>
-                <div><strong>Average rating</strong><p id="avg_rating"></p></div>
+            <div class="row">
+                <div col-sm-12><h2 id="title"></h2></div></div>
+            <div class="row">
+                <div id="img" class="col-sm-6">
+                    <img id="poster" class="img-responsive" src="" alt="movie poster"/>
+                </div>
+                <div class="col-sm-6">
 
+                    <div><strong>Released:</strong><p id="release_date"></p></div>
+                    <div><strong>Description:</strong><p id="overview"></p></div>
+                    <div><strong>Language</strong><p id="lan"></p></div>
+                    <div><strong>Average rating</strong><p id="avg_rating"></p></div>
+                    <div><strong>Genres</strong><p>
+                        {% if movie_genres %}
+                            | {% for genre in movie_genres %}
+                                {{ genre.name}} |
+                            {% endfor %}
+                        {% endif %}
+                    </p></div>
+
+                </div>
+            </div>
+
+            <div id="recs" class="row" display="hidden">
+                <h2>Frequently bought with these</h2>
             </div>
         </div>
     </div>
+    <script>
+         get_seededrecs('{{ movie_id }}')
+    </script>
 </div>
 {% endblock content %}

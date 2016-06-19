@@ -21,7 +21,7 @@ def create_movie(movie_id, title, genres):
     if genres:
         for genre in genres.split(sep="|"):
             g = movie.genres.get_or_create(name=genre)[0]
-            #g.save()
+            g.save()
 
     movie.save()
 
@@ -43,6 +43,8 @@ def delete_db():
 def populate():
 
     movies = download_movies()
+
+    print('movie data downloaded')
 
     for movie in movies.split(sep="\n"):
         m = movie.split(sep="::")

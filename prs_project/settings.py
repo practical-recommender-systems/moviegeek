@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     'moviegeeks',
     'collector',
     'analytics',
+    'recommender',
 ]
 
 MIDDLEWARE_CLASSES = [

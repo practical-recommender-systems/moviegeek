@@ -81,12 +81,30 @@
             {% endfor %}
         {% endif %}
 
+      function getTopContent() {
+
+          $.getJSON('/rec/chart', function(result) {
+            var ul = document.getElementById("top_content");
+
+            result.forEach(function(element, index, array) {
+                var li = document.createElement("li")
+                li.innerHTML = '<a ' +
+                               'onclick=\'PostRecClicked(\"'
+                               + element.content_id + '\", \"rec:chart\")\''
+                              + "href='/movies/movie/"+ element.content_id + "'>"
+                              + (index + 1) + ". "
+                              + element.title + "</a>";
+                ul.appendChild(li)
+               });
+            })
+         };
     </script>
 {% endblock head %}
 
 {% block content %}
-    <div id="movies" class="col-sm-8 main max-size"></div>
-    <div class="row">
+    <div class="col-sm-8 main max-size">
+        <div id="movies" class="row"></div>
+        <div class="row">
         {% if movies.has_other_pages %}
         <ul class="pagination">
             {% if movies.has_previous %}
@@ -112,6 +130,14 @@
             {% endif %}
         </ul>
         {% endif %}
-
+        </div>
     </div>
+    <div id="right" class="col-sm-2">
+        <div class="well">
+            <ol id="top_content" class="nav nav-sidebar"></ol>
+        </div>
+    </div>
+    <script type="text/javascript">
+        getTopContent();
+    </script>
 {% endblock content %}

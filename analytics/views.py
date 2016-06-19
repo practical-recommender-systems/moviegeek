@@ -72,6 +72,17 @@ def content(request, content_id):
 
     return render(request, 'analytics/content.html', context_dict)
 
+def user_taste(request, user_id):
+    genres = dict()
+
+    context_dict = {
+        'user_id': user_id,
+        'genres': genres,
+    }
+
+    return JsonResponse()
+
+
 def statistics(request):
     user_by_moviecount = Rating.objects.values('user_id').annotate(movie_count=Count('movie_id')).order_by(
         '-movie_count')

@@ -22,7 +22,7 @@
     <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.2/jquery.min.js"></script>
     <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
-    <script src="{% static "js/collector.js" %}"></script>
+    <script src="{% static 'js/collector.js' %}"></script>
 
       {% block head %}{% endblock head %}
 </head>
@@ -52,9 +52,10 @@
                     {% endfor %}
                     {% endif %}
                     </ul>
-                </div></div>
-
+                </div>
+              </div>
             {% block content %}{% endblock content %}
+
         </div>
     </div>
     <script>
