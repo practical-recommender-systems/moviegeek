@@ -14,8 +14,8 @@ class SeededRecs(models.Model):
     created = models.DateTimeField()
     source = models.CharField(max_length=8)
     target = models.CharField(max_length=8)
-    support = models.DecimalField(max_digits=2, decimal_places=0)
-    confidence = models.DecimalField(max_digits=2, decimal_places=0)
+    support = models.DecimalField(max_digits=8, decimal_places=8)
+    confidence = models.DecimalField(max_digits=8, decimal_places=8)
     type = models.CharField(max_length=8)
 
     class Meta:

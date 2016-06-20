@@ -20,7 +20,8 @@ def create_movie(movie_id, title, genres):
 
     if genres:
         for genre in genres.split(sep="|"):
-            g = movie.genres.get_or_create(name=genre)[0]
+            g = Genre.objects.get_or_create(name=genre)[0]
+            movie.genres.add(g)
             g.save()
 
     movie.save()

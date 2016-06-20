@@ -56,7 +56,7 @@ def index(request):
 
 @ensure_csrf_cookie
 def genre(request, genre_id):
-    paginate_by = 16
+    paginate_by = 18
 
     if genre_id:
         selected = Genre.objects.filter(name=genre_id)[0]
@@ -92,7 +92,6 @@ def genre(request, genre_id):
                     }
 
     return render(request, 'moviegeek/index.html', context_dict)
-    return None
 
 
 def detail(request, movie_id):
