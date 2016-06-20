@@ -1,4 +1,5 @@
 from django.http import JsonResponse
+from django.db.models import Avg
 
 from collector.models import Log
 from recommender.models import SeededRecs
@@ -10,18 +11,25 @@ def get_association_rules_for(request, content_id, take=6):
         .order_by('confidence')\
         .values('target', 'confidence', 'support')[:take]
 
-    dto = {'result': data}
     return JsonResponse(dict(data=list(data)), safe=False)
 
 
 def recs_using_association_rules(request, user_id, take=6):
-    events = Log.objects.filter(user_id=user_id).order_by('created').values('content_id', 'event' )[:20]
+    events = Log.objects.filter(user_id=user_id)\
+                        .order_by('created')\
+                        .values('content_id')[:20]
 
-    seeds = [event['content_id'] for event in events]
+    seeds = set([event['content_id'] for event in events])
 
-    rules = SeededRecs.objects.filter(source__in=seeds).order_by('confidence')
+    print(seeds)
 
-    recs = ['{0:07d}'.format(int(rule.target)) for rule in rules]
+    rules = SeededRecs.objects.filter(source__in=seeds)\
+                              .values('target')\
+                              .annotate(confidence=Avg('confidence'))\
+                              .order_by('-confidence')
+
+    recs = [{'id':'{0:07d}'.format(int(rule['target'])),
+             'confidence': rule['confidence']} for rule in rules]
 
     return JsonResponse(dict(data=list(recs[:take])))
 
@@ -43,3 +51,4 @@ def chart(request, take=10):
     data = DataHelper.dictfetchall(c)
 
     return JsonResponse(data, safe=False)
+
