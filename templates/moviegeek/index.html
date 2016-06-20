@@ -9,7 +9,8 @@
             $('.movie').on('show.bs.popover', function () {
               var contentid;
               contentid = $(this).attr("id");
-              add_impression({{ user_id }}, 'details', contentid);
+              add_impression({{ user_id }}, 'details', contentid, '{{ session_id }}',
+                                        '{{ csrf_token }}');
             });
           });
 
@@ -20,31 +21,37 @@
 
             $.getJSON(url,
                 function(result) {
-                    result.data.forEach(function(element, index, array) {
+                    if ((result.data != null) && (result.data.length > 0)) {
+                        recs = document.getElementById('recs')
+                        recs.style.display = 'block'
 
-                        $.getJSON(get_url(element), function(result) {
-                            image_url = 'http://image.tmdb.org/t/p/w500/'
-                            + result.movie_results[0].poster_path
+                        result.data.forEach(function(element, index, array) {
 
-                            rec_div = document.createElement('div')
-                            rec_div.setAttribute('class', "col-sm-2 img-responsive")
+                            $.getJSON(get_url(element.id), function(result) {
+                                image_url = 'http://image.tmdb.org/t/p/w500/'
+                                + result.movie_results[0].poster_path
 
-                            a = document.createElement('a')
-                            a.setAttribute('href', '/movies/movie/' + element.target)
+                                rec_div = document.createElement('div')
+                                rec_div.setAttribute('class', "col-sm-2 img-responsive")
 
-                            img = document.createElement('img')
-                            img.setAttribute('src', image_url)
-                            img.setAttribute('class',"img-responsive")
-                            a.appendChild(img)
+                                a = document.createElement('a')
+                                a.setAttribute('href', '/movies/movie/' + element.id)
 
-                            rec_div.appendChild(a)
+                                img = document.createElement('img')
+                                img.setAttribute('src', image_url)
+                                img.setAttribute('class',"img-responsive")
+                                a.appendChild(img)
 
-                            recs = document.getElementById('recs')
-                            recs.appendChild(rec_div)
-                            recs.setAttribute('display', 'block')
-                        })
+                                rec_div.appendChild(a)
 
-                    })
+                                recs = document.getElementById('recs')
+                                recs.appendChild(rec_div)
+
+                            })
+
+                        });
+                    }
+
                 });
         }
 
@@ -62,11 +69,14 @@
 
                             a = document.createElement("a");
                             a.setAttribute('href', "/movies/movie/" + movie_id);
-                            a.setAttribute('onclick', "add_impression({{user_id}}, 'more_details', " + movie_id + ")")
+                            a.setAttribute('onclick', "add_impression({{user_id}}, 'more_details', " +
+                                                      movie_id + ", '{{ session_id }}','{{ csrf_token }}')")
                             a.innerHTML= 'more details'
 
                             save_for_later_a = document.createElement("a");
-                            save_for_later_a.setAttribute('onclick', "add_impression({{user_id}}, 'save_for_later', " + movie_id + ")")
+                            save_for_later_a.setAttribute('onclick',
+                             "add_impression({{user_id}}, 'save_for_later', " + movie_id +
+                                              ", '{{ session_id }}','{{ csrf_token }}')")
                             save_for_later_a.innerHTML = 'save for later';
 
                             popover_div = '<div style="width: 200px;">' +
@@ -82,17 +92,20 @@
 
                             img = document.createElement("img");
                             img.setAttribute('id', movie_id);
-                            img.setAttribute('class', 'movie');
+                            img.setAttribute('class', 'movie img-rounded img-responsive');
                             img.setAttribute('src', image_url);
                             img.setAttribute('style','padding: 0px 0px 0px 0px;height: 150px')
                             img.setAttribute('title', title);
 
                             div = document.createElement("div");
-                            div.setAttribute('class', 'col-sm-2');
-                            div.setAttribute('style', 'height: 150px');
+                            div.setAttribute('class', 'col-xs-2');
                             div.appendChild(img)
 
                             document.createElement("div");
+
+                            div.setAttribute('onclick', "add_impression({{user_id}}, 'details', "
+                                                     + movie_id
+                                                     + ", '{{ session_id }}','{{ csrf_token }}')")
 
                             $('#movies').append(div)
 
@@ -132,10 +145,10 @@
 {% endblock head %}
 
 {% block content %}
-    <div class="col-sm-8 main max-size">
+    <div class="col-xs-8 main max-size">
         <div id="movies" class="row"></div>
 
-        <div id="recs" class="row" style="">
+        <div id="recs" class="row" style="display: none">
             <h2>recommended for you</h2>
 
         </div>
@@ -167,13 +180,13 @@
         {% endif %}
         </div>
     </div>
-    <div id="right" class="col-sm-2">
+    <div id="right" class="col-xs-2">
         <div class="well">
             <ol id="top_content" class="nav nav-sidebar"></ol>
         </div>
     </div>
     <script type="text/javascript">
         getTopContent();
-        get_association_rule_recs(1)
+        get_association_rule_recs({{user_id}})
     </script>
 {% endblock content %}
