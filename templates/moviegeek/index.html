@@ -13,6 +13,42 @@
             });
           });
 
+
+
+        function get_association_rule_recs(userid) {
+            url = '/rec/ar/' + userid + '/'
+
+            $.getJSON(url,
+                function(result) {
+                    result.data.forEach(function(element, index, array) {
+
+                        $.getJSON(get_url(element), function(result) {
+                            image_url = 'http://image.tmdb.org/t/p/w500/'
+                            + result.movie_results[0].poster_path
+
+                            rec_div = document.createElement('div')
+                            rec_div.setAttribute('class', "col-sm-2 img-responsive")
+
+                            a = document.createElement('a')
+                            a.setAttribute('href', '/movies/movie/' + element.target)
+
+                            img = document.createElement('img')
+                            img.setAttribute('src', image_url)
+                            img.setAttribute('class',"img-responsive")
+                            a.appendChild(img)
+
+                            rec_div.appendChild(a)
+
+                            recs = document.getElementById('recs')
+                            recs.appendChild(rec_div)
+                            recs.setAttribute('display', 'block')
+                        })
+
+                    })
+                });
+        }
+
+
         function getinfo(movie_id, title) {
             url = 'https://api.themoviedb.org/3/find/tt' + movie_id + '?external_source=imdb_id&api_key={{ api_key }}'
             $.getJSON(url,
@@ -50,15 +86,9 @@
                             img.setAttribute('src', image_url);
                             img.setAttribute('style','padding: 0px 0px 0px 0px;height: 150px')
                             img.setAttribute('title', title);
-                            //img.setAttribute('data-contentid', movie_id);
-
-                            // img.setAttribute('data-html', 'true');
-                            // img.setAttribute('data-toggle','popover');
-                            // img.setAttribute('data-trigger','focus');
-                            // img.setAttribute('data-content', popover_content);
 
                             div = document.createElement("div");
-                            div.setAttribute('class', 'col-sm-3');
+                            div.setAttribute('class', 'col-sm-2');
                             div.setAttribute('style', 'height: 150px');
                             div.appendChild(img)
 
@@ -104,6 +134,11 @@
 {% block content %}
     <div class="col-sm-8 main max-size">
         <div id="movies" class="row"></div>
+
+        <div id="recs" class="row" style="">
+            <h2>recommended for you</h2>
+
+        </div>
         <div class="row">
         {% if movies.has_other_pages %}
         <ul class="pagination">
@@ -139,5 +174,6 @@
     </div>
     <script type="text/javascript">
         getTopContent();
+        get_association_rule_recs(1)
     </script>
 {% endblock content %}

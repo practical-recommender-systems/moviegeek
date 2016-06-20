@@ -104,11 +104,15 @@ def calculate_implicit_ratings_for_user(userid, conn=connect_to_db()):
     return ratings
 
 
-def save_ratings(ratings, userid, type, conn):
+def save_ratings(ratings, userid, type):
 
     print("saving ratings")
     i = 0
+
+    conn = DataHelper.connect_to_db()
+
     for content_id, rating in ratings.items():
+
 
         sql = """
         UPDATE analytics_rating

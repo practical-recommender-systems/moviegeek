@@ -1,9 +1,7 @@
 {% extends "moviegeek/base.html" %}
 {% block content %}
 <script>
-        function get_url(movieid) {
-            return 'https://api.themoviedb.org/3/find/tt' + movieid + '?external_source=imdb_id&api_key={{ api_key }}'
-        }
+
         function get_seededrecs(movieid) {
             url = '/rec/association_rule/' + movieid + '/'
 
@@ -30,7 +28,7 @@
 
                             recs = document.getElementById('recs')
                             recs.appendChild(rec_div)
-
+                            recs.setAttribute('display', 'block')
                         })
 
                     })
@@ -90,7 +88,7 @@
                 </div>
             </div>
 
-            <div id="recs" class="row" display="hidden">
+            <div id="recs" class="row" style="visibility: hidden">
                 <h2>Frequently bought with these</h2>
             </div>
         </div>

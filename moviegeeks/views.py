@@ -13,7 +13,7 @@ from django.utils.dateparse import parse_datetime
 @ensure_csrf_cookie
 def index(request):
 
-    paginate_by = 16
+    paginate_by = 18
 
     genre_selected = request.GET.get('genre')
 
@@ -43,7 +43,6 @@ def index(request):
     page_start = 1 if page_number < 5 else page_number - 3
     page_end = 6 if page_number < 5 else page_number + 2
 
-    print(genres)
     context_dict = {'movies': page,
                     'genres': genres,
                     'api_key': api_key,
