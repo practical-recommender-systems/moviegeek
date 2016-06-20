@@ -53,7 +53,9 @@
                     {% if genres %}
                     {% for genre in genres %}
                         <li> <a href="/movies/genre/{{genre.name}}"
-                                onclick="add_impression('genre:{{genre.name}}', {{ user_id }}, 0)">{{ genre.name }}</a> </li>
+                                onclick="add_impression('genre:{{genre.name}}'
+                                        , {{ user_id }}, 0, '{{ session_id }}',
+                                        '{{ csrf_token }}')">{{ genre.name }}</a> </li>
                     {% endfor %}
                     {% endif %}
                     </ul>
