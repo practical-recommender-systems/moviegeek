@@ -14,6 +14,7 @@ def connect_to_sqllite():
 def get_query_cursor(sql):
     conn = connect_to_sqllite()
     c = conn.cursor()
+
     return c.execute(sql)
 
 

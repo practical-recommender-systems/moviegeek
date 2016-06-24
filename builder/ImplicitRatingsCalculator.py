@@ -2,6 +2,8 @@ import datetime
 from datetime import date, timedelta
 import sqlite3
 
+from builder import DataHelper
+
 db = './../db.sqlite3'
 w1 = 100
 w2 = 50
@@ -104,12 +106,10 @@ def calculate_implicit_ratings_for_user(userid, conn=connect_to_db()):
     return ratings
 
 
-def save_ratings(ratings, userid, type):
+def save_ratings(ratings, userid, type, conn=DataHelper.connect_to_db()):
 
     print("saving ratings")
     i = 0
-
-    conn = DataHelper.connect_to_db()
 
     for content_id, rating in ratings.items():
 
@@ -139,8 +139,9 @@ def calculate_ratings_with_timedecay(conn):
 
 def calculate_ratings(conn):
 
-    for user in query_log_for_users(conn):
-        userid = user['user_id']
+    rows = query_log_for_users(conn).fetchall()
+    for user in rows:
+        userid = user[0]
         ratings = calculate_implicit_ratings_for_user(userid, conn)
         save_ratings(ratings, userid, 'implicit', conn)
 

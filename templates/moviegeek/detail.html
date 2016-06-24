@@ -55,6 +55,10 @@
                         document.getElementById('avg_rating').innerHTML =  result.movie_results[0].rating
 
                 } )}
+        function item_bought()
+        {
+            add_impression({{user_id}}, 'buy', '{{ movie_id }}', '{{ session_id }}','{{ csrf_token }}')
+        }
 
         $(document).ready(function() {
             getinfo('{{ movie_id }}')
@@ -84,6 +88,9 @@
                             {% endfor %}
                         {% endif %}
                     </p></div>
+                    <div>
+                        <a href="#" type="button" onclick="item_bought()" class="btn btn-danger btn-lg">Buy</a>
+                    </div>
 
                 </div>
             </div>

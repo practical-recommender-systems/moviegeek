@@ -22,7 +22,7 @@ def index(request):
 def user(request, user_id):
     user_ratings = Rating.objects.filter(user_id=user_id).order_by('-rating')
     movies = Movie.objects.filter(movie_id__in=user_ratings.values('movie_id'))
-    log = Log.objects.filter(user_id=user_id).values()[:20]
+    log = Log.objects.filter(user_id=user_id).order_by('-created').values()[:20]
     movie_dtos = list()
     sum_rating = 0
 

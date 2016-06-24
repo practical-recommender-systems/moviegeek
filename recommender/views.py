@@ -24,6 +24,7 @@ def recs_using_association_rules(request, user_id, take=6):
     print(seeds)
 
     rules = SeededRecs.objects.filter(source__in=seeds)\
+                              .exclude(target__in=seeds)\
                               .values('target')\
                               .annotate(confidence=Avg('confidence'))\
                               .order_by('-confidence')
