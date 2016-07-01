@@ -23,63 +23,97 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.2/jquery.min.js"></script>
     <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
     <script src="{% static 'js/collector.js' %}"></script>
+    <script src="http://d3js.org/d3.v3.min.js"></script>
+    <script src="http://dimplejs.org/dist/dimple.v2.2.0.min.js"></script>
     <title>User</title>
 </head>
 <body>
 <div class='container'>
   <div class='row'>
-    <h1>What we know about user(id: {{ user_id }})</h1>
+    <h1>User Profile id: {{ user_id }}</h1>
 
     <div>
       Average rating: {{ avg_rating }} / 10
     </div>
 
-    <h2>Movie titles</h2>
+    <h2>Movie rated</h2>
     <ul>
     {% for movie in movies %}
-        <li><a href="/movies/movie/{{ movie.movie_id }}">{{ movie.title }}</a> {{ movie.rating }}/10 </li>
+        <li><a href="/analytics/content/{{ movie.movie_id }}">{{ movie.title }}</a> {{ movie.rating }}/10 </li>
     {% endfor %}
     </ul>
   </div>
   <div class="row">
     <h2>Taste</h2>
-    <ul>
-    {% for key, value in genres.items %}
-      <li> {{ key }} : {{ value }} </li>
-    {% endfor %}
-    </ul>
-  </div>
+
 
   <div id="chartContainer">
-  <script src="/lib/d3.v3.4.8.js"></script>
-  <script src="http://dimplejs.org/dist/dimple.v2.2.0.min.js"></script>
+
   <script type="text/javascript">
-    var svg = dimple.newSvg("#chartContainer", 590, 400);
-    d3.json("/data/example_data.tsv", function (data) {
-      data = dimple.filterData(data, "Owner", ["Aperture", "Black Mesa"])
-      var myChart = new dimple.chart(svg, data);
-      myChart.setBounds(60, 30, 505, 305);
-      var x = myChart.addCategoryAxis("x", "Month");
-      x.addOrderRule("Date");
-      myChart.addMeasureAxis("y", "Unit Sales");
-      var s = myChart.addSeries("Channel", dimple.plot.area);
-      s.interpolation = "step";
-      s.lineWeight = 1;
-      myChart.addLegend(60, 10, 500, 20, "right");
-      myChart.draw();
-    });
+    var svg = dimple.newSvg("#chartContainer", 700, 400);
+    var data = [
+      {% for key, value in genres.items %}
+        { "name": '{{key}}', "value": {{value}} },
+      {% endfor %}
+    ];
+    var chart = new dimple.chart(svg, data);
+    chart.setBounds(50, 10, 600, 300);
+
+    x = chart.addCategoryAxis("x", "name");
+    y = chart.addMeasureAxis("y", "value");
+    chart.addSeries(null, dimple.plot.bar);
+    x.addOrderRule("name")
+    chart.draw();
   </script>
-</div>
+  </div>
+  </div>
+  <div class="row">
+    <h2>Similar users</h2>
 
+    <ul id="sim_users" >
 
+    </ul>
+    <script>
+      function get_sim_users(this_user) {
+        min_overlap = 4
+        url = '/rec/sim/user/' + this_user + '/jaccard/?min=' + min_overlap
+            $.getJSON(url,
+                      function(result) {
+
+                        ul =  document.getElementById('sim_users')
+                        if (result.similarity != null &&
+                            Object.keys(result.similarity).length > 0) {
+                            for (var key in result.similarity)
+                            {
+                              if (result.similarity.hasOwnProperty(key)) {
+                                li = document.createElement('li')
+                                a = document.createElement('a')
+                                a.setAttribute('href', '/analytics/user/' + key)
+                                sim = parseFloat(result.similarity[key])
+                                a.innerHTML = key + ' : ' + sim.toFixed(2)
+                                li.appendChild(a)
+                                ul.appendChild(li)
+                              }
+                            }
+                         } else {
+                                li = document.createElement('li')
+                                li.innerHTML = 'No similar users found, with min = ' + min_overlap
+                                ul.appendChild(li)
+
+                         }
+
+                      });
+      }
+      get_sim_users({{user_id}})
+    </script>
+  </div>
 
   <div class="row">
     <h2>Recent Log</h2>
-  <ul>
+
     {% for row in logs %}
-      {{ row.content_id }} | {{ row.event }} | {{ row.created }} <br />
+      <a href="/analytics/content/{{ row.content_id }}"/>{{row.content_id}}</a> | {{ row.event }} | {{ row.created }} <br />
     {% endfor %}
-    <ul>
   </div>
 </div>
 </body>

@@ -8,5 +8,7 @@ urlpatterns = [
         name='get_association_rules_for'),
     url(r'^ar/(?P<user_id>\w+)/$',
         views.recs_using_association_rules,
-        name='recs_using_association_rules')
+        name='recs_using_association_rules'),
+    url(r'^sim/user/(?P<user_id>\w+)/(?P<type>\w+)/$',
+        views.similar_users, name='similar_users'),
 ]

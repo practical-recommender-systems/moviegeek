@@ -10,8 +10,9 @@ from datetime import datetime
 import time
 
 from collector.models import Log
-from moviegeeks.models import Movie
+from moviegeeks.models import Movie, Genre
 from analytics.models import Rating
+from recommender.models import SeededRecs
 
 
 def index(request):
@@ -23,11 +24,13 @@ def user(request, user_id):
     user_ratings = Rating.objects.filter(user_id=user_id).order_by('-rating')
     movies = Movie.objects.filter(movie_id__in=user_ratings.values('movie_id'))
     log = Log.objects.filter(user_id=user_id).order_by('-created').values()[:20]
+    users_with_similar_movies = Rating.objects.filter(movie_id__in=movies)\
+        .exclude(user_id=user_id).values('user_id').distinct()
     movie_dtos = list()
     sum_rating = 0
+    max_genre = 0
 
-    genres = dict()
-
+    genres = {g['name']: 0 for g in Genre.objects.all().values('name').distinct()}
     for movie in movies:
         id = movie.movie_id
 
@@ -40,7 +43,6 @@ def user(request, user_id):
 
         for rating in user_ratings:
 
-            # todo: rating.movieid is an integer
             if rating.movie_id == id:
                 r = rating.rating
                 sum_rating += r
@@ -53,9 +55,13 @@ def user(request, user_id):
                     else:
                         genres[genre.name] = r
 
+        max_value = max(genres.values())
+        genres = {key: value / max_value for key, value in genres.items()}
+
     context_dict = {
         'user_id': user_id,
         'avg_rating': 0 if len(movie_dtos) == 0 else float(sum_rating) / float(len(movie_dtos)),
+        'similar_users': list((user['user_id'] for user in users_with_similar_movies)),
         'movies': movie_dtos,
         'genres': genres,
         'logs': list(log),
@@ -65,27 +71,32 @@ def user(request, user_id):
 
 
 def content(request, content_id):
+    movie = Movie.objects.filter(movie_id=content_id).first()
+    ratings = Rating.objects.filter(movie_id=content_id).values('rating')
+    logs = Log.objects.filter(content_id=content_id).order_by('-created').values()[:20]
+    association_rules = SeededRecs.objects.filter(source=content_id).values('target', 'type')
 
+    genres = movie.genres.values()
+
+    ratings = list(r['rating'] for r in ratings)
+    agv_rating = sum(ratings)/len(ratings)
     context_dict = {
+        'title': movie.title,
+        'avg_rating': "{:10.2f}".format(agv_rating),
+        'genres': [g['name'] for g in genres],
+        'association_rules': association_rules,
         'content_id': content_id,
+        'logs': logs,
     }
 
-    return render(request, 'analytics/content.html', context_dict)
-
-def user_taste(request, user_id):
-    genres = dict()
-
-    context_dict = {
-        'user_id': user_id,
-        'genres': genres,
-    }
-
-    return JsonResponse()
+    return render(request, 'analytics/content_item.html', context_dict)
 
 
 def statistics(request):
     user_by_moviecount = Rating.objects.values('user_id').annotate(movie_count=Count('movie_id')).order_by(
         '-movie_count')
+
+
 
 
 class MovieDto(object):
@@ -95,18 +106,10 @@ class MovieDto(object):
         self.rating = rating
 
 
-###### -------------- old code ------------------
-
-
-def user2(request, userid):
-    context = RequestContext(request, {
-        'user': userid,
-    })
-
-    return render(request, '/analytics/user.html', context)
-
-
 def top_content(request):
+
+    #todo: use django ORM instead of raw sql.
+
     cursor = connection.cursor()
     cursor.execute('SELECT \
                         content_id,\
@@ -122,6 +125,7 @@ def top_content(request):
 
     data = dictfetchall(cursor)
     return JsonResponse(data, safe=False)
+###### -------------- old code ------------------
 
 
 def get_user_statistics(request, userid):
@@ -257,4 +261,3 @@ def monthdelta(date, delta):
     d = min(date.day, [31,
                        29 if y % 4 == 0 and not y % 400 == 0 else 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][m - 1])
     return date.replace(day=d, month=m, year=y)
-

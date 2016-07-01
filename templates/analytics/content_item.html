@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    {% load staticfiles %}
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Movie GEEKs</title>
+
+    <!-- Bootstrap -->
+    <link href="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css" rel="stylesheet">
+
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+    <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.2/jquery.min.js"></script>
+    <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+    <script src="{% static 'js/collector.js' %}"></script>
+    <title>User</title>
+</head>
+<body>
+<div class='container'>
+  <div class='row'>
+    <h1>{{ title }} (id: {{ content_id }})</h1>
+
+    <div>
+      Average rating: {{ avg_rating }} / 10
+    </div>
+
+  </div>
+  <div class="row">
+    <h2>Genres</h2>
+
+    |{% for genre in genres %}
+      {{ genre }} |
+    {% endfor %}
+
+  </div>
+
+  <div id="chartContainer">
+  <script src="/lib/d3.v3.4.8.js"></script>
+  <script src="http://dimplejs.org/dist/dimple.v2.2.0.min.js"></script>
+  <script type="text/javascript">
+    var svg = dimple.newSvg("#chartContainer", 590, 400);
+    d3.json("/data/example_data.tsv", function (data) {
+      data = dimple.filterData(data, "Owner", ["Aperture", "Black Mesa"])
+      var myChart = new dimple.chart(svg, data);
+      myChart.setBounds(60, 30, 505, 305);
+      var x = myChart.addCategoryAxis("x", "Month");
+      x.addOrderRule("Date");
+      myChart.addMeasureAxis("y", "Unit Sales");
+      var s = myChart.addSeries("Channel", dimple.plot.area);
+      s.interpolation = "step";
+      s.lineWeight = 1;
+      myChart.addLegend(60, 10, 500, 20, "right");
+      myChart.draw();
+    });
+  </script>
+</div>
+
+
+
+  <div class="row">
+    <h2>Recent Log</h2>
+  <ul>
+    {% for row in logs %}
+      <a href="/analytics/user/{{ row.user_id }}">{{ row.user_id }}</a> | {{ row.event }} | {{ row.created }} <br />
+    {% endfor %}
+    <ul>
+  </div>
+</div>
+</body>
+</html>
