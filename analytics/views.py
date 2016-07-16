@@ -21,8 +21,6 @@ def user(request, user_id):
     user_ratings = Rating.objects.filter(user_id=user_id).order_by('-rating')
     movies = Movie.objects.filter(movie_id__in=user_ratings.values('movie_id'))
     log = Log.objects.filter(user_id=user_id).order_by('-created').values()[:20]
-    users_with_similar_movies = Rating.objects.filter(movie_id__in=movies)\
-        .exclude(user_id=user_id).values('user_id').distinct()
 
     cluster = Cluster.objects.filter(user_id=user_id).first()
     ratings = {r.movie_id: r for r in user_ratings}
@@ -52,7 +50,6 @@ def user(request, user_id):
     context_dict = {
         'user_id': user_id,
         'avg_rating': 0 if len(movie_dtos) == 0 else float(sum_rating) / float(len(movie_dtos)),
-        'similar_users': list((user['user_id'] for user in users_with_similar_movies)),
         'movies': movie_dtos,
         'genres': genres,
         'logs': list(log),
@@ -82,6 +79,7 @@ def content(request, content_id):
     }
 
     return render(request, 'analytics/content_item.html', context_dict)
+
 
 def cluster(request, cluster_id):
 
