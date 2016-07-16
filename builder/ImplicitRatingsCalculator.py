@@ -113,7 +113,6 @@ def save_ratings(ratings, userid, type, conn=DataHelper.connect_to_db()):
 
     for content_id, rating in ratings.items():
 
-
         sql = """
         UPDATE analytics_rating
         SET rating = {},rating_timestamp = '{}', type='{}'

@@ -73,14 +73,13 @@ def pearson(users, this_user, that_user):
             if movie in users[this_user].keys() and movie in users[that_user].keys():
                 nr_a = users[this_user][movie] - this_user_avg
                 nr_b = users[that_user][movie] - that_user_avg
-                dividend += (nr_a) * \
-                            (nr_b)
+                dividend += (nr_a) * (nr_b)
                 divisor_a += pow(nr_a, 2)
                 divisor_b += pow(nr_b, 2)
 
-                divisor = Decimal(sqrt(divisor_a) * sqrt(divisor_b))
-                if divisor != 0:
-                    return dividend/Decimal(sqrt(divisor_a) * sqrt(divisor_b))
+        divisor = Decimal(sqrt(divisor_a) * sqrt(divisor_b))
+        if divisor != 0:
+            return dividend/Decimal(sqrt(divisor_a) * sqrt(divisor_b))
 
     return 0
 
@@ -93,7 +92,6 @@ def jaccard(users, this_user, that_user):
         return len(intersect)/Decimal(len(union))
     else:
         return 0
-
 
 def similar_users(request, user_id, type):
 
@@ -121,7 +119,6 @@ def similar_users(request, user_id, type):
     }
 
     for user in sim_users:
-        s = jaccard(users, int(user_id), int(user['user_id']))
 
         func = switcher.get(type, lambda: "nothing")
         s = func(users, int(user_id), int(user['user_id']))

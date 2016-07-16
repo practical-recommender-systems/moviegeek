@@ -1,9 +1,6 @@
 from django.shortcuts import render
 from django.db.models import Count
 from django.http import JsonResponse
-from django.http import HttpResponse
-from django.template.loader import get_template
-from django.template.context import RequestContext
 from django.db import connection
 
 from datetime import datetime
@@ -11,7 +8,7 @@ import time
 
 from collector.models import Log
 from moviegeeks.models import Movie, Genre
-from analytics.models import Rating
+from analytics.models import Rating, Cluster
 from recommender.models import SeededRecs
 
 
@@ -26,37 +23,31 @@ def user(request, user_id):
     log = Log.objects.filter(user_id=user_id).order_by('-created').values()[:20]
     users_with_similar_movies = Rating.objects.filter(movie_id__in=movies)\
         .exclude(user_id=user_id).values('user_id').distinct()
+
+    cluster = Cluster.objects.filter(user_id=user_id).first()
+    ratings = {r.movie_id: r for r in user_ratings}
+
     movie_dtos = list()
     sum_rating = 0
-    max_genre = 0
+
 
     genres = {g['name']: 0 for g in Genre.objects.all().values('name').distinct()}
     for movie in movies:
         id = movie.movie_id
 
+        rating = ratings[id]
+
+        r = rating.rating
+        sum_rating += r
+        movie_dtos.append(MovieDto(id, movie.title, r))
+
         for genre in movie.genres.all():
 
             if genre.name in genres.keys():
-                genres[genre.name] += 1
-            else:
-                genres[genre.name] = 1
+                genres[genre.name] += r
 
-        for rating in user_ratings:
-
-            if rating.movie_id == id:
-                r = rating.rating
-                sum_rating += r
-                movie_dtos.append(MovieDto(id, movie.title, r))
-
-                for genre in movie.genres.all():
-
-                    if genre.name in genres.keys():
-                        genres[genre.name] += r
-                    else:
-                        genres[genre.name] = r
-
-        max_value = max(genres.values())
-        genres = {key: value / max_value for key, value in genres.items()}
+    max_value = max(genres.values())
+    genres = {key: value / max_value for key, value in genres.items()}
 
     context_dict = {
         'user_id': user_id,
@@ -65,6 +56,7 @@ def user(request, user_id):
         'movies': movie_dtos,
         'genres': genres,
         'logs': list(log),
+        'cluster': cluster.cluster_id,
 
     }
     return render(request, 'analytics/user.html', context_dict)
@@ -91,13 +83,40 @@ def content(request, content_id):
 
     return render(request, 'analytics/content_item.html', context_dict)
 
+def cluster(request, cluster_id):
 
-def statistics(request):
-    user_by_moviecount = Rating.objects.values('user_id').annotate(movie_count=Count('movie_id')).order_by(
-        '-movie_count')
+    members = Cluster.objects.filter(cluster_id=cluster_id)
+    member_ratings = Rating.objects.filter(user_id__in=members.values('user_id'))
+    movies = Movie.objects.filter(movie_id__in=member_ratings.values('movie_id'))
 
+    ratings = {r.movie_id: r for r in member_ratings}
 
+    sum_rating = 0
 
+    genres = {g['name']: 0 for g in Genre.objects.all().values('name').distinct()}
+    for movie in movies:
+        id = movie.movie_id
+        rating = ratings[id]
+
+        r = rating.rating
+        sum_rating += r
+
+        for genre in movie.genres.all():
+
+            if genre.name in genres.keys():
+                genres[genre.name] += r
+
+    max_value = max(genres.values())
+    genres = {key: value / max_value for key, value in genres.items()}
+
+    context_dict = {
+        'genres': genres,
+        'members':  [m.user_id for m in members],
+        'cluster_id': cluster_id,
+        'members_count': len(members),
+    }
+
+    return render(request, 'analytics/cluster.html', context_dict)
 
 class MovieDto(object):
     def __init__(self, movie_id, title, rating):
@@ -125,32 +144,20 @@ def top_content(request):
 
     data = dictfetchall(cursor)
     return JsonResponse(data, safe=False)
+
+def clusters(request):
+
+    clusters_w_membercount = Cluster.objects.values('cluster_id').annotate(member_count=Count('user_id'))
+
+    context_dict = {
+        'cluster': list(clusters_w_membercount)
+    }
+    return JsonResponse(context_dict, safe=False)
+
+
 ###### -------------- old code ------------------
 
 
-def get_user_statistics(request, userid):
-    date_timestamp = time.strptime(request.GET["date"], "%Y-%m-%d")
-
-    end_date = datetime.fromtimestamp(time.mktime(date_timestamp))
-    start_date = monthdelta(end_date, -1)
-
-    sessions_with_conversions = Log.objects.filter(created__range=(start_date, end_date), event='buy', user_id=userid) \
-        .values('sessionId').distinct()
-    buy_data = Log.objects.filter(created__range=(start_date, end_date), event='buy', user_id=userid) \
-        .values('event', 'user_id', 'content_id', 'sessionId')
-    sessions = Log.objects.filter(created__range=(start_date, end_date), user_id=userid) \
-        .values('sessionId').distinct()
-
-    if len(sessions) == 0:
-        conversions = 0
-    else:
-        conversions = (len(sessions_with_conversions) / len(sessions)) * 100
-        conversions = round(conversions)
-
-    return JsonResponse(
-        {"items_bought": len(buy_data),
-         "conversions": conversions,
-         "sessions": len(sessions)})
 
 
 def get_statistics(request):

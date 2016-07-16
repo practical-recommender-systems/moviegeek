@@ -26,7 +26,7 @@ function getTopContent() {
     result.forEach(function(element, index, array) {
       var li = document.createElement("li");
       var a = document.createElement("a");
-      a.setAttribute('href', "/content/" + element.content_id + "/");
+      a.setAttribute('href', "/analytics/content/" + element.content_id + "/");
       a.innerHTML= element.title + "("  + element.sold + ")"
 
       li.appendChild(a);
@@ -35,6 +35,22 @@ function getTopContent() {
     });
   })
 
+}
+function getClusterInfo() {
+    $.getJSON('api/clusters', function(result) {
+        var ul = document.getElementById("clusters");
+
+        result.cluster.forEach(function(element, index, array) {
+          var li = document.createElement("li");
+          var a = document.createElement("a");
+          a.setAttribute('href', "/analytics/cluster/" + element.cluster_id + "/");
+          a.innerHTML= element.cluster_id+ "("  + element.member_count + ")"
+
+          li.appendChild(a);
+          li.setAttribute("id",element.cluster_id);
+          ul.appendChild(li);
+        });
+      })
 }
 function drawChart(id, endpoint) {
 
@@ -120,12 +136,20 @@ function update_statistics() {
             <ul id="top_content"></ul>
         </list>
     </div>
+    <div class="col-sm-4">
+        <list>
+            <p>Clusters</p>
+            <ul id="clusters"></ul>
+        </list>
+
+    </div>
 </div>
 <script type="text/javascript">
 update_statistics();
 drawChart("#p1", "events_on_conversions");
 drawChart("#p2", "events_on_conversions");
 getTopContent();
+getClusterInfo();
 //attachHistogram("#p2", "events_on_conversions");
 </script>
 {% endblock content %}

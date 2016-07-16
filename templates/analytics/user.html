@@ -25,17 +25,52 @@
     <script src="{% static 'js/collector.js' %}"></script>
     <script src="http://d3js.org/d3.v3.min.js"></script>
     <script src="http://dimplejs.org/dist/dimple.v2.2.0.min.js"></script>
+              <script>
+             function get_sim_users(this_user, type) {
+            min_overlap = 4
+            url = '/rec/sim/user/' + this_user + '/' + type + '/?min=' + min_overlap
+                $.getJSON(url,
+                          function(result) {
+
+                            ul =  document.getElementById('sim_users_' + type)
+                            if (result.similarity != null &&
+                                Object.keys(result.similarity).length > 0) {
+                                for (var key in result.similarity)
+                                {
+                                  if (result.similarity.hasOwnProperty(key)) {
+                                    li = document.createElement('li')
+                                    a = document.createElement('a')
+                                    a.setAttribute('href', '/analytics/user/' + key)
+                                    sim = parseFloat(result.similarity[key])
+                                    a.innerHTML = key + ' : ' + sim.toFixed(2)
+                                    li.appendChild(a)
+                                    ul.appendChild(li)
+                                  }
+                                }
+                             } else {
+                                    li = document.createElement('li')
+                                    li.innerHTML = 'No similar users found, with min = ' + min_overlap
+                                    ul.appendChild(li)
+
+                             }
+
+                          });
+          }
+    </script>
     <title>User</title>
 </head>
 <body>
 <div class='container'>
   <div class='row'>
-    <h1>User Profile id: {{ user_id }}</h1>
+    <h1>User Profile id: {{ user_id }} (in cluster: <a href="/analytics/cluster/{{cluster}}">{{ cluster }}</a>)</h1>
 
     <div>
       Average rating: {{ avg_rating }} / 10
     </div>
 
+  </div>
+  <div class='row'>
+    <div class="col-sm-3 well">
     <h2>Movie rated</h2>
     <ul>
     {% for movie in movies %}
@@ -43,9 +78,8 @@
     {% endfor %}
     </ul>
   </div>
-  <div class="row">
+  <div class="col-sm-9 well">
     <h2>Taste</h2>
-
 
   <div id="chartContainer">
 
@@ -67,45 +101,29 @@
   </script>
   </div>
   </div>
+  </div>
   <div class="row">
-    <h2>Similar users</h2>
+      <div class="col-sm-3">
+        <h2>Similar users</h2>
+        <div class="row">
+            <div class="col-sm-6">
+                <strong>Jaccard sim</strong>
+                <ul id="sim_users_jaccard" >
 
-    <ul id="sim_users" >
-
-    </ul>
-    <script>
-      function get_sim_users(this_user) {
-        min_overlap = 4
-        url = '/rec/sim/user/' + this_user + '/jaccard/?min=' + min_overlap
-            $.getJSON(url,
-                      function(result) {
-
-                        ul =  document.getElementById('sim_users')
-                        if (result.similarity != null &&
-                            Object.keys(result.similarity).length > 0) {
-                            for (var key in result.similarity)
-                            {
-                              if (result.similarity.hasOwnProperty(key)) {
-                                li = document.createElement('li')
-                                a = document.createElement('a')
-                                a.setAttribute('href', '/analytics/user/' + key)
-                                sim = parseFloat(result.similarity[key])
-                                a.innerHTML = key + ' : ' + sim.toFixed(2)
-                                li.appendChild(a)
-                                ul.appendChild(li)
-                              }
-                            }
-                         } else {
-                                li = document.createElement('li')
-                                li.innerHTML = 'No similar users found, with min = ' + min_overlap
-                                ul.appendChild(li)
-
-                         }
-
-                      });
-      }
-      get_sim_users({{user_id}})
-    </script>
+                </ul>
+                  <script>
+                  get_sim_users({{user_id}}, 'jaccard')
+                </script>
+            </div>
+            <div class="col-sm-6">
+                <strong>Pearson sim</strong>
+                <ul id="sim_users_pearson"></ul>
+              <script>
+                  get_sim_users({{user_id}}, 'pearson')
+              </script>
+            </div>
+        </div>
+    </div>
   </div>
 
   <div class="row">
