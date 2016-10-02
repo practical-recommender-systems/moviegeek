@@ -15,7 +15,9 @@ def get_descriptions():
     url = """https://api.themoviedb.org/3/discover/movie?primary_release_date.gte=2016-01-01&primary_release_date.lte=2016-10-22&api_key={}&page={}"""
     api_key = get_api_key()
 
-    for page in range(1, 10):
+    MovieDescriptions.objects.all().delete()
+
+    for page in range(1, 20):
         r = requests.get(url.format(api_key, page))
         for film in r.json()['results']:
             id = film['id']
@@ -24,8 +26,9 @@ def get_descriptions():
             md.imdb_id = get_imdb_id(id)
             md.title = film['title']
             md.description = film['overview']
-
-            md.save()
+            md.genres = film['genre_ids']
+            if None != md.imdb_id:
+                md.save()
 
         print("{}: {}".format(page, r.json()))
 
@@ -36,7 +39,7 @@ def save_as_csv():
     file = open('data.json','w')
 
     films = []
-    for page in range(1, 50):
+    for page in range(1, 100):
         r = requests.get(url.format(api_key, page))
         for film in r.json()['results']:
             f = dict()
@@ -58,7 +61,8 @@ def get_imdb_id(moviedb_id):
     url = """https://api.themoviedb.org/3/movie/{}?api_key={}"""
 
     r = requests.get(url.format(moviedb_id, get_api_key()))
-    return r.json()['imdb_id']
+    imdb_id = r.json()['imdb_id']
+    return imdb_id[2:] if imdb_id is not None else ''
 
 
 def get_api_key():
@@ -86,6 +90,6 @@ def get_popular_films_for_genre(genre_str):
 
 if __name__ == '__main__':
     print("Starting MovieGeeks Population script...")
-    #get_descriptions()
+    get_descriptions()
     # get_popular_films_for_genre('comedy')
-    save_as_csv()
+    # save_as_csv()

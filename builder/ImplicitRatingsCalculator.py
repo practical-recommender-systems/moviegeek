@@ -1,7 +1,18 @@
+import os
+
+
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "prs_project.settings")
+
+import django
+from django.db.models import Count
+django.setup()
+
 import datetime
 from datetime import date, timedelta
 import sqlite3
 
+from collector.models import Log
+from analytics.models import Rating
 from builder import DataHelper
 
 db = './../db.sqlite3'
@@ -24,8 +35,9 @@ def query_log_for_users(conn):
     from collector_log log
     """
 
-    c = conn.cursor()
-    return c.execute(sql)
+    #c = conn.cursor()
+    #return c.execute(sql)
+    return Log.objects.values('user_id').distinct()
 
 
 def query_log_data_for_user(userid, conn):
@@ -36,7 +48,8 @@ def query_log_data_for_user(userid, conn):
     """.format(userid)
 
     c = conn.cursor()
-    return c.execute(sql)
+    #return c.execute(sql)
+    return Log.objects.filter(user_id=userid)
 
 
 def query_aggregated_log_data_for_user(userid, conn):
@@ -53,11 +66,12 @@ def query_aggregated_log_data_for_user(userid, conn):
     ON      log.content_id = mov.movie_id
     WHERE
         user_id like {}
-      group by user_id, content_id, mov.title
-      order by buys desc, details desc, moredetails desc
+    group by user_id, content_id, mov.title
+    order by buys desc, details desc, moredetails desc
     """.format(userid)
 
     c = conn.cursor()
+    print(c.description)
     return c.execute(sql)
 
 
@@ -84,13 +98,14 @@ def calculate_implicit_ratings_w_timedecay(userid, conn):
 
 
 def calculate_implicit_ratings_for_user(userid, conn=connect_to_db()):
-    data = query_aggregated_log_data_for_user(userid, conn)
+    data = query_aggregated_log_data_for_user(userid, conn=connect_to_db())
 
     ratings = dict()
     maxrating = 0
 
     for row in data:
-        content_id = row[1]
+        print(row)
+        content_id = str(row[1])
         buys = row[3]
         details = row[4]
         moredetails = row[5]
@@ -108,18 +123,20 @@ def calculate_implicit_ratings_for_user(userid, conn=connect_to_db()):
 
 def save_ratings(ratings, userid, type, conn=DataHelper.connect_to_db()):
 
-    print("saving ratings")
+    print("saving ratings for {}".format(userid))
     i = 0
 
     for content_id, rating in ratings.items():
 
-        sql = """
-        UPDATE analytics_rating
-        SET rating = {},rating_timestamp = '{}', type='{}'
-        WHERE user_id = {} and movie_id = {}
-        """.format(rating, datetime.datetime.now(), type, userid, content_id)
-        # print (sql)
-        conn.cursor().execute(sql)
+        Rating(
+            user_id=userid,
+            movie_id=str(content_id),
+            rating=rating,
+            rating_timestamp=datetime.datetime.now(),
+            type=type
+        ).save()
+        print ('{} {}'.format(userid, str(content_id)))
+        #conn.cursor().execute(sql)
 
         i += 1
 
@@ -138,18 +155,20 @@ def calculate_ratings_with_timedecay(conn):
 
 def calculate_ratings(conn):
 
-    rows = query_log_for_users(conn).fetchall()
+    rows = query_log_for_users(conn)
     for user in rows:
-        userid = user[0]
-        ratings = calculate_implicit_ratings_for_user(userid, conn)
+        userid = user['user_id']
+        ratings = calculate_implicit_ratings_for_user(userid, conn=connect_to_db())
         save_ratings(ratings, userid, 'implicit', conn)
 
 
 if __name__ == '__main__':
     print("Calculating implicit ratings...")
 
-    userid = 1
-    conn = connect_to_db()
+    Rating.objects.filter(type='implicit').delete()
+
+    #conn = connect_to_db()
+    conn = []
     # c = conn.cursor()
     #
     # for tables in c.execute("select name from sqlite_master where type = 'table';"):
@@ -157,5 +176,5 @@ if __name__ == '__main__':
 
     # Save (commit) the changes
     calculate_ratings(conn)
-    conn.commit()
-    conn.close()
+    #conn.commit()
+    #conn.close()

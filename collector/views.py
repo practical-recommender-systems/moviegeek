@@ -22,7 +22,7 @@ def log(request):
         l = Log(
             created=date,
             user_id=user_id,
-            content_id=content_id,
+            content_id=str(content_id),
             event=event,
             visit_count=visit_count,
             session_id=str(session_id))

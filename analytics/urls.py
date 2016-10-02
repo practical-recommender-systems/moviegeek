@@ -12,4 +12,6 @@ urlpatterns = [
 	url(r'^api/top_content', views.top_content, name='top_content'),
 	url(r'^api/user_evidence/(?P<userid>[a-zA-Z0-9]+)', views.user_evidence, name='user_evidence'),
     url(r'^api/clusters', views.clusters, name='clusters'),
+    url(r'^api/lda', views.lda, name='lda'),
+    url(r'^similarity', views.similarity_graph, name='similarity_graph'),
 ]

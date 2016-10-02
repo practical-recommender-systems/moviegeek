@@ -1,0 +1,71 @@
+<!doctype html>
+<html>
+        {% load staticfiles %}
+<head>
+  <title>item similarity</title>
+
+  <script type="text/javascript" src="http://visjs.org/dist/vis.js"></script>
+  <link href="http://visjs.org/dist/vis.css" rel="stylesheet" type="text/css" />
+
+  <style type="text/css">
+    #mynetwork {
+      width: 600px;
+      height: 400px;
+      border: 1px solid lightgray;
+    }
+  </style>
+</head>
+<body>
+
+<p>
+  A graph representing the item-item similarity graph of the
+</p>
+
+<div id="mynetwork"></div>
+
+<script type="text/javascript">
+  var options = {
+  layout: {
+    randomSeed: undefined,
+    improvedLayout:false,
+    hierarchical: {
+        enabled:false,
+        levelSeparation: 150,
+        nodeSpacing: 100,
+        treeSpacing: 200,
+        blockShifting: true,
+        edgeMinimization: true,
+        parentCentralization: true,
+        direction: 'UD',        // UD, DU, LR, RL
+        sortMethod: 'hubsize'   // hubsize, directed
+      }
+    }
+  }
+
+  // create an array with nodes
+  var nodes = new vis.DataSet([
+  {% for node in nodes %}
+        {'id': {{ node.id }}, 'label': "{{ node.label }}" },
+  {% endfor %}
+  ]);
+
+  // create an array with edges
+  var edges = new vis.DataSet([
+  {% for edge in edges %}
+    {'from': {{ edge.from }}, 'to': {{ edge.to }} },
+
+  {% endfor %}
+  ]);
+
+  // create a network
+  var container = document.getElementById('mynetwork');
+
+  var data = {
+    nodes: nodes,
+    edges: edges
+  };
+  var network = new vis.Network(container, data, options);
+</script>
+
+</body>
+</html>

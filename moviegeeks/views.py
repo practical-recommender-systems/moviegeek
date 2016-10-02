@@ -60,9 +60,9 @@ def genre(request, genre_id):
 
     if genre_id:
         selected = Genre.objects.filter(name=genre_id)[0]
-        movies = selected.movies.all()
+        movies = selected.movies.all().order_by('-year')
     else:
-        movies = Movie.objects.all()
+        movies = Movie.objects.all().order_by('-year')
 
     genres = get_genres()
 
@@ -98,11 +98,15 @@ def detail(request, movie_id):
     api_key = get_api_key()
     genres = get_genres()
     movie = Movie.objects.filter(movie_id=movie_id).first()
-    movie_genres = movie.genres.all()
+    genre_names = []
+
+    if movie is not None :
+        movie_genres = movie.genres.all() if movie is not None else []
+        genre_names = list(movie_genres.values('name'))
 
     context_dict = {'movie_id': movie_id,
                     'genres': genres,
-                    'movie_genres': list(movie_genres.values('name')),
+                    'movie_genres': genre_names,
                     'api_key': api_key,
                     'session_id': session_id(request),
                     'user_id': user_id(request)}

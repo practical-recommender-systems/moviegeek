@@ -5,9 +5,26 @@ class MovieDescriptions(models.Model):
     imdb_id = models.CharField(max_length=8)
     title = models.CharField(max_length=56)
     description = models.CharField(max_length=512)
+    genres = models.CharField(max_length=512, default='')
+    lda_vector = models.CharField(max_length=56, null=True)
 
     def __str__(self):
         return self.imdb_id
+
+
+class Similarity(models.Model):
+    created = models.DateField()
+    source = models.CharField(max_length=8)
+    target = models.CharField(max_length=8)
+    similarity = models.DecimalField(max_digits=8, decimal_places=7)
+
+    class Meta:
+        db_table = 'similarity'
+
+    def __str__(self):
+        return "[({} => {}) sim = {}]".format(self.source,
+                                              self.target,
+                                              self.similarity)
 
 
 class SeededRecs(models.Model):

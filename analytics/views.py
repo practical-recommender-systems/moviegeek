@@ -9,8 +9,8 @@ import time
 from collector.models import Log
 from moviegeeks.models import Movie, Genre
 from analytics.models import Rating, Cluster
-from recommender.models import SeededRecs
-
+from recommender.models import SeededRecs, Similarity
+from gensim import corpora, models
 
 def index(request):
     context_dict = {}
@@ -19,12 +19,14 @@ def index(request):
 
 def user(request, user_id):
     user_ratings = Rating.objects.filter(user_id=user_id).order_by('-rating')
+    print(user_ratings.values('movie_id'))
     movies = Movie.objects.filter(movie_id__in=user_ratings.values('movie_id'))
     log = Log.objects.filter(user_id=user_id).order_by('-created').values()[:20]
 
     cluster = Cluster.objects.filter(user_id=user_id).first()
     ratings = {r.movie_id: r for r in user_ratings}
-
+    print(ratings)
+    print(movies)
     movie_dtos = list()
     sum_rating = 0
 
@@ -45,15 +47,17 @@ def user(request, user_id):
                 genres[genre.name] += r
 
     max_value = max(genres.values())
-    genres = {key: value / max_value for key, value in genres.items()}
+    max_value = max(max_value,1)
 
+    genres = {key: value / max_value for key, value in genres.items()}
+    cluster_id = cluster.cluster_id if cluster else 'Not in cluster'
     context_dict = {
         'user_id': user_id,
         'avg_rating': 0 if len(movie_dtos) == 0 else float(sum_rating) / float(len(movie_dtos)),
         'movies': movie_dtos,
         'genres': genres,
         'logs': list(log),
-        'cluster': cluster.cluster_id,
+        'cluster': cluster_id,
 
     }
     return render(request, 'analytics/user.html', context_dict)
@@ -79,6 +83,21 @@ def content(request, content_id):
     }
 
     return render(request, 'analytics/content_item.html', context_dict)
+
+def lda(request):
+    lda = models.ldamodel.LdaModel.load('./../pickled_model.lda')
+
+    for topic in lda.print_topics():
+        print("topic {}: {}".format(topic[0], topic[1]))
+
+    context_dict = {
+        "topics": lda.print_topics(),
+        "number_of_topics": lda.num_topics
+
+    }
+
+
+    return render(request, 'analytics/lda_model.html', context_dict)
 
 
 def cluster(request, cluster_id):
@@ -151,6 +170,39 @@ def clusters(request):
         'cluster': list(clusters_w_membercount)
     }
     return JsonResponse(context_dict, safe=False)
+
+
+def similarity_graph(request):
+
+    sim = Similarity.objects.all()[:10000]
+    source_set = [s.source for s in sim]
+    nodes = [{"id":s, "label": s} for s in set(source_set)]
+    edges = [{"from": s.source, "to": s.target} for s in sim]
+
+    print(nodes)
+    print(edges)
+    context_dict = {
+        "nodes": nodes,
+        "edges": edges
+    }
+    # context_dict = {
+    #     "nodes": [
+    #         {"id": 2, "label": 'Node 2'},
+    #         {"id": 3, "label": 'Node 3'},
+    #         {"id": 4, "label": 'Node 4'},
+    #         {"id": 5, "label": 'Node 5'},
+    #         {"id": 1, "label": 'Node 1'},
+    #     ],
+    #     "edges": [
+    #         {"from": 1, "to": 3},
+    #         {"from": 1, "to": 2},
+    #         {"from": 2, "to": 4},
+    #         {"from": 2, "to": 5},
+    #         {"from": 1, "to": 5}
+    #     ]
+    #
+    # }
+    return render(request, 'analytics/similarity_graph.html', context_dict)
 
 
 ###### -------------- old code ------------------

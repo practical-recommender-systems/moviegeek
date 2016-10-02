@@ -1,13 +1,16 @@
 from decimal import Decimal
 from math import sqrt
 
+import numpy as np
 from django.http import JsonResponse
 from django.db.models import Avg, Count
 
 from analytics.models import Rating
 from collector.models import Log
-from recommender.models import SeededRecs
+from recommender.models import SeededRecs, MovieDescriptions
 from builder import DataHelper
+
+from gensim import models, corpora, similarities
 
 
 def get_association_rules_for(request, content_id, take=6):
@@ -60,8 +63,8 @@ def chart(request, take=10):
 
 def pearson(users, this_user, that_user):
     if this_user in users and that_user in users:
-        this_user_avg = sum(users[this_user].values())/len(users[this_user].values())
-        that_user_avg = sum(users[that_user].values())/len(users[that_user].values())
+        this_user_avg = sum(users[this_user].values()) / len(users[this_user].values())
+        that_user_avg = sum(users[that_user].values()) / len(users[that_user].values())
 
         all_movies = set(users[this_user].keys()) & set(users[that_user].keys())
 
@@ -79,7 +82,7 @@ def pearson(users, this_user, that_user):
 
         divisor = Decimal(sqrt(divisor_a) * sqrt(divisor_b))
         if divisor != 0:
-            return dividend/Decimal(sqrt(divisor_a) * sqrt(divisor_b))
+            return dividend / Decimal(sqrt(divisor_a) * sqrt(divisor_b))
 
     return 0
 
@@ -89,12 +92,12 @@ def jaccard(users, this_user, that_user):
         intersect = set(users[this_user].keys()) & set(users[that_user].keys())
         union = set(users[this_user].keys()) | set(users[that_user].keys())
 
-        return len(intersect)/Decimal(len(union))
+        return len(intersect) / Decimal(len(union))
     else:
         return 0
 
-def similar_users(request, user_id, type):
 
+def similar_users(request, user_id, type):
     min = request.GET.get('min', 1)
 
     ratings = Rating.objects.filter(user_id=user_id)
@@ -123,7 +126,7 @@ def similar_users(request, user_id, type):
         func = switcher.get(type, lambda: "nothing")
         s = func(users, int(user_id), int(user['user_id']))
 
-        if s > 0.2:
+        if s > 0.5:
             similarity[user['user_id']] = s
 
     data = {
@@ -133,3 +136,50 @@ def similar_users(request, user_id, type):
         'similarity': similarity,
     }
     return JsonResponse(data, safe=False)
+
+
+def similar_content(request, content_id, num = 6):
+    lda = models.ldamodel.LdaModel.load('./../pickled_model.lda')
+
+    dictionary = corpora.Dictionary.load('./lda/dict.lda')
+
+    corpus = corpora.MmCorpus('./lda/corpus.mm')
+    content_sims = None
+
+    md = MovieDescriptions.objects.filter(imdb_id=content_id).first()
+
+
+    if md is not None:
+        index = similarities.MatrixSimilarity.load('./lda/index.lda')
+
+        lda_vector = lda[corpus[int(md.lda_vector)]]
+        sims = index[lda_vector]
+
+        sorted_sims = sorted(enumerate(sims), key=lambda item: -item[1])[:num]
+
+        content_sims = get_movie_ids(sorted_sims, corpus, dictionary)
+
+        data = {
+            'source_title': md.title,
+            'source_id': md.imdb_id,
+            'data': content_sims
+        }
+
+        return JsonResponse(data, safe=False)
+
+
+def get_movie_ids(sorted_sims, corpus, dictionary):
+    ids = [s[0] for s in sorted_sims]
+    movies = MovieDescriptions.objects.filter(lda_vector__in=ids)
+
+    return [{"target": movies[i].imdb_id,  "title": movies[i].title, "sim": str(sorted_sims[i])} for i in range(len(movies))]
+
+
+def lda2array(lda_vector, len):
+    vec = np.zeros(len)
+    for coor in lda_vector:
+        if coor[0] > 1270:
+            print("auc")
+        vec[coor[0]] = coor[1]
+
+    return vec

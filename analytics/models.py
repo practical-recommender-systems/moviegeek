@@ -10,7 +10,7 @@ class Rating(models.Model):
     type = models.CharField(max_length=8, default='explicit')
 
     def __str__(self):
-        return "user_id: {}, content_id: {}, rating: {}, type: {}"\
+        return "user_id: {}, movie_id: {}, rating: {}, type: {}"\
             .format(self.user_id, self.movie_id, self.rating, self.type)
 
 

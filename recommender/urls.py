@@ -11,4 +11,6 @@ urlpatterns = [
         name='recs_using_association_rules'),
     url(r'^sim/user/(?P<user_id>\w+)/(?P<type>\w+)/$',
         views.similar_users, name='similar_users'),
+    url(r'^cb/item/(?P<content_id>\w+)/$',
+        views.similar_content, name='similar_content'),
 ]
