@@ -13,4 +13,6 @@ urlpatterns = [
         views.similar_users, name='similar_users'),
     url(r'^cb/item/(?P<content_id>\w+)/$',
         views.similar_content, name='similar_content'),
+    url(r'^cb/user/(?P<user_id>\w+)/$',
+        views.recs_cb, name='recs_cb'),
 ]

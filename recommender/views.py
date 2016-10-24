@@ -139,7 +139,7 @@ def similar_users(request, user_id, type):
 
 
 def similar_content(request, content_id, num = 6):
-    lda = models.ldamodel.LdaModel.load('./../pickled_model.lda')
+    lda = models.ldamodel.LdaModel.load('./lda/model.lda')
 
     dictionary = corpora.Dictionary.load('./lda/dict.lda')
 
@@ -168,11 +168,44 @@ def similar_content(request, content_id, num = 6):
         return JsonResponse(data, safe=False)
 
 
+def recs_cb(request, user_id, num = 6):
+    ratings = Rating.objects.filter(user_id=user_id)
+
+    lda = models.ldamodel.LdaModel.load('./lda/model.lda')
+
+    dictionary = corpora.Dictionary.load('./lda/dict.lda')
+
+    corpus = corpora.MmCorpus('./lda/corpus.mm')
+
+    content_sims = []
+    for rating in ratings:
+        md = MovieDescriptions.objects.filter(imdb_id=rating.movie_id).first()
+        if md is not None:
+            index = similarities.MatrixSimilarity.load('./lda/index.lda')
+
+            lda_vector = lda[corpus[int(md.lda_vector)]]
+            sims = index[lda_vector]
+            sorted_sims = sorted(enumerate(sims), key=lambda item: -item[1])[:num]
+            content_sims.extend( get_movie_ids(sorted_sims, corpus, dictionary))
+
+    sorted_items = sorted(enumerate(content_sims), key=lambda item: -float(item[0]))[:num]
+
+    data = {
+        'user_id': user_id,
+        'data': sorted_items
+    }
+
+    return JsonResponse(data, safe=False)
+
+
+
 def get_movie_ids(sorted_sims, corpus, dictionary):
     ids = [s[0] for s in sorted_sims]
     movies = MovieDescriptions.objects.filter(lda_vector__in=ids)
 
-    return [{"target": movies[i].imdb_id,  "title": movies[i].title, "sim": str(sorted_sims[i])} for i in range(len(movies))]
+    return [{"target": movies[i].imdb_id,
+             "title": movies[i].title,
+             "sim": str(sorted_sims[i][1])} for i in range(len(movies))]
 
 
 def lda2array(lda_vector, len):

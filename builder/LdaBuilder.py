@@ -39,12 +39,12 @@ def cosine_similarity(ldas):
     similarity_matrix = np.zeros((size,size))
 
     for i in range(ldas.shape[0]):
-        i_sim = dict()
 
         for j in range(ldas.shape[0]):
-            similarity_matrix[i,j] = vector_cos(ldas[i,], ldas[j, ])
+            similarity_matrix[i, j] = vector_cos(ldas[i,], ldas[j, ])
 
     return similarity_matrix
+
 
 def load_data():
     docs = list(MovieDescriptions.objects.all())
@@ -52,11 +52,12 @@ def load_data():
 
     return data, docs
 
+
 class LdaModel(object):
 
     def train(self, data, docs):
 
-        NUM_TOPICS = 27
+        NUM_TOPICS = 50
         n_products = len(data)
 
         dictionary, texts, lda_model = self.build_lda_model(data, docs, NUM_TOPICS)

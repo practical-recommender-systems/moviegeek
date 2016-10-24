@@ -85,7 +85,7 @@ def content(request, content_id):
     return render(request, 'analytics/content_item.html', context_dict)
 
 def lda(request):
-    lda = models.ldamodel.LdaModel.load('./../pickled_model.lda')
+    lda = models.ldamodel.LdaModel.load('./lda/model.lda')
 
     for topic in lda.print_topics():
         print("topic {}: {}".format(topic[0], topic[1]))
