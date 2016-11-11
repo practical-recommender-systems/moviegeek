@@ -16,7 +16,6 @@ The dataset is used in the populate_moviegeek script which downloads it and impo
 into the database configured in Django. 
 
 * download code
-* update settings with db connections.
 * run the following two commands to create the dbs.
   * `python manage.py makemigrations`
   * `python manage.py migrate`
