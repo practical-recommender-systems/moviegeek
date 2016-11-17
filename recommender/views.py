@@ -8,7 +8,7 @@ from django.db.models import Avg, Count
 
 from analytics.models import Rating
 from collector.models import Log
-from recommender.models import SeededRecs, Recs, MovieDescriptions
+from recommender.models import SeededRecs, Recs, MovieDescriptions, Similarity
 from builder import DataHelper
 
 from gensim import models, corpora, similarities
@@ -130,9 +130,7 @@ def similar_users(request, user_id, type):
         if s > 0.5:
             similarity[user['user_id']] = round(s, 2)
     topn = sorted(similarity.items(), key=operator.itemgetter(1), reverse=True)[:10]
-    print(topn)
-    print('-----------------')
-    print(similarity)
+
     data = {
         'user_id': user_id,
         'num_movies_rated': len(ratings),
@@ -209,6 +207,41 @@ def recs_cb(request, user_id, num = 6):
     }
 
     return JsonResponse(data, safe=False)
+
+def recs_cf(request, user_id, num = 6):
+    active_user_items = Rating.objects.filter(user_id=user_id)
+
+    movie_ids = {movie.movie_id: movie.rating for movie in active_user_items}
+    #todo: get similar items
+    candidate_items = Similarity.objects.filter(source__in=movie_ids.keys())
+    candidate_items = candidate_items.distinct().order_by('-similarity')
+
+    #todo: calculate predictions
+    recs = dict()
+    print(candidate_items)
+    for candiate in candidate_items:
+        target = candiate.target
+
+        if target not in movie_ids:
+            pre = 0
+
+            rated_items = [i for i in candidate_items if i.target == target]
+
+            for sim_item in [i for i in candidate_items if i.target == target]:
+                r = movie_ids[sim_item.source]
+                pre += sim_item.similarity * r
+
+            recs[target] = {'prediction': pre/len(rated_items),
+                            'sim_items': [r.source for r in rated_items]}
+
+    sorted_items = sorted(recs.items(), key=lambda item: -float(item[1]['prediction']))[:num]
+
+    data = {'user_id': user_id,
+            'data': sorted_items}
+
+    return JsonResponse(data, safe=False)
+
+
 
 
 def get_movie_ids(sorted_sims, corpus, dictionary):

@@ -15,4 +15,6 @@ urlpatterns = [
         views.similar_content, name='similar_content'),
     url(r'^cb/user/(?P<user_id>\w+)/$',
         views.recs_cb, name='recs_cb'),
+    url(r'^cf/user/(?P<user_id>\w+)/$',
+        views.recs_cf, name='recs_cb'),
 ]
