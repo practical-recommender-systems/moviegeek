@@ -148,7 +148,7 @@ def similar_content(request, content_id, num = 6):
     dictionary = corpora.Dictionary.load('./lda/dict.lda')
 
     corpus = corpora.MmCorpus('./lda/corpus.mm')
-    content_sims = None
+    content_sims = dict()
 
     md = MovieDescriptions.objects.filter(imdb_id=content_id).first()
 
@@ -161,12 +161,22 @@ def similar_content(request, content_id, num = 6):
 
         sorted_sims = sorted(enumerate(sims), key=lambda item: -item[1])[:num]
 
-        content_sims = get_movie_ids(sorted_sims, corpus, dictionary)
+        movies = get_movie_ids(sorted_sims, corpus, dictionary)
+
+        for movie in movies:
+            target = movie['target']
+            if target in content_sims.keys():
+                if movie['sim'] > content_sims[target]['sim']:
+                    content_sims[target] = movie
+            else:
+                content_sims[target] = movie
+
+        sorted_items = sorted(content_sims.values(), key=lambda item: -float(item['sim']))[:num]
 
         data = {
             'source_title': md.title,
             'source_id': md.imdb_id,
-            'data': content_sims
+            'data': sorted_items
         }
 
         return JsonResponse(data, safe=False)
@@ -188,7 +198,7 @@ def recs_cb(request, user_id, num = 6):
 
     corpus = corpora.MmCorpus('./lda/corpus.mm')
 
-    content_sims = []
+    content_sims = dict()
     for rating in ratings:
         md = MovieDescriptions.objects.filter(imdb_id=rating.movie_id).first()
         if md is not None:
@@ -197,9 +207,17 @@ def recs_cb(request, user_id, num = 6):
             lda_vector = lda[corpus[int(md.lda_vector)]]
             sims = index[lda_vector]
             sorted_sims = sorted(enumerate(sims), key=lambda item: -item[1])[:num]
-            content_sims.extend( get_movie_ids(sorted_sims, corpus, dictionary))
+            movies = get_movie_ids(sorted_sims, corpus, dictionary)
 
-    sorted_items = sorted(enumerate(content_sims), key=lambda item: -float(item[0]))[:num]
+            for movie in movies:
+                target = movie['target']
+                if target in content_sims.keys():
+                    if movie['sim'] > content_sims[target]['sim']:
+                        content_sims[target] = movie
+                else:
+                    content_sims[target] = movie
+
+    sorted_items = sorted(content_sims.values(), key=lambda item: -float(item['sim']))[:num]
 
     data = {
         'user_id': user_id,
