@@ -40,9 +40,10 @@
                                   if (result.similarity.hasOwnProperty(key)) {
                                     li = document.createElement('li')
                                     a = document.createElement('a')
-                                    a.setAttribute('href', '/analytics/user/' + key)
-                                    sim = parseFloat(result.similarity[key])
-                                    a.innerHTML = key + ' : ' + sim.toFixed(2)
+                                    a.setAttribute('href', '/analytics/user/' + result.similarity[key][0])
+
+                                    sim = parseFloat(result.similarity[key][1])
+                                    a.innerHTML = result.similarity[key][0] + ':' + sim
                                     li.appendChild(a)
                                     ul.appendChild(li)
                                   }
@@ -51,11 +52,49 @@
                                     li = document.createElement('li')
                                     li.innerHTML = 'No similar users found, with min = ' + min_overlap
                                     ul.appendChild(li)
-
                              }
-
                           });
           }
+
+          function get_association_rule_recs(userid) {
+            url = '/rec/ar/' + userid + '/'
+
+            $.getJSON(url,
+                function(result) {
+                    if ((result.data != null) && (result.data.length > 0)) {
+                        recs = document.getElementById('association_rule_recs')
+                        recs.style.display = 'block'
+
+                        result.data.forEach(function(element, index, array) {
+
+                            $.getJSON(get_url(element.id), function(result) {
+                                image_url = 'http://image.tmdb.org/t/p/w500/'
+                                + result.movie_results[0].poster_path
+
+                                rec_div = document.createElement('div')
+                                rec_div.setAttribute('class', "col-sm-2 img-responsive")
+
+                                a = document.createElement('a')
+                                a.setAttribute('href', '/movies/movie/' + element.id)
+
+                                img = document.createElement('img')
+                                img.setAttribute('src', image_url)
+                                img.setAttribute('class',"img-responsive")
+                                a.appendChild(img)
+
+                                rec_div.appendChild(a)
+
+                                recs = document.getElementById('recs')
+                                recs.appendChild(rec_div)
+
+                            })
+
+                        });
+                    }
+
+                });
+        }
+
     </script>
     <title>User</title>
 </head>
@@ -80,27 +119,36 @@
   </div>
   <div class="col-sm-9 well">
     <h2>Taste</h2>
-
   <div id="chartContainer">
 
-  <script type="text/javascript">
-    var svg = dimple.newSvg("#chartContainer", 700, 400);
-    var data = [
-      {% for key, value in genres.items %}
-        { "name": '{{key}}', "value": {{value}} },
-      {% endfor %}
-    ];
-    var chart = new dimple.chart(svg, data);
-    chart.setBounds(50, 10, 600, 300);
+    <script type="text/javascript">
+      var svg = dimple.newSvg("#chartContainer", 700, 400);
+      var data = [
+        {% for key, value in genres.items %}
+          { "name": '{{key}}', "value": {{value}} },
+        {% endfor %}
+      ];
+      var chart = new dimple.chart(svg, data);
+      chart.setBounds(50, 10, 600, 300);
 
-    x = chart.addCategoryAxis("x", "name");
-    y = chart.addMeasureAxis("y", "value");
-    chart.addSeries(null, dimple.plot.bar);
-    x.addOrderRule("name")
-    chart.draw();
-  </script>
+      x = chart.addCategoryAxis("x", "name");
+      y = chart.addMeasureAxis("y", "value");
+      chart.addSeries(null, dimple.plot.bar);
+      x.addOrderRule("name")
+      chart.draw();
+    </script>
   </div>
   </div>
+  </div>
+  <div class="row">
+    <div class="col-sm-3">
+      Association rules:
+    </div>
+    <div class="col-sm-9">
+      <div class="association_rule_recs"></div>
+
+    </div>
+
   </div>
   <div class="row">
       <div class="col-sm-3">
@@ -134,5 +182,8 @@
     {% endfor %}
   </div>
 </div>
+<script type="text/javascript">
+        get_association_rule_recs({{user_id}})
+    </script>
 </body>
 </html>

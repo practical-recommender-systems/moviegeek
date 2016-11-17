@@ -19,14 +19,13 @@ def index(request):
 
 def user(request, user_id):
     user_ratings = Rating.objects.filter(user_id=user_id).order_by('-rating')
-    print(user_ratings.values('movie_id'))
+
     movies = Movie.objects.filter(movie_id__in=user_ratings.values('movie_id'))
     log = Log.objects.filter(user_id=user_id).order_by('-created').values()[:20]
 
     cluster = Cluster.objects.filter(user_id=user_id).first()
     ratings = {r.movie_id: r for r in user_ratings}
-    print(ratings)
-    print(movies)
+
     movie_dtos = list()
     sum_rating = 0
 
@@ -53,7 +52,7 @@ def user(request, user_id):
     cluster_id = cluster.cluster_id if cluster else 'Not in cluster'
     context_dict = {
         'user_id': user_id,
-        'avg_rating': 0 if len(movie_dtos) == 0 else float(sum_rating) / float(len(movie_dtos)),
+        'avg_rating': 0 if len(movie_dtos) == 0 else round(float(sum_rating) / float(len(movie_dtos)), 2),
         'movies': movie_dtos,
         'genres': genres,
         'logs': list(log),

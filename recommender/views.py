@@ -2,12 +2,13 @@ from decimal import Decimal
 from math import sqrt
 
 import numpy as np
+import operator
 from django.http import JsonResponse
 from django.db.models import Avg, Count
 
 from analytics.models import Rating
 from collector.models import Log
-from recommender.models import SeededRecs, MovieDescriptions
+from recommender.models import SeededRecs, Recs, MovieDescriptions
 from builder import DataHelper
 
 from gensim import models, corpora, similarities
@@ -127,14 +128,19 @@ def similar_users(request, user_id, type):
         s = func(users, int(user_id), int(user['user_id']))
 
         if s > 0.5:
-            similarity[user['user_id']] = s
-
+            similarity[user['user_id']] = round(s, 2)
+    topn = sorted(similarity.items(), key=operator.itemgetter(1), reverse=True)[:10]
+    print(topn)
+    print('-----------------')
+    print(similarity)
     data = {
         'user_id': user_id,
         'num_movies_rated': len(ratings),
         'type': type,
-        'similarity': similarity,
+        'topn': topn,
+        'similarity': topn,
     }
+
     return JsonResponse(data, safe=False)
 
 
@@ -168,6 +174,13 @@ def similar_content(request, content_id, num = 6):
         return JsonResponse(data, safe=False)
 
 
+def recs_funksvd(request, user_id, num = 6):
+    recs = Recs.objects.filter(user_id=user_id)
+
+    top_num = sorted(recs, key=lambda rec: rec.rating)[: num]
+    return top_num
+
+
 def recs_cb(request, user_id, num = 6):
     ratings = Rating.objects.filter(user_id=user_id)
 
@@ -196,7 +209,6 @@ def recs_cb(request, user_id, num = 6):
     }
 
     return JsonResponse(data, safe=False)
-
 
 
 def get_movie_ids(sorted_sims, corpus, dictionary):
