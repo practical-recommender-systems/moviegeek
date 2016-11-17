@@ -5,6 +5,7 @@ from django.db import connection
 
 from datetime import datetime
 import time
+import json
 
 from collector.models import Log
 from moviegeeks.models import Movie, Genre
@@ -57,6 +58,7 @@ def user(request, user_id):
         'genres': genres,
         'logs': list(log),
         'cluster': cluster_id,
+        'api_key': get_api_key(),
 
     }
     return render(request, 'analytics/user.html', context_dict)
@@ -202,6 +204,11 @@ def similarity_graph(request):
     #
     # }
     return render(request, 'analytics/similarity_graph.html', context_dict)
+
+def get_api_key():
+    # Load credentials
+    cred = json.loads(open(".prs").read())
+    return cred['themoviedb_apikey']
 
 
 ###### -------------- old code ------------------
