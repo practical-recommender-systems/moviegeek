@@ -43,3 +43,15 @@ class SeededRecs(models.Model):
                                                     self.target,
                                                     self.support,
                                                     self.confidence)
+
+
+class Recs(models.Model):
+    user = models.CharField(max_length=8)
+    item = models.CharField(max_length=8)
+    rating = models.FloatField()
+
+    class Meta:
+        db_table = 'recs'
+
+    def __str__(self):
+        return "(u,i)({}, {})={}".format(self.user, self.item, self.rating)

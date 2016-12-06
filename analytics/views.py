@@ -81,6 +81,7 @@ def content(request, content_id):
         'association_rules': association_rules,
         'content_id': content_id,
         'logs': logs,
+        'number_users': len(ratings)
     }
 
     return render(request, 'analytics/content_item.html', context_dict)

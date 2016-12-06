@@ -26,7 +26,11 @@
     <script src="http://d3js.org/d3.v3.min.js"></script>
     <script src="http://dimplejs.org/dist/dimple.v2.2.0.min.js"></script>
               <script>
-             function get_sim_users(this_user, type) {
+            function get_url(movieid) {
+              return 'https://api.themoviedb.org/3/find/tt' + movieid + '?external_source=imdb_id&api_key={{ api_key }}'
+            }
+
+            function get_sim_users(this_user, type) {
             min_overlap = 4
             url = '/rec/sim/user/' + this_user + '/' + type + '/?min=' + min_overlap
                 $.getJSON(url,
@@ -63,7 +67,7 @@
                 function(result) {
                     if ((result.data != null) && (result.data.length > 0)) {
                         recs = document.getElementById('association_rule_recs')
-                        recs.style.display = 'block'
+
 
                         result.data.forEach(function(element, index, array) {
 
@@ -80,11 +84,12 @@
                                 img = document.createElement('img')
                                 img.setAttribute('src', image_url)
                                 img.setAttribute('class',"img-responsive")
+
                                 a.appendChild(img)
 
                                 rec_div.appendChild(a)
 
-                                recs = document.getElementById('recs')
+
                                 recs.appendChild(rec_div)
 
                             })
@@ -94,6 +99,86 @@
 
                 });
         }
+
+        function get_cb_recs(userid) {
+            url = '/rec/cb/user/' + userid + '/'
+
+            $.getJSON(url,
+                function(result) {
+                    if ((result.data != null) && (result.data.length > 0)) {
+                        recs = document.getElementById('cb_recs')
+
+
+                        result.data.forEach(function(element, index, array) {
+
+                            $.getJSON(get_url(element[1].target), function(mov) {
+                                image_url = 'http://image.tmdb.org/t/p/w500/'
+                                + mov.movie_results[0].poster_path
+
+                                rec_div = document.createElement('div')
+                                rec_div.setAttribute('class', "col-sm-2 img-responsive")
+
+                                a = document.createElement('a')
+                                a.setAttribute('href', '/movies/movie/' + element.id)
+
+                                img = document.createElement('img')
+                                img.setAttribute('src', image_url)
+                                img.setAttribute('class',"img-responsive")
+                                a.appendChild(img)
+
+                                rec_div.appendChild(a)
+
+                                recs.appendChild(rec_div)
+
+                            })
+
+                        });
+                    }
+
+                });
+        }
+
+
+        function get_cf_recs(userid) {
+            url = '/rec/cf/user/' + userid + '/'
+
+            $.getJSON(url,
+                function(result) {
+                    if ((result.data != null) && (result.data.length > 0)) {
+                        recs = document.getElementById('cf_recs')
+
+
+                        result.data.forEach(function(element, index, array) {
+
+                            $.getJSON(get_url(element[0]), function(mov) {
+                                image_url = 'http://image.tmdb.org/t/p/w500/'
+                                + mov.movie_results[0].poster_path
+
+                                rec_div = document.createElement('div')
+                                rec_div.setAttribute('class', "col-sm-2 img-responsive")
+
+                                a = document.createElement('a')
+                                a.setAttribute('href', '/analytics/content/' + element[0])
+
+                                img = document.createElement('img')
+                                img.setAttribute('src', image_url)
+                                img.setAttribute('class',"img-responsive")
+                                img.setAttribute('title', element[1].sim_items)
+                                a.appendChild(img)
+
+                                rec_div.appendChild(a)
+
+
+                                recs.appendChild(rec_div)
+
+                            })
+
+                        });
+                    }
+
+                });
+        }
+
 
     </script>
     <title>User</title>
@@ -140,15 +225,32 @@
   </div>
   </div>
   </div>
+  <h2>Personalised recommendations</h2>
   <div class="row">
-    <div class="col-sm-3">
+    <div class="col-sm-1">
       Association rules:
     </div>
-    <div class="col-sm-9">
-      <div class="association_rule_recs"></div>
+    <div class="col-sm-11">
+      <div id="association_rule_recs"></div>
 
     </div>
 
+  </div>
+  <div class="row">
+    <div class="col-sm-1">
+      Content-based recs:
+    </div>
+    <div class="col-sm-11">
+      <div id="cb_recs"></div>
+    </div>
+  </div>
+    <div class="row">
+    <div class="col-sm-1">
+      Collaborative-based recs:
+    </div>
+    <div class="col-sm-11">
+      <div id="cf_recs"></div>
+    </div>
   </div>
   <div class="row">
       <div class="col-sm-3">
@@ -184,6 +286,8 @@
 </div>
 <script type="text/javascript">
         get_association_rule_recs({{user_id}})
+        get_cb_recs({{user_id}})
+        get_cf_recs({{user_id}})
     </script>
 </body>
 </html>
