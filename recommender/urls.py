@@ -17,4 +17,6 @@ urlpatterns = [
         views.recs_cb, name='recs_cb'),
     url(r'^cf/user/(?P<user_id>\w+)/$',
         views.recs_cf, name='recs_cb'),
+    url(r'^funk/user/(?P<user_id>\w+)/$',
+        views.recs_funksvd, name='recs_funksvd')
 ]

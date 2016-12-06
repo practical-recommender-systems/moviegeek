@@ -183,10 +183,15 @@ def similar_content(request, content_id, num = 6):
 
 
 def recs_funksvd(request, user_id, num = 6):
-    recs = Recs.objects.filter(user_id=user_id)
+    recs = Recs.objects.filter(user='u' + user_id)
 
-    top_num = sorted(recs, key=lambda rec: rec.rating)[: num]
-    return top_num
+    top_num = sorted(recs.values(), key=lambda rec: rec['rating'])
+
+    data = {
+        'user_id': user_id,
+        'data': top_num[:num]
+    }
+    return JsonResponse(data, safe=False)
 
 
 def recs_cb(request, user_id, num = 6):
@@ -226,6 +231,7 @@ def recs_cb(request, user_id, num = 6):
 
     return JsonResponse(data, safe=False)
 
+
 def recs_cf(request, user_id, num = 6):
     active_user_items = Rating.objects.filter(user_id=user_id)
 
@@ -258,8 +264,6 @@ def recs_cf(request, user_id, num = 6):
             'data': sorted_items}
 
     return JsonResponse(data, safe=False)
-
-
 
 
 def get_movie_ids(sorted_sims, corpus, dictionary):
