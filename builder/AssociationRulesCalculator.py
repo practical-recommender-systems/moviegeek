@@ -1,8 +1,20 @@
+import os
+
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "prs_project.settings")
+
+import django
+from django.db.models import Count
+django.setup()
+
+import pandas as pd
+import numpy as np
 from builder import DataHelper
 from collections import defaultdict
 
 from itertools import combinations
 from datetime import datetime
+
+from recommender.models import SeededRecs
 
 
 def build_association_rules():
@@ -118,15 +130,23 @@ def has_support(perm, one_itemsets):
 
 
 def save_rules(rules):
-    conn = DataHelper.connect_to_db()
+
+    #conn = DataHelper.connect_to_db()
 
     for rule in rules:
+        SeededRecs(
+            created=rule[0],
+            source=str(rule[1]),
+            target=str(rule[2]),
+            support=rule[3],
+            confidence=rule[4]
+        ).save()
         sql = """INSERT INTO seeded_recs (created, source, target, support, confidence, type)
              VALUES ('{}', '{}', '{}', {}, {}, 'associate')"""
         print(sql.format(rule[0], rule[1], rule[2], rule[3], rule[4]))
-        conn.cursor().execute(sql.format(rule[0], rule[1], rule[2], rule[3], rule[4]))
-    conn.commit()
-    conn.close()
+        #conn.cursor().execute(sql.format(rule[0], rule[1], rule[2], rule[3], rule[4]))
+    #conn.commit()
+    #conn.close()
 
 
 if __name__ == '__main__':
