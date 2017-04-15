@@ -96,7 +96,8 @@ def main():
                 content_id=selected_film,
                 event=action,
                 session_id=str(user.get_session_id()),
-                created=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                #created=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                created="2017-04-03 12:00:00",
                 visit_count=0)
         l.save()
 

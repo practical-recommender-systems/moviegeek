@@ -1,7 +1,7 @@
 import uuid, random
 import json
 
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from moviegeeks.models import Movie, Genre
@@ -112,6 +112,29 @@ def detail(request, movie_id):
                     'user_id': user_id(request)}
 
     return render(request, 'moviegeek/detail.html', context_dict)
+
+
+def search_for_movie(request):
+
+    search_term = request.GET.get('q', None)
+
+    if search_term is None:
+        return redirect('/movies/')
+
+    mov = Movie.objects.filter(title__startswith=search_term)
+
+    genres = get_genres()
+
+    api_key = get_api_key()
+
+    context_dict = {
+        'genres': genres,
+        'movies': mov.values(),
+        'api_key': api_key,
+    }
+    print(list(mov))
+
+    return render(request, 'moviegeek/search_result.html', context_dict)
 
 
 def dictfetchall(cursor):

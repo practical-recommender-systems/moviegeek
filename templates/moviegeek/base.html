@@ -42,6 +42,17 @@
                 </button>
                 <a class="navbar-brand" href=".">Movie GEEKs</a>
                 <a href="/analytics/user/{{user_id}}/">User: {{ user_id }} </a>
+
+            </div>
+            <!-- Search -->
+            <div class="nav nav-pills pull-right">
+
+                <form class="navbar-form" action="/movies/search/">
+                    <div class="form-group" style="display:inline;">
+                        <input type="text" class="form-control" placeholder="Search" name="q" style="bg-color='gray'" maxlength="40">
+                        <button class="input-group-addon" style="width: 40px"><i class="glyphicon glyphicon-search" title="Search"></i></button>
+                    </div>
+                  </form>
             </div>
         </nav>
         <!-- end of top -->

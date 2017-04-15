@@ -1,3 +1,8 @@
 .DS_Store
 .idea/
 db.sqlite3*
+prs
+venv
+recommender/migrations
+collector/migrations
+.prs

@@ -9,128 +9,9 @@
             $('.movie').on('show.bs.popover', function () {
               var contentid;
               contentid = $(this).attr("id");
-              add_impression({{ user_id }}, 'details', contentid, '{{ session_id }}',
-                                        '{{ csrf_token }}');
+
             });
           });
-
-                function get_cb_recs(userid) {
-            url = '/rec/cb/user/' + userid + '/'
-
-            $.getJSON(url,
-                function(result) {
-                    if ((result.data != null) && (result.data.length > 0)) {
-                        recs = document.getElementById('cb_recs')
-                        recs.style.display = 'block'
-
-                        result.data.forEach(function(element, index, array) {
-
-                            $.getJSON(get_url(element.target), function(mov) {
-                                image_url = 'http://image.tmdb.org/t/p/w500/'
-                                + mov.movie_results[0].poster_path
-
-                                rec_div = document.createElement('div')
-                                rec_div.setAttribute('class', "col-sm-2 img-responsive")
-
-                                a = document.createElement('a')
-                                a.setAttribute('href', '/movies/movie/' + element.id)
-
-                                img = document.createElement('img')
-                                img.setAttribute('src', image_url)
-                                img.setAttribute('class',"img-responsive")
-                                a.appendChild(img)
-
-                                rec_div.appendChild(a)
-
-                                recs.appendChild(rec_div)
-
-                            })
-
-                        });
-                    }
-
-                });
-        }
-
-        function get_cf_recs(userid) {
-            url = '/rec/cf/user/' + userid + '/'
-
-            $.getJSON(url,
-                function(result) {
-                    if ((result.data != null) && (result.data.length > 0)) {
-                        recs = document.getElementById('cf_recs')
-                        recs.style.display = 'block'
-
-                        result.data.forEach(function(element, index, array) {
-
-                            $.getJSON(get_url(element[0]), function(mov) {
-                                image_url = 'http://image.tmdb.org/t/p/w500/'
-                                + mov.movie_results[0].poster_path
-
-                                rec_div = document.createElement('div')
-                                rec_div.setAttribute('class', "col-sm-2 img-responsive")
-
-                                a = document.createElement('a')
-                                a.setAttribute('href', '/movies/movie/' + element[0])
-
-                                img = document.createElement('img')
-                                img.setAttribute('src', image_url)
-                                img.setAttribute('class',"img-responsive")
-                                img.setAttribute('title', element[1].sim_items)
-                                a.appendChild(img)
-
-                                rec_div.appendChild(a)
-
-                                recs.appendChild(rec_div)
-
-                            })
-
-                        });
-
-                    }
-
-                });
-        }
-
-        function get_association_rule_recs(userid) {
-            url = '/rec/ar/' + userid + '/'
-
-            $.getJSON(url,
-                function(result) {
-                    if ((result.data != null) && (result.data.length > 0)) {
-                        recs = document.getElementById('association_rules_recs')
-                        recs.style.display = 'block'
-
-                        result.data.forEach(function(element, index, array) {
-
-                            $.getJSON(get_url(element.id), function(result) {
-                                image_url = 'http://image.tmdb.org/t/p/w500/'
-                                + result.movie_results[0].poster_path
-
-                                rec_div = document.createElement('div')
-                                rec_div.setAttribute('class', "col-sm-2 img-responsive")
-
-                                a = document.createElement('a')
-                                a.setAttribute('href', '/movies/movie/' + element.id)
-
-                                img = document.createElement('img')
-                                img.setAttribute('src', image_url)
-                                img.setAttribute('class',"img-responsive")
-                                a.appendChild(img)
-
-                                rec_div.appendChild(a)
-
-                                recs = document.getElementById('association_rules_recs')
-                                recs.appendChild(rec_div)
-
-                            })
-
-                        });
-                    }
-
-                });
-        }
-
 
         function getinfo(movie_id, title) {
             url = 'https://api.themoviedb.org/3/find/tt' + movie_id + '?external_source=imdb_id&api_key={{ api_key }}'
@@ -168,7 +49,7 @@
 
                             img = document.createElement("img");
                             img.setAttribute('id', movie_id);
-                            img.setAttribute('class', 'movie img-rounded');
+                            img.setAttribute('class', 'movie img-rounded img-responsive');
                             img.setAttribute('src', image_url);
                             img.setAttribute('style','padding: 0px 0px 0px 0px;height: 150px')
                             img.setAttribute('title', title);
@@ -222,20 +103,12 @@
 
 {% block content %}
     <div class="col-xs-8 main max-size">
+        {% if movies|length > 0 %}
         <div id="movies" class="row"></div>
+        {% else %}
+            No movies found
+        {% endif%}
 
-        <div id="association_rules_recs" class="row" style="display: none">
-            <h2>recommended for you</h2>
-
-        </div>
-        <div id="cf_recs" class="row" style="display: none">
-            <h2>Based on what you and others have bought</h2>
-
-        </div>
-         <div id="cb_recs" class="row" style="display: none">
-            <h2>Similar Content</h2>
-
-        </div>
         <div class="row">
         {% if movies.has_other_pages %}
         <ul class="pagination">
@@ -271,8 +144,6 @@
     </div>
     <script type="text/javascript">
         getTopContent();
-        get_association_rule_recs({{user_id}})
-        get_cf_recs({{user_id}})
-        get_cb_recs({{user_id}})
+
     </script>
 {% endblock content %}
