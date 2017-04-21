@@ -8,7 +8,7 @@ django.setup()
 
 import pandas as pd
 import numpy as np
-from builder import DataHelper
+from builder import data_helper
 from collections import defaultdict
 
 from itertools import combinations
@@ -32,8 +32,8 @@ def retrieve_transactions():
          WHERE event = 'buy'
          ORDER BY session_id, content_id
     """
-    cursor = DataHelper.get_query_cursor(sql)
-    data = DataHelper.dictfetchall(cursor)
+    cursor = data_helper.get_query_cursor(sql)
+    data = data_helper.dictfetchall(cursor)
 
     return data
 

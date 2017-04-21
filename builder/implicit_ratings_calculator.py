@@ -13,7 +13,7 @@ import sqlite3
 
 from collector.models import Log
 from analytics.models import Rating
-from builder import DataHelper
+from builder import data_helper
 
 db = './../db.sqlite3'
 w1 = 100
@@ -98,7 +98,7 @@ def calculate_implicit_ratings_w_timedecay(userid, conn):
 
 
 def calculate_implicit_ratings_for_user(userid, conn=connect_to_db()):
-    data = query_aggregated_log_data_for_user(userid, conn=connect_to_db())
+    data = query_aggregated_log_data_for_user(userid, conn=conn)
 
     ratings = dict()
     maxrating = 0
@@ -121,7 +121,7 @@ def calculate_implicit_ratings_for_user(userid, conn=connect_to_db()):
     return ratings
 
 
-def save_ratings(ratings, userid, type, conn=DataHelper.connect_to_db()):
+def save_ratings(ratings, userid, type, conn=data_helper.connect_to_db()):
 
     print("saving ratings for {}".format(userid))
     i = 0
@@ -153,12 +153,12 @@ def calculate_ratings_with_timedecay(conn):
         save_ratings(ratings, userid, 'implicit_w', conn)
 
 
-def calculate_ratings(conn):
+def calculate_ratings(conn=connect_to_db()):
 
     rows = query_log_for_users(conn)
     for user in rows:
         userid = user['user_id']
-        ratings = calculate_implicit_ratings_for_user(userid, conn=connect_to_db())
+        ratings = calculate_implicit_ratings_for_user(userid, conn=conn)
         save_ratings(ratings, userid, 'implicit', conn)
 
 

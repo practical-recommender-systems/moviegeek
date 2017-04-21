@@ -9,7 +9,7 @@ from django.db.models import Avg, Count
 from analytics.models import Rating
 from collector.models import Log
 from recommender.models import SeededRecs, Recs, MovieDescriptions, Similarity
-from builder import DataHelper
+from builder import data_helper
 
 from gensim import models, corpora, similarities
 
@@ -56,8 +56,8 @@ def chart(request, take=10):
             LIMIT {}
             """.format(take)
 
-    c = DataHelper.get_query_cursor(sql)
-    data = DataHelper.dictfetchall(c)
+    c = data_helper.get_query_cursor(sql)
+    data = data_helper.dictfetchall(c)
 
     return JsonResponse(data, safe=False)
 
