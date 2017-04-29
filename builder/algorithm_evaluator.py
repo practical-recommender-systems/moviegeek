@@ -6,7 +6,7 @@ import pandas as pd
 from collections import defaultdict
 from sklearn.model_selection import KFold
 
-from builder.item_similarity_calculator import build
+from builder.item_similarity_calculator import ItemSimilarityMatrixBuilder
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "prs_project.settings")
 
@@ -50,23 +50,6 @@ class PrecissionAtK(object):
         self.K = k
         self.rec = recommender
 
-    def split_ratings_sql(self):
-
-        sql = """select  *,
-           ( select  count(*)
-             from    analytics_rating as rating2
-             where   rating2.rating_timestamp < rating1.rating_timestamp
-             and     rating1.user_id = rating2.user_id
-            ) as rank
-        from    analytics_rating as rating1
-        where    rank < 3"""
-
-        columns = ['user_id', 'movie_id', 'rating', 'type']
-        rating_data = data_helper.get_data_frame(sql, columns)
-
-        print('found {} ratings'.format(rating_data.count()))
-        return rating_data
-
     def calculate(self, ratings):
 
         timestr = time.strftime("%Y%m%d-%H%M%S")
@@ -102,10 +85,11 @@ class PrecissionAtK(object):
                                                              len(relevant_ratings),
                                                              num_hits,
                                                              score))
-            print("")
-            print("MAP: ({}, {}) = {}".format(total_score,
-                                              len(self.all_users),
-                                              total_score / len(self.all_users)))
+        mean_average_precision = total_score / len(self.all_users)
+        print("MAP: ({}, {}) = {}".format(total_score,
+                                          len(self.all_users),
+                                          mean_average_precision))
+        return mean_average_precision
 
     def calculate_old(self):
         timestr = time.strftime("%Y%m%d-%H%M%S")
@@ -182,4 +166,7 @@ if __name__ == '__main__':
     # CFCoverage().calculate_coverage()
 
     print("Calculating Precision at K")
-    PrecissionAtK(5, NeighborhoodBasedRecs()).calculate_old()
+    pak = PrecissionAtK(5, NeighborhoodBasedRecs(),
+                        ItemSimilarityMatrixBuilder())
+
+    pak.calculate_old()
