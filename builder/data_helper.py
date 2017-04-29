@@ -1,5 +1,8 @@
 import os
 import sqlite3
+
+import pandas as pd
+
 from prs_project.settings import BASE_DIR
 
 db = os.path.join(BASE_DIR, 'db.sqlite3')
@@ -16,6 +19,13 @@ def get_query_cursor(sql):
     c = conn.cursor()
 
     return c.execute(sql)
+
+
+def get_data_frame(sql, columns):
+    conn = connect_to_sqllite()
+    #pd.DataFrame.from_records(ratings_data, columns=columns)
+    return pd.read_sql_query(sql, conn)
+    #return pd.read_sql(sql, conn, columns)
 
 
 def execute_many(sql, items):

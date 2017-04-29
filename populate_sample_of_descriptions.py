@@ -9,16 +9,21 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'prs_project.settings')
 django.setup()
 
 from recommender.models import MovieDescriptions
+NUMBER_OF_PAGES = 1000
+start_date = "2016-01-01"
+end_date = "2017-04-22"
 
 
 def get_descriptions():
-    url = """https://api.themoviedb.org/3/discover/movie?primary_release_date.gte=2016-01-01&primary_release_date.lte=2016-10-22&api_key={}&page={}"""
+    url = """https://api.themoviedb.org/3/discover/movie?primary_release_date.gte={}&primary_release_date.lte={}&api_key={}&page={}"""
     api_key = get_api_key()
 
-    MovieDescriptions.objects.all().delete()
+    #MovieDescriptions.objects.all().delete()
 
-    for page in range(1, 20):
-        r = requests.get(url.format(api_key, page))
+    for page in range(173, NUMBER_OF_PAGES):
+        formated_url = url.format(start_date, end_date, api_key, page)
+        print(formated_url)
+        r = requests.get(formated_url)
         for film in r.json()['results']:
             id = film['id']
             md = MovieDescriptions.objects.get_or_create(movie_id=id)[0]
@@ -32,14 +37,16 @@ def get_descriptions():
 
         print("{}: {}".format(page, r.json()))
 
+
 def save_as_csv():
-    url = """https://api.themoviedb.org/3/discover/movie?primary_release_date.gte=2016-01-01&primary_release_date.lte=2016-10-22&api_key={}&page={}"""
+    url = """https://api.themoviedb.org/3/discover/movie?primary_release_date.gte=2016-01-01
+    &primary_release_date.lte=2016-10-22&api_key={}&page={}"""
     api_key = get_api_key()
 
     file = open('data.json','w')
 
     films = []
-    for page in range(1, 100):
+    for page in range(1, NUMBER_OF_PAGES):
         r = requests.get(url.format(api_key, page))
         for film in r.json()['results']:
             f = dict()
@@ -61,8 +68,17 @@ def get_imdb_id(moviedb_id):
     url = """https://api.themoviedb.org/3/movie/{}?api_key={}"""
 
     r = requests.get(url.format(moviedb_id, get_api_key()))
-    imdb_id = r.json()['imdb_id']
-    return imdb_id[2:] if imdb_id is not None else ''
+
+    json = r.json()
+    print(json)
+    if 'imdb_id' not in json:
+        return ''
+    imdb_id = json['imdb_id']
+    if imdb_id is not None:
+        print(imdb_id)
+        return imdb_id[2:]
+    else:
+        return ''
 
 
 def get_api_key():

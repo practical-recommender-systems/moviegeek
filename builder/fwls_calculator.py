@@ -10,8 +10,8 @@ django.setup()
 import pandas as pd
 import numpy as np
 
-from recs.contentbasedrecs import ContentBasedRecs
-from recs.neighborhoodbasedrecs import NeighborhoodBasedRecs
+from recs.content_based_recommender import ContentBasedRecs
+from recs.neighborhood_based_recommender import NeighborhoodBasedRecs
 from analytics.models import Rating
 
 import numpy as np
@@ -21,6 +21,7 @@ import statsmodels.formula.api as sm
 
 
 class FWLSCalculator(object):
+
     def __init__(self):
         self.train = None
         self.test = None
@@ -47,21 +48,21 @@ class FWLSCalculator(object):
 
     def calculate_predictions_for_training_data(self):
         self.train['cb'] = self.train.apply(lambda data:
-                                            self.cb.predict_score(data['user_id'], data['movie_id']))
+                                            self.cb.predict_score(data['user_id'], data['movie_id']), axis=1)
         self.train['cf'] = self.train.apply(lambda data:
-                                            self.cf.predict_score(data['user_id'], data['movie_id']))
+                                            self.cf.predict_score(data['user_id'], data['movie_id']), axis = 1)
         return None
 
     def calculate_feature_functions_for_training_data(self):
         self.train['cb1'] = self.train.apply(lambda data:
                                              data.cb * self.func1())
         self.train['cb2'] = self.train.apply(lambda data:
-                                             data.cb * self.func2(data['user_id']))
+                                             data.cb * self.func2(data['user_id']), axis = 1)
 
         self.train['cf1'] = self.train.apply(lambda data:
                                              data.cf * self.func1())
         self.train['cf2'] = self.train.apply(lambda data:
-                                             data.cf * self.func2(data['user_id']))
+                                             data.cf * self.func2(data['user_id']), axis = 1)
 
         return None
 
@@ -73,10 +74,14 @@ class FWLSCalculator(object):
 if __name__ == '__main__':
     print("Calculating Feature Weighted Linear Stacking...")
 
+    if not os.path.exists("./../lda/model.lda"):
+        print("lda model should be done first. please run the lda_model_calculator.py script")
+        exit()
+
     fwls = FWLSCalculator()
-    fwls.get_training_data()
+    fwls.get_real_training_data()
     print(fwls.train)
-    print(fwls.fun2('1'))
+
     fwls.calculate_predictions_for_training_data()
     fwls.calculate_feature_functions_for_training_data()
     fwls.train()

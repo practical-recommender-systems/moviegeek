@@ -50,6 +50,8 @@ def load_data():
     docs = list(MovieDescriptions.objects.all())
     data = ["{}, {}, {}".format(d.title, d.genres, d.description) for d in docs]
 
+    if len(data) == 0:
+        print("No descriptions were found, run populate_sample_of_descriptions")
     return data, docs
 
 
@@ -59,6 +61,9 @@ class LdaModel(object):
 
         NUM_TOPICS = 50
         n_products = len(data)
+        self.lda_path = './../lda/'
+        if not os.path.exists(self.lda_path):
+            os.makedirs(self.lda_path)
 
         dictionary, texts, lda_model = self.build_lda_model(data, docs, NUM_TOPICS)
 
@@ -95,7 +100,8 @@ class LdaModel(object):
 
 
         index = similarities.MatrixSimilarity(corpus)
-        index.save('./../lda/index.lda')
+
+        index.save(self.lda_path + 'index.lda')
         for i in range(len(texts)):
             docs[i].lda_vector = i
             docs[i].save()
@@ -107,10 +113,10 @@ class LdaModel(object):
     def save_lda_model(self, lda_model, corpus, dictionary):
         pyLDAvis.save_json(pyLDAvis.gensim.prepare(lda_model, corpus, dictionary), './../static/js/lda.json')
         print(lda_model.print_topics())
-        lda_model.save('./../lda/model.lda')
+        lda_model.save(self.lda_path + 'model.lda')
 
-        dictionary.save('./../lda/dict.lda')
-        corpora.MmCorpus.serialize('./../lda/corpus.mm', corpus)
+        dictionary.save(self.lda_path + 'dict.lda')
+        corpora.MmCorpus.serialize(self.lda_path + 'corpus.mm', corpus)
 
     def remove_stopwords(self, tokenized_data):
         en_stop = get_stop_words('en')

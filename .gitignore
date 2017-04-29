@@ -6,3 +6,4 @@ venv
 recommender/migrations
 collector/migrations
 .prs
+cluster.png

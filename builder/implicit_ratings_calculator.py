@@ -167,8 +167,7 @@ if __name__ == '__main__':
 
     Rating.objects.filter(type='implicit').delete()
 
-    #conn = connect_to_db()
-    conn = []
+    conn = connect_to_db()
     # c = conn.cursor()
     #
     # for tables in c.execute("select name from sqlite_master where type = 'table';"):
