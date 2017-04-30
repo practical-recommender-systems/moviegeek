@@ -4,9 +4,6 @@ import random
 import pandas as pd
 
 class BayesianPersonalizationRanking(object):
-    def __init__(self, data):
-
-
 
     def build(self, data, num_iterations):
 
