@@ -67,12 +67,12 @@ class PrecissionAtK(object):
 
             for user_id in user_ids:
                 num_user += 1
-                ratings_for_recommender = train_ratings[train_ratings.user_id == user_id]
-                dicts_for_recommender = ratings_for_recommender.to_dict(orient='records')
+                ratings_for_rec = train_ratings[train_ratings.user_id == user_id][:20]
+                dicts_for_rec = ratings_for_rec.to_dict(orient='records')
 
                 relevant_ratings = list(test_ratings[(test_ratings['user_id'] == user_id)]['movie_id'])
                 recs = list(self.rec.recommend_items_by_ratings(user_id,
-                                                                dicts_for_recommender,
+                                                                dicts_for_rec,
                                                                 self.K))
                 num_hits = 0
                 score = 0

@@ -95,8 +95,7 @@ class MatrixFactorization(object):
                     i = 'i' + str(user_rating.movie_id)
                     rating = user_rating.rating
 
-                    err = float(rating) - self.predict(u, i)
-                    current_err += math.pow(err, 2)
+                    current_err, err = self.loss(current_err, i, rating, u)
 
                     self.user_bias[u] += lr * (err - r * self.user_bias[u])
                     self.item_bias[i] += lr * (err - r * self.item_bias[i])
@@ -114,6 +113,14 @@ class MatrixFactorization(object):
 
         #save
         self.save()
+
+    def loss(self, current_err, i, rating, u):
+
+        # todo: add regularization
+        err = float(rating) - self.predict(u, i)
+        current_err += math.pow(err, 2)
+
+        return current_err, err
 
     def finished(self, iterations, last_err, current_err):
 

@@ -18,8 +18,8 @@ from analytics.models import Rating
 
 class ItemSimilarityMatrixBuilder(object):
 
-    def __init__(self, min_overlap = 10):
-        self.min_overlap =  min_overlap
+    def __init__(self, min_overlap=5):
+        self.min_overlap = min_overlap
 
     def save_cf(self, df, created=datetime.datetime.now()):
         print("Save item-item model")

@@ -37,7 +37,7 @@ class EvaluationRunner(object):
         print('reduced dataset from {} to {}'.format(original_size, new_size))
         return ratings
 
-    def calculate(self, min_rank=5):
+    def calculate(self, min_rank=10):
 
         ratings_rows = Rating.objects.all().values()
         all_ratings = pd.DataFrame.from_records(ratings_rows)
@@ -63,7 +63,7 @@ class EvaluationRunner(object):
                                                     users[test],
                                                     users[train])
 
-            print("Test run with fold, having {} training rows, and {} test rows".format(len(train_data), len(test_data)))
+            print("Test run having {} training rows, and {} test rows".format(len(train_data), len(test_data)))
             self.builder.build(train_data)
             print("Build is finished")
 
