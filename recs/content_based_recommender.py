@@ -14,6 +14,10 @@ class ContentBasedRecs(base_recommender):
 
         ratings = Rating.objects.filter(user_id=user_id)
 
+        self.recommend_items_from_items(ratings, num)
+
+    def recommend_items_from_items(self, ratings, num=6):
+
         lda = models.ldamodel.LdaModel.load(self.lda_path + 'model.lda')
 
         dictionary = corpora.Dictionary.load(self.lda_path + 'dict.lda')

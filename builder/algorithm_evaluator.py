@@ -50,27 +50,30 @@ class PrecissionAtK(object):
         self.K = k
         self.rec = recommender
 
-    def calculate(self, ratings):
+    def calculate(self, train_ratings, test_ratings):
 
         timestr = time.strftime("%Y%m%d-%H%M%S")
         file_name = '{}-evaluation_data.csv'.format(timestr)
 
-        print('start evaluation with {} ratings'.format(ratings.shape[0]))
+        print('start evaluation with {} ratings'.format(test_ratings.shape[0]))
         total_score = 0
         num_user = 0
 
         with open(file_name, 'a') as the_file:
 
             # use test users.
-            user_ids = ratings['user_id'].unique()
+            user_ids = test_ratings['user_id'].unique()
             print('evaluating based on {} users'.format(len(user_ids)))
 
             for user_id in user_ids:
                 num_user += 1
+                ratings_for_recommender = train_ratings[train_ratings.user_id == user_id]
+                dicts_for_recommender = ratings_for_recommender.to_dict(orient='records')
 
-                relevant_ratings = list(ratings[(ratings['user_id'] == user_id) &
-                                                (ratings['rating'] > 5.0)]['movie_id'])
-                recs = list(self.rec.recommend_items(user_id, self.K))
+                relevant_ratings = list(test_ratings[(test_ratings['user_id'] == user_id)]['movie_id'])
+                recs = list(self.rec.recommend_items_by_ratings(user_id,
+                                                                dicts_for_recommender,
+                                                                self.K))
                 num_hits = 0
                 score = 0
 
@@ -85,7 +88,7 @@ class PrecissionAtK(object):
                                                              len(relevant_ratings),
                                                              num_hits,
                                                              score))
-        mean_average_precision = total_score / len(self.all_users)
+        mean_average_precision = total_score / len(user_ids)
         print("MAP: ({}, {}) = {}".format(total_score,
                                           len(self.all_users),
                                           mean_average_precision))

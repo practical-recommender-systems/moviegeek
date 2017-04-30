@@ -17,6 +17,10 @@ from analytics.models import Rating
 
 
 class ItemSimilarityMatrixBuilder(object):
+
+    def __init__(self, min_overlap = 10):
+        self.min_overlap =  min_overlap
+
     def save_cf(self, df, created=datetime.datetime.now()):
         print("Save item-item model")
 
@@ -54,7 +58,7 @@ class ItemSimilarityMatrixBuilder(object):
         rp = ratings.pivot_table(index=['movie_id'], columns=['user_id'], values='avg')
         print("rating matrix finished")
 
-        cor = rp.transpose().corr(method='pearson', min_periods=10)
+        cor = rp.transpose().corr(method='pearson', min_periods=self.min_overlap)
 
         # todo: implement cosine_similarity
         # cor = cosine_similarity(rp.trainspose())

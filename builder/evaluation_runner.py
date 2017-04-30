@@ -27,7 +27,7 @@ class EvaluationRunner(object):
         self.builder = builder
         self.recommender = recommender
 
-    def clean_data(self, ratings, min_ratings=10):
+    def clean_data(self, ratings, min_ratings=5):
         original_size = ratings.shape[0]
         user_count = ratings[['user_id', 'movie_id']].groupby('user_id').count()
         user_count = user_count.reset_index()
@@ -42,7 +42,12 @@ class EvaluationRunner(object):
         ratings_rows = Rating.objects.all().values()
         all_ratings = pd.DataFrame.from_records(ratings_rows)
 
-        ratings = self.clean_data(all_ratings)
+        return self.calculate_using_ratings(all_ratings, min_rank)
+
+    def calculate_using_ratings(self, all_ratings, min_rank=5):
+
+
+        ratings = self.clean_data(all_ratings, min_rank)
 
         users = ratings.user_id.unique()
         kf = self.split_users()
@@ -55,14 +60,14 @@ class EvaluationRunner(object):
 
             test_data, train_data = self.split_data(min_rank,
                                                     ratings,
-                                                    test,
-                                                    train)
+                                                    users[test],
+                                                    users[train])
 
             print("Test run with fold, having {} training rows, and {} test rows".format(len(train_data), len(test_data)))
             self.builder.build(train_data)
             print("Build is finished")
 
-            result = PrecissionAtK(5, self.recommender).calculate(test_data)
+            result = PrecissionAtK(10, self.recommender).calculate(train_data, test_data)
             results.append(result)
 
         print(results)
@@ -101,5 +106,35 @@ class EvaluationRunner(object):
         return rating_data
 
 if __name__ == '__main__':
-    er = EvaluationRunner(5, ItemSimilarityMatrixBuilder(), NeighborhoodBasedRecs())
-    er.calculate()
+    TEST = False
+
+    if TEST:
+        er = EvaluationRunner(5, ItemSimilarityMatrixBuilder(2), NeighborhoodBasedRecs())
+        ratings = pd.DataFrame(
+            [[1, '11', 5, '2013-10-12 23:20:27+00:00'],
+             [1, '12', 3, '2014-10-12 23:20:27+00:00'],
+             [1, '14', 2, '2015-10-12 23:20:27+00:00'],
+             [2, '11', 4, '2013-10-12 23:20:27+00:00'],
+             [2, '12', 3, '2014-10-12 23:20:27+00:00'],
+             [2, '13', 4, '2015-10-12 23:20:27+00:00'],
+             [3, '11', 5, '2013-10-12 23:20:27+00:00'],
+             [3, '12', 2, '2014-10-12 23:20:27+00:00'],
+             [3, '13', 5, '2015-10-12 23:20:27+00:00'],
+             [3, '14', 2, '2016-10-12 23:20:27+00:00'],
+             [4, '11', 3, '2013-10-12 23:20:27+00:00'],
+             [4, '12', 5, '2014-10-12 23:20:27+00:00'],
+             [4, '13', 3, '2015-10-12 23:20:27+00:00'],
+             [5, '11', 3, '2013-10-12 23:20:27+00:00'],
+             [5, '12', 3, '2014-10-12 23:20:27+00:00'],
+             [5, '13', 3, '2015-10-12 23:20:27+00:00'],
+             [5, '14', 2, '2016-10-12 23:20:27+00:00'],
+             [6, '11', 2, '2013-10-12 23:20:27+00:00'],
+             [6, '12', 3, '2014-10-12 23:20:27+00:00'],
+             [6, '13', 2, '2015-10-12 23:20:27+00:00'],
+             [6, '14', 3, '2016-10-12 23:20:27+00:00'],
+             ], columns=['user_id', 'movie_id', 'rating', 'rating_timestamp'])
+
+        er.calculate_using_ratings(ratings, 2)
+    else:
+        er = EvaluationRunner(5, ItemSimilarityMatrixBuilder(), NeighborhoodBasedRecs())
+        er.calculate()

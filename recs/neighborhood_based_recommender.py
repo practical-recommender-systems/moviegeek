@@ -10,7 +10,11 @@ class NeighborhoodBasedRecs(base_recommender):
 
         active_user_items = Rating.objects.filter(user_id=user_id).order_by('-rating')[:100]
 
-        movie_ids = {movie.movie_id: movie.rating for movie in active_user_items}
+        return self.recommen_items_by_ratings(active_user_items)
+
+    def recommend_items_by_ratings(self, user_id, active_user_items, num=6):
+
+        movie_ids = {movie['movie_id']: movie['rating'] for movie in active_user_items}
 
         candidate_items = Similarity.objects.filter(source__in=movie_ids.keys(), similarity__gte=0.5)
         candidate_items = candidate_items.distinct().order_by('-similarity')[:100]
