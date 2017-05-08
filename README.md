@@ -56,8 +56,15 @@ described in the Django docs [here](https://docs.djangoproject.com/en/1.10/ref/d
 (WARNING: If you are using python >3.6 on a Mac then you need to run 
 "/Applications/Python\ 3.6/Install\ Certificates.command". More details [here](https://bugs.python.org/issue28150))
 ```bash
-> python populate_moviegeek.py`
+> python populate_moviegeek.py
 ```
+
+### Create a themoviedb.org id
+* go to [https://www.themoviedb.org/account/signup](https://www.themoviedb.org/account/signup) and create an api_key
+* create a file in the root of the directory called "`.prs`" and add 
+`{ "themoviedb_apikey": <INSERT YOUR APIKEY HERE>}`.
+(remember to remove the "<" and ">")
+
 ### Start the web server
  To start the development server run:
 ```bash
@@ -66,12 +73,6 @@ described in the Django docs [here](https://docs.djangoproject.com/en/1.10/ref/d
 Running the server like this, will make the website available 
 [http://127.0.0.1:8000](http://127.0.0.1:8000) other applications also use this port
 so you might need to try out 8001 instead. 
-
-### Create a themoviedb.org id
-* go to [https://www.themoviedb.org/account/signup](https://www.themoviedb.org/account/signup) and create an api_key
-* create a file in the root of the directory called "`.prs`" and add 
-`{ "themoviedb_apikey": <INSERT YOUR APIKEY HERE>}`.
-(remember to remove the "<" and ">")
 
 ### Closing down.
 * when you are finished running the project you can exit the virtual env:
