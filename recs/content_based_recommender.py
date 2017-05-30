@@ -1,3 +1,4 @@
+import os
 from recs.base_recommender import base_recommender
 from analytics.models import Rating
 from recommender.models import MovieDescriptions
@@ -8,15 +9,16 @@ from gensim import models, corpora, similarities, matutils
 class ContentBasedRecs(base_recommender):
 
     def __init__(self):
-        self.lda_path = './../lda/'
+        self.lda_path = './lda/'
 
     def recommend_items(self, user_id, num=6):
 
         ratings = Rating.objects.filter(user_id=user_id)
+        movie_ids = Rating.objects.filter(user_id=user_id).values_list('movie_id', flat=True).distinct()
 
-        self.recommend_items_from_items(ratings, num)
+        return self.recommend_items_from_items(movie_ids, num)
 
-    def recommend_items_from_items(self, ratings, num=6):
+    def recommend_items_from_items(self, movie_ids, num=6):
 
         lda = models.ldamodel.LdaModel.load(self.lda_path + 'model.lda')
 
@@ -25,11 +27,11 @@ class ContentBasedRecs(base_recommender):
         corpus = corpora.MmCorpus(self.lda_path + 'corpus.mm')
 
         content_sims = dict()
-        for rating in ratings:
+        for movie_id in movie_ids:
 
-            md = MovieDescriptions.objects.filter(imdb_id=rating.movie_id).first()
+            md = MovieDescriptions.objects.filter(imdb_id=movie_id).first()
             if md is not None:
-                index = similarities.MatrixSimilarity.load(lda_path + 'index.lda')
+                index = similarities.MatrixSimilarity.load(self.lda_path + 'index.lda')
 
                 lda_vector = lda[corpus[int(md.lda_vector)]]
                 sims = index[lda_vector]
@@ -43,6 +45,7 @@ class ContentBasedRecs(base_recommender):
                             content_sims[target] = movie
                     else:
                         content_sims[target] = movie
+        return sorted(content_sims.values(), key=lambda item: -float(item['sim']))[:num]
 
     def predict_score(self, user_id, item_id):
 
@@ -84,4 +87,5 @@ def get_movie_ids(sorted_sims, corpus, dictionary):
 
     return [{"target": movies[i].imdb_id,
              "title": movies[i].title,
-             "sim": str(sorted_sims[i][1])} for i in range(len(movies))]
+             "sim": str(sorted_sims[i][1])} for i in range(len(movies))
+            if movies[i].imdb_id is not '']
