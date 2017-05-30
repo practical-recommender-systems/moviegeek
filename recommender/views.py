@@ -3,6 +3,8 @@ from math import sqrt
 
 import numpy as np
 import operator
+import os
+
 from django.http import JsonResponse
 from django.db.models import Avg, Count
 
@@ -12,6 +14,8 @@ from recommender.models import SeededRecs, Recs, MovieDescriptions, Similarity
 from builder import data_helper
 
 from gensim import models, corpora, similarities
+
+from recs.content_based_recommender import ContentBasedRecs
 
 
 def get_association_rules_for(request, content_id, take=6):
@@ -23,13 +27,10 @@ def get_association_rules_for(request, content_id, take=6):
 
 
 def recs_using_association_rules(request, user_id, take=6):
-    events = Log.objects.filter(user_id=user_id) \
-                 .order_by('created') \
-                 .values('content_id')[:20]
+    events = Log.objects.filter(user_id=user_id).order_by('created').values_list('content_id', flat=True).distinct()
 
-    seeds = set([event['content_id'] for event in events])
+    seeds = set(events[:20])
 
-    print(seeds)
 
     rules = SeededRecs.objects.filter(source__in=seeds) \
         .exclude(target__in=seeds) \
@@ -40,6 +41,7 @@ def recs_using_association_rules(request, user_id, take=6):
     recs = [{'id': '{0:07d}'.format(int(rule['target'])),
              'confidence': rule['confidence']} for rule in rules]
 
+    print("recs from association rules: \n{}".format(recs[:take]))
     return JsonResponse(dict(data=list(recs[:take])))
 
 
@@ -143,44 +145,53 @@ def similar_users(request, user_id, type):
 
 
 def similar_content(request, content_id, num = 6):
-    lda = models.ldamodel.LdaModel.load('./lda/model.lda')
+    # lda = models.ldamodel.LdaModel.load('./lda/model.lda')
+    #
+    # dictionary = corpora.Dictionary.load('./lda/dict.lda')
+    #
+    # corpus = corpora.MmCorpus('./lda/corpus.mm')
+    # content_sims = dict()
+    #
+    # md = MovieDescriptions.objects.filter(imdb_id=content_id).first()
+    #
+    #
+    # if md is not None:
+    #     index = similarities.MatrixSimilarity.load('./lda/index.lda')
+    #
+    #     lda_vector = lda[corpus[int(md.lda_vector)]]
+    #     sims = index[lda_vector]
+    #
+    #     sorted_sims = sorted(enumerate(sims), key=lambda item: -item[1])[:num]
+    #
+    #     movies = get_movie_ids(sorted_sims, corpus, dictionary)
+    #
+    #     for movie in movies:
+    #         target = movie['target']
+    #         if target in content_sims.keys():
+    #             if movie['sim'] > content_sims[target]['sim']:
+    #                 content_sims[target] = movie
+    #         else:
+    #             content_sims[target] = movie
 
-    dictionary = corpora.Dictionary.load('./lda/dict.lda')
-
-    corpus = corpora.MmCorpus('./lda/corpus.mm')
-    content_sims = dict()
-
-    md = MovieDescriptions.objects.filter(imdb_id=content_id).first()
-
-
-    if md is not None:
-        index = similarities.MatrixSimilarity.load('./lda/index.lda')
-
-        lda_vector = lda[corpus[int(md.lda_vector)]]
-        sims = index[lda_vector]
-
-        sorted_sims = sorted(enumerate(sims), key=lambda item: -item[1])[:num]
-
-        movies = get_movie_ids(sorted_sims, corpus, dictionary)
-
-        for movie in movies:
-            target = movie['target']
-            if target in content_sims.keys():
-                if movie['sim'] > content_sims[target]['sim']:
-                    content_sims[target] = movie
-            else:
-                content_sims[target] = movie
-
-        sorted_items = sorted(content_sims.values(), key=lambda item: -float(item['sim']))[:num]
-
+        sorted_items = ContentBasedRecs().recommend_items_from_items([content_id], num)
         data = {
-            'source_title': md.title,
-            'source_id': md.imdb_id,
+            'source_id': content_id,
             'data': sorted_items
         }
 
         return JsonResponse(data, safe=False)
 
+
+def recs_cb(request, user_id, num = 6):
+
+    sorted_items = ContentBasedRecs().recommend_items(user_id, num)
+
+    data = {
+        'user_id': user_id,
+        'data': sorted_items
+    }
+
+    return JsonResponse(data, safe=False)
 
 def recs_funksvd(request, user_id, num = 6):
     recs = Recs.objects.filter(user='u' + user_id)
@@ -192,45 +203,6 @@ def recs_funksvd(request, user_id, num = 6):
         'data': top_num[:num]
     }
     return JsonResponse(data, safe=False)
-
-
-def recs_cb(request, user_id, num = 6):
-    ratings = Rating.objects.filter(user_id=user_id)
-
-    lda = models.ldamodel.LdaModel.load('./lda/model.lda')
-
-    dictionary = corpora.Dictionary.load('./lda/dict.lda')
-
-    corpus = corpora.MmCorpus('./lda/corpus.mm')
-
-    content_sims = dict()
-    for rating in ratings:
-        md = MovieDescriptions.objects.filter(imdb_id=rating.movie_id).first()
-        if md is not None:
-            index = similarities.MatrixSimilarity.load('./lda/index.lda')
-
-            lda_vector = lda[corpus[int(md.lda_vector)]]
-            sims = index[lda_vector]
-            sorted_sims = sorted(enumerate(sims), key=lambda item: -item[1])[:num]
-            movies = get_movie_ids(sorted_sims, corpus, dictionary)
-
-            for movie in movies:
-                target = movie['target']
-                if target in content_sims.keys():
-                    if movie['sim'] > content_sims[target]['sim']:
-                        content_sims[target] = movie
-                else:
-                    content_sims[target] = movie
-
-    sorted_items = sorted(content_sims.values(), key=lambda item: -float(item['sim']))[:num]
-
-    data = {
-        'user_id': user_id,
-        'data': sorted_items
-    }
-
-    return JsonResponse(data, safe=False)
-
 
 def recs_cf(request, user_id, num = 6):
     active_user_items = Rating.objects.filter(user_id=user_id)
@@ -259,7 +231,7 @@ def recs_cf(request, user_id, num = 6):
                             'sim_items': [r.source for r in rated_items]}
 
     sorted_items = sorted(recs.items(), key=lambda item: -float(item[1]['prediction']))[:num]
-
+    print('Collaborative filtering recommendations for user {} \n {}'.format(user_id, sorted_items))
     data = {'user_id': user_id,
             'data': sorted_items}
 
