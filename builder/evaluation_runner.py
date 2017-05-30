@@ -28,32 +28,36 @@ class EvaluationRunner(object):
         self.recommender = recommender
 
     def clean_data(self, ratings, min_ratings=5):
+        print("cleaning data only to contain users with atleast {} ratings".format(min_ratings))
+
         original_size = ratings.shape[0]
+
         user_count = ratings[['user_id', 'movie_id']].groupby('user_id').count()
         user_count = user_count.reset_index()
-        user_ids = user_count[user_count['movie_id'] > min_ratings]['user_id']
+        user_ids = user_count[user_count['movie_id'] > min_ratings]['user_id'][:1000]
+
         ratings = ratings[ratings['user_id'].isin(user_ids)]
         new_size = ratings.shape[0]
         print('reduced dataset from {} to {}'.format(original_size, new_size))
         return ratings
 
-    def calculate(self, min_rank=10):
+    def calculate(self, min_number_of_ratings=5, min_rank=10):
 
         ratings_rows = Rating.objects.all().values()
         all_ratings = pd.DataFrame.from_records(ratings_rows)
 
-        return self.calculate_using_ratings(all_ratings, min_rank)
+        return self.calculate_using_ratings(all_ratings, min_number_of_ratings, min_rank)
 
-    def calculate_using_ratings(self, all_ratings, min_rank=5):
+    def calculate_using_ratings(self, all_ratings, min_number_of_ratings=5, min_rank=5):
 
-
-        ratings = self.clean_data(all_ratings, min_rank)
+        ratings = self.clean_data(all_ratings, min_number_of_ratings)
 
         users = ratings.user_id.unique()
         kf = self.split_users()
 
         validation_no = 0
         results = []
+
         for train, test in kf.split(users):
             print('starting validation no {}'.format(validation_no))
             validation_no += 1
@@ -71,6 +75,7 @@ class EvaluationRunner(object):
             results.append(result)
 
         print(results)
+        return results
 
     def split_users(self):
         kf = KFold(n_splits=self.folds)
@@ -81,7 +86,7 @@ class EvaluationRunner(object):
         test_temp = ratings[ratings['user_id'].isin(test_users)]
 
         test_temp['rank'] = test_temp.groupby('user_id')['rating_timestamp'].rank(ascending=False)
-        test = test_temp[test_temp['rank'] < min_rank]
+        test = test_temp[test_temp['rank'] > min_rank]
 
         additional_training_data = test_temp[test_temp['rank'] >= min_rank]
         train = train.append(additional_training_data)
@@ -134,7 +139,8 @@ if __name__ == '__main__':
              [6, '14', 3, '2016-10-12 23:20:27+00:00'],
              ], columns=['user_id', 'movie_id', 'rating', 'rating_timestamp'])
 
-        er.calculate_using_ratings(ratings, 2)
+        result = er.calculate_using_ratings(ratings, min_number_of_ratings=2, min_rank=2)
+        print(result)
     else:
         er = EvaluationRunner(5, ItemSimilarityMatrixBuilder(), NeighborhoodBasedRecs())
-        er.calculate()
+        er.calculate(min_number_of_ratings=30, min_rank=15)
