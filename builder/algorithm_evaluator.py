@@ -56,7 +56,7 @@ class PrecissionAtK(object):
         file_name = '{}-evaluation_data.csv'.format(timestr)
 
         print('start evaluation with {} ratings'.format(test_ratings.shape[0]))
-        total_score = 0
+        total_score = 0.0
         num_user = 0
 
         with open(file_name, 'a') as the_file:
@@ -75,7 +75,7 @@ class PrecissionAtK(object):
                                                                 dicts_for_rec,
                                                                 self.K))
                 num_hits = 0
-                score = 0
+                score = 0.0
 
                 for i, p in enumerate(recs):
                     if p[0] in relevant_ratings and p not in recs[:i]:
@@ -90,50 +90,9 @@ class PrecissionAtK(object):
                                                              score))
         mean_average_precision = total_score / len(user_ids)
         print("MAP: ({}, {}) = {}".format(total_score,
-                                          len(self.all_users),
+                                          len(user_ids),
                                           mean_average_precision))
         return mean_average_precision
-
-    def calculate_old(self):
-        timestr = time.strftime("%Y%m%d-%H%M%S")
-        file_name = '{}-evaluation_data.csv'.format(timestr)
-        # rating_data = self.split_ratings_django()
-        print('build similarity matrix')
-        # build(rating_data)
-        print('start evaluation with {} users'.format(len(self.all_users)))
-        total_score = 0
-        num_user = 0
-
-        with open(file_name, 'a') as the_file:
-
-            # use test users.
-            for user in self.all_users:
-                num_user += 1
-                user_id = str(user['user_id'])
-                actual = list(Rating.objects.filter(user_id=user_id))
-                relevant_ratings = [r.movie_id for r in actual if self.relevant(r)]
-                recset = list(self.rec.recommend_items(user_id, self.K))
-
-                num_hits = 0
-                score = 0
-
-                for i, p in enumerate(recset):
-                    if p[0] in relevant_ratings and p not in recset[:i]:
-                        num_hits += 1.0
-                        score += num_hits / (i + 1.0)
-                        the_file.write("{}, {}, {}, {}, {}\n".format(user_id,
-                                                                     len(recset),
-                                                                     len(relevant_ratings),
-                                                                     num_hits,
-                                                                     score))
-                total_score += score
-                if num_user % 1000 == 0:
-                    print(num_user)
-            print("")
-            print("MAP: ({}, {}) = {}".format(total_score,
-                                              len(self.all_users),
-                                              total_score / len(self.all_users)))
-
 
 class CFCoverage(object):
     def __init__(self):
