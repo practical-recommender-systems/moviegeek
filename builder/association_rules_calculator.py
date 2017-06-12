@@ -42,13 +42,12 @@ def generate_transactions(data):
     transactions = dict()
 
     for transaction_item in data:
-        transaction_id = transaction_item["sessionId"]
+        transaction_id = transaction_item["session_id"]
         if transaction_id not in transactions:
             transactions[transaction_id] = []
         transactions[transaction_id].append(transaction_item["content_id"])
 
     return transactions
-
 
 def calculate_support_confidence(transactions, min_sup=0.01):
 
@@ -81,6 +80,7 @@ def calculate_itemsets_one(transactions, min_sup=0.01):
 
     return one_itemsets
 
+
 def calculate_itemsets_two(transactions, one_itemsets, min_sup=0.01):
     two_itemsets = defaultdict(int)
 
@@ -110,18 +110,6 @@ def calculate_association_rules(one_itemsets, two_itemsets, N):
                 rules.append((timestamp, next(iter(source)), next(iter(target)),
                               confidence, support))
     return rules
-
-
-def generate_transactions(data):
-    transactions = dict()
-
-    for transaction_item in data:
-        transaction_id = transaction_item["session_id"]
-        if transaction_id not in transactions:
-            transactions[transaction_id] = []
-        transactions[transaction_id].append(transaction_item["content_id"])
-
-    return transactions
 
 
 def has_support(perm, one_itemsets):
