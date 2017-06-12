@@ -65,27 +65,28 @@ def chart(request, take=10):
 
 
 def pearson(users, this_user, that_user):
+
     if this_user in users and that_user in users:
-        this_user_avg = sum(users[this_user].values()) / len(users[this_user].values())
-        that_user_avg = sum(users[that_user].values()) / len(users[that_user].values())
+        this_user_avg = sum(users[this_user].values())/len(users[this_user].values())
+        that_user_avg = sum(users[that_user].values())/len(users[that_user].values())
 
         all_movies = set(users[this_user].keys()) & set(users[that_user].keys())
 
         dividend = 0
-        divisor_a = 0
-        divisor_b = 0
+        a_divisor = 0
+        b_divisor = 0
         for movie in all_movies:
 
             if movie in users[this_user].keys() and movie in users[that_user].keys():
-                nr_a = users[this_user][movie] - this_user_avg
-                nr_b = users[that_user][movie] - that_user_avg
-                dividend += (nr_a) * (nr_b)
-                divisor_a += pow(nr_a, 2)
-                divisor_b += pow(nr_b, 2)
+                a_nr = users[this_user][movie] - this_user_avg
+                b_nr = users[that_user][movie] - that_user_avg
+                dividend += a_nr * b_nr
+                a_divisor += pow(a_nr, 2)
+                b_divisor += pow(b_nr, 2)
 
-        divisor = Decimal(sqrt(divisor_a) * sqrt(divisor_b))
+        divisor = Decimal(sqrt(a_divisor) * sqrt(b_divisor))
         if divisor != 0:
-            return dividend / Decimal(sqrt(divisor_a) * sqrt(divisor_b))
+            return dividend / Decimal(sqrt(a_divisor) * sqrt(b_divisor))
 
     return 0
 
