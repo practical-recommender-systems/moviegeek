@@ -1,4 +1,5 @@
 import os
+import logging
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "prs_project.settings")
 
@@ -97,8 +98,6 @@ class LdaModel(object):
         lda_model = models.ldamodel.LdaModel(corpus=corpus, id2word=dictionary,
                                                  num_topics=n_topics)
 
-
-
         index = similarities.MatrixSimilarity(corpus)
 
         index.save(self.lda_path + 'index.lda')
@@ -127,6 +126,8 @@ class LdaModel(object):
 if __name__ == '__main__':
     print("Calculating lda model...")
 
+
+    logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
     data, docs = load_data()
 
     lda = LdaModel()
