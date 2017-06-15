@@ -12,17 +12,15 @@ class NeighborhoodBasedRecs(base_recommender):
 
         active_user_items = Rating.objects.filter(user_id=user_id).order_by('-rating')[:100]
 
-        return self.recommen_items_by_ratings(active_user_items)
+        return self.recommend_items_by_ratings(user_id, active_user_items)
 
     def recommend_items_by_ratings(self, user_id, active_user_items, num=6):
 
         movie_ids = {movie['movie_id']: movie['rating'] for movie in active_user_items}
         user_mean = sum(movie_ids.values()) / Decimal(len(movie_ids))
 
-        #candidate_items = Similarity.objects.filter(source__in=movie_ids.keys(), similarity__gte=0.5)
         candidate_items = Similarity.objects.filter(source__in=movie_ids.keys())
-        candidate_items = candidate_items.distinct().order_by('-similarity')
-        #print("user id {} has rated {} and gets {} candidates".format(user_id, len(movie_ids), candidate_items.count()))
+        candidate_items = candidate_items.distinct().order_by('-similarity')[:50]
 
         recs = dict()
         for candidate in candidate_items:
@@ -44,12 +42,12 @@ class NeighborhoodBasedRecs(base_recommender):
                                         'sim_items': [r.source for r in rated_items]}
 
         sorted_items = sorted(recs.items(), key=lambda item: -float(item[1]['prediction']))[:num]
-        #print("user ({}) rated {} got recommended: {}".format(user_id, len(movie_ids), list(sorted_items)))
+
         return sorted_items
 
     def predict_score(self, user_id, item_id):
 
-        active_user_items = Rating.objects.exclude(movie_id=item_id).filter(user_id=user_id)
+        active_user_items = Rating.objects.exclude(movie_id=item_id).filter(user_id=user_id).order_by('-rating')[:100]
         movie_ids = {movie.movie_id: movie.rating for movie in active_user_items}
 
         return self.predict_score_by_ratings(item_id, movie_ids)
@@ -58,14 +56,12 @@ class NeighborhoodBasedRecs(base_recommender):
         top = 0
         bottom = 0
 
-        #candidate_items = Similarity.objects.filter(source__in=movie_ids.keys()).filter(target=item_id)
-        #candidate_items = candidate_items.distinct().order_by('-similarity')[:self.neighborhood_size]
-        candidate_items = Similarity.objects.filter(source__in=movie_ids.keys()).filter(target=item_id).distinct()
+        candidate_items = Similarity.objects.filter(source__in=movie_ids.keys()).filter(target=item_id)
+        candidate_items = candidate_items.distinct().order_by('-similarity')
 
         if len(candidate_items) == 0:
             return 0
 
-        candidate_items = candidate_items.order_by('-similarity')[:self.neighborhood_size]
         for sim_item in candidate_items:
             r = movie_ids[sim_item.source]
             top += sim_item.similarity * r
