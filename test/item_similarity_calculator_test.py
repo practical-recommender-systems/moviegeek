@@ -41,11 +41,11 @@ class TestItemSimilarityMatrixBuilder(unittest.TestCase):
         self.assertEqual(cor.shape[0], no_items, "Expected correlations matrix to have a row for each item")
         self.assertEqual(cor.shape[1], no_items, "Expected correlations matrix to have a column for each item")
 
-        self.assertTrue(cor[1, 2] - 0.5 < 0.01, "Expected Wolverine and Star Wars to have similarity 0.5")
-        self.assertEqual(cor[0, 0], 1, "Expected items to be similar to themselves similarity 1")
-        self.assertEqual(cor[1, 1], 1, "Expected items to be similar to themselves similarity 1")
-        self.assertEqual(cor[2, 2], 1, "Expected items to be similar to themselves similarity 1")
-        self.assertEqual(cor[3, 3], 1, "Expected items to be similar to themselves similarity 1")
+        self.assertEqual(cor[WONDER_WOMAN][AVENGERS], - 1, "Expected Wolverine and Star Wars to have similarity 0.5")
+        self.assertEqual(cor[AVENGERS][AVENGERS], 1, "Expected items to be similar to themselves similarity 1")
+        self.assertEqual(cor[STAR_WARS][STAR_WARS], 1, "Expected items to be similar to themselves similarity 1")
+        self.assertEqual(cor[WONDER_WOMAN][WONDER_WOMAN], 1, "Expected items to be similar to themselves similarity 1")
+        self.assertEqual(cor[WOLVERINE][WOLVERINE], 1, "Expected items to be similar to themselves similarity 1")
 
     def test_min_ratings(self):
         builder = ItemSimilarityMatrixBuilder(2)
@@ -55,9 +55,8 @@ class TestItemSimilarityMatrixBuilder(unittest.TestCase):
         self.assertEqual(cor.shape[0], 2, "Expected correlations matrix to have a row for each item")
         self.assertEqual(cor.shape[1], 2, "Expected correlations matrix to have a column for each item")
 
-        self.assertTrue(cor[0, 1] - 1 < 0.01, "Expected Wolverine and Star Wars to have similarity 0.5")
-        self.assertEqual(cor[0, 0], 1, "Expected items to be similar to themselves similarity 1")
-        self.assertEqual(cor[1, 1], 1, "Expected items to be similar to themselves similarity 1")
+        self.assertEqual(cor[WONDER_WOMAN][AVENGERS], -1, "Expected Wolverine and Star Wars to have similarity 0.5")
+        self.assertEqual(cor[AVENGERS][AVENGERS], 1, "Expected items to be similar to themselves similarity 1")
 
     def test_save_similarities(self):
         builder = ItemSimilarityMatrixBuilder(0)

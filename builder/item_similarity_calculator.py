@@ -27,34 +27,33 @@ class ItemSimilarityMatrixBuilder(object):
 
     def save_sparse_matrix(self, sm, index, created=datetime.now()):
         start_time = datetime.now()
-        print('saving similarities (number:{})'.format(len(sm.data)))
         Similarity.objects.all().delete()
         sims = []
         no_saved = 0
-        rows, cols = self.interesting_indexes(sm, self.min_sim)
-        for row, col in zip(rows, cols):
 
-            if len(sims) == 1000:
-                Similarity.objects.bulk_create(sims)
-                sims = []
+        for i in sm.itertuples():
+            for j in range(1, len(i)):
+                row = i[0]
+                col = sm.columns[j - 1]
+                sim = i[j]
+                if sim > self.min_sim:
 
-            if row != col:
-                new_similarity = Similarity(
-                    created=created,
-                    source=index[row],
-                    target=index[col],
-                    similarity=decimal.Decimal(str(sm[row, col]))
-                )
-                no_saved +=1
-                sims.append(new_similarity)
+                    if len(sims) == 1000:
+                        Similarity.objects.bulk_create(sims)
+                        sims = []
+
+                    if row != col:
+                        new_similarity = Similarity(
+                            created=created,
+                            source=row,
+                            target=col,
+                            similarity=decimal.Decimal(str(sim))
+                        )
+                        no_saved +=1
+                        sims.append(new_similarity)
 
         Similarity.objects.bulk_create(sims)
         print('{} Similarity items saved, done in {} seconds'.format(no_saved, datetime.now() - start_time))
-
-    def interesting_indexes(self, sm, min_sim=0.2):
-        cors = sm.tocoo()
-        nz_mask = np.bitwise_and(~np.isnan(cors.data), cors.data > min_sim)
-        return cors.row[nz_mask], cors.col[nz_mask]
 
     def build(self, ratings, save=True):
 
@@ -83,7 +82,7 @@ class ItemSimilarityMatrixBuilder(object):
 
         start_time = datetime.now()
         #cor = cosine_similarity(sparse.csr_matrix(rp.transpose()), dense_output=False)
-        cor = sparse.csr_matrix(rp.corr(method='pearson', min_periods=self.min_overlap))
+        cor = rp.corr(method='pearson', min_periods=self.min_overlap)
         print('correlation is finished, done in {} seconds'.format(datetime.now() - start_time))
 
         if save:
@@ -116,7 +115,7 @@ def load_all_ratings():
     columns = ['user_id', 'movie_id', 'rating', 'type']
 
     ratings_data = Rating.objects.all().values(*columns)
-    ratings = pd.DataFrame.from_records(ratings_data, columns=columns)
+    ratings = pd.SparseDataFrame.from_records(ratings_data, columns=columns)
     ratings['rating'] = ratings['rating'].astype(float)
     return ratings
 
