@@ -21,16 +21,17 @@ from datetime import datetime
 
 class ItemSimilarityMatrixBuilder(object):
 
-    def __init__(self, min_overlap=15):
+    def __init__(self, min_overlap=15, min_sim=0.2):
         self.min_overlap = min_overlap
+        self.min_sim = min_sim
 
     def save_sparse_matrix(self, sm, index, created=datetime.now()):
         start_time = datetime.now()
-        print('saving similarities (number:{})'.format(sm.shape[0]*sm.shape[1]))
+        print('saving similarities (number:{})'.format(len(sm.data)))
         Similarity.objects.all().delete()
         sims = []
         no_saved = 0
-        rows, cols = self.interesting_indexes(sm, 0)
+        rows, cols = self.interesting_indexes(sm, self.min_sim)
         for row, col in zip(rows, cols):
 
             if len(sims) == 1000:
@@ -51,37 +52,49 @@ class ItemSimilarityMatrixBuilder(object):
         print('{} Similarity items saved, done in {} seconds'.format(no_saved, datetime.now() - start_time))
 
     def interesting_indexes(self, sm, min_sim=0.2):
-
         cors = sm.tocoo()
         nz_mask = np.bitwise_and(~np.isnan(cors.data), cors.data > min_sim)
         return cors.row[nz_mask], cors.col[nz_mask]
 
-    def build(self, ratings):
+    def build(self, ratings, save=True):
 
         print("Calculating similarities ... using {} ratings".format(len(ratings)))
         start_time = datetime.now()
+
         ratings['avg'] = ratings.groupby('user_id')['rating'].transform(lambda x: normalize(x))
         ratings['avg'] = ratings['avg'].astype(float)
 
         print("normalized ratings.")
 
         rp = ratings.pivot_table(index=['movie_id'], columns=['user_id'], values='avg', fill_value=0)
-        print("rating matrix finished, done in {} seconds".format(datetime.now() - start_time))
+
+        rp = rp.transpose()
+        items_to_keep = rp.astype(bool).sum(axis=0) > self.min_overlap
+
+        for i, column in zip(rp.columns, items_to_keep):
+            if not column:
+                rp.drop(i, axis=1, inplace=True)
+
+        print(
+            f"rating matrix (size {rp.shape[0]}x{rp.shape[1]})finished, done in {datetime.now() - start_time} seconds")
 
         sparsity_level = 1-(ratings.shape[0] / (rp.shape[0] * rp.shape[1]))
         print("sparsity level is ", sparsity_level)
 
         start_time = datetime.now()
         #cor = cosine_similarity(sparse.csr_matrix(rp.transpose()), dense_output=False)
-        cor = sparse.csr_matrix(rp.transpose().corr(method='pearson', min_periods=self.min_overlap))
+        cor = sparse.csr_matrix(rp.corr(method='pearson', min_periods=self.min_overlap))
         print('correlation is finished, done in {} seconds'.format(datetime.now() - start_time))
 
-        self.save_sparse_matrix(cor, rp.index)
+        if save:
+            self.save_sparse_matrix(cor, rp.transpose().index)
 
         return cor
 
 
+
 def normalize(x):
+
     x = x.astype(float)
     if x.std() == 0:
         return 0.0
