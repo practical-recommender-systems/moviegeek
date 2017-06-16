@@ -19,24 +19,6 @@ from moviegeeks.models import Movie
 from analytics.models import Rating
 
 
-class DataSplitter(object):
-    def __init__(self):
-        self.folds = None
-
-    def training_data(self):
-
-        if self.folds is None:
-            return Rating.objects().all()
-        else:
-            return Rating.objects().filter(user_id__in=self.folds)
-
-    def split_data(self, num_folds=5):
-
-        users = Rating.objects().values('user_id').distinct()
-        kf = KFold(n_split=num_folds)
-        self.folds = kf.split(users)
-
-
 class MeanAverageError(object):
     def __init__(self, recommender):
         self.rec = recommender
@@ -46,7 +28,6 @@ class MeanAverageError(object):
         user_ids = test_ratings['user_id'].unique()
         print('evaluating based on {} users (MAE)'.format(len(user_ids)))
         error = 0
-
 
         for user_id in user_ids:
             user_error = Decimal(0.0)
@@ -69,7 +50,9 @@ class MeanAverageError(object):
                         item_error = abs(actual_rating - predicted_rating)
                         user_error += item_error
                     else:
-                        print("userid:{}, item:{} actual {} predicted = {}".format(user_id, item_id, actual_rating, predicted_rating))
+                        print("userid:{}, item:{} actual {} predicted = {}".format(user_id, item_id, actual_rating,
+                                                                                   predicted_rating))
+
                 error += user_error / num_movies
         return error / len(user_ids)
 
@@ -95,7 +78,6 @@ class PrecissionAtK(object):
             print('evaluating based on {} users'.format(len(user_ids)))
             apks = []
             for user_id in user_ids:
-
                 ratings_for_rec = train_ratings[train_ratings.user_id == user_id][:20]
                 dicts_for_rec = ratings_for_rec.to_dict(orient='records')
 
@@ -109,14 +91,14 @@ class PrecissionAtK(object):
                 apks.append(score)
                 total_score += score
                 the_file.write("{}, {}, {}, {}, {} \n".format(user_id,
-                                                             len(recs),
-                                                             len(relevant_ratings),
-                                                             relevant_ratings, recs))
+                                                              len(recs),
+                                                              len(relevant_ratings),
+                                                              relevant_ratings, recs))
 
         mean_average_precision = np.mean(apks)
         print("MAP: ({}, {}) = {}".format(total_score,
-                                              len(user_ids),
-                                              mean_average_precision))
+                                          len(user_ids),
+                                          mean_average_precision))
         return mean_average_precision
 
     def average_precision_k(self, recs, actual):
@@ -161,14 +143,3 @@ class CFCoverage(object):
 
         print("{} {} {}".format(no_movies, no_movies_in_rec, float(no_movies / no_movies_in_rec)))
         return no_movies_in_rec / no_movies
-
-
-if __name__ == '__main__':
-    # print("Calculating coverage...")
-    # CFCoverage().calculate_coverage()
-
-    print("Calculating Precision at K")
-    pak = PrecissionAtK(5, NeighborhoodBasedRecs(),
-                        ItemSimilarityMatrixBuilder())
-
-    pak.calculate_old()
