@@ -8,9 +8,7 @@ django.setup()
 
 import decimal
 import pandas as pd
-import math
-import numpy as np
-import time
+
 
 from recommender.models import Similarity
 from analytics.models import Rating

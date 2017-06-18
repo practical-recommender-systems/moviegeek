@@ -4,9 +4,7 @@ import json
 import numpy as np
 
 from collections import defaultdict
-from sklearn.model_selection import KFold
 from decimal import Decimal
-from builder.item_similarity_calculator import ItemSimilarityMatrixBuilder
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "prs_project.settings")
 
@@ -27,7 +25,9 @@ class MeanAverageError(object):
 
         user_ids = test_ratings['user_id'].unique()
         print('evaluating based on {} users (MAE)'.format(len(user_ids)))
-        error = 0
+        error = Decimal(0.0)
+        if len(user_ids) == 0:
+            return Decimal(0.0)
 
         for user_id in user_ids:
             user_error = Decimal(0.0)
@@ -45,15 +45,21 @@ class MeanAverageError(object):
                 for item_id in movie_ids:
                     actual_rating = this_test_ratings[this_test_ratings['movie_id'] == item_id].iloc[0]['rating']
                     predicted_rating = self.rec.predict_score_by_ratings(item_id, movies)
+
                     if actual_rating > 0 and predicted_rating > 0:
                         num_movies += 1
                         item_error = abs(actual_rating - predicted_rating)
                         user_error += item_error
-                    else:
-                        print("userid:{}, item:{} actual {} predicted = {}".format(user_id, item_id, actual_rating,
-                                                                                   predicted_rating))
 
-                error += user_error / num_movies
+                if num_movies > 0:
+                    error += user_error / num_movies
+
+                print(
+                    "AE userid:{}, test_ratings:{} predicted {} error {}".format(user_id,
+                                                                                 len(this_test_ratings),
+                                                                                 num_movies,
+                                                                                 user_error / num_movies))
+
         return error / len(user_ids)
 
 
@@ -69,7 +75,7 @@ class PrecissionAtK(object):
         timestr = time.strftime("%Y%m%d-%H%M%S")
         file_name = '{}-evaluation_data.csv'.format(timestr)
 
-        total_score = 0.0
+        total_score = Decimal(0.0)
 
         with open(file_name, 'a') as the_file:
             the_file.write("user_id, num_recs, num_test_data, test_data, recs\n")
@@ -102,16 +108,33 @@ class PrecissionAtK(object):
         return mean_average_precision
 
     def average_precision_k(self, recs, actual):
-        score = 0.0
+        score = Decimal(0.0)
         num_hits = 0
 
         for i, p in enumerate(recs):
-            if p[0] in actual and p not in recs[:i]:
+            TP = p[0] in actual
+            if TP:
                 num_hits += 1.0
-                score += num_hits / (i + 1.0)
+            score += Decimal(num_hits / (i + 1.0))
 
-        print("hits: {}  score {}".format(num_hits, score))
-        score = score / min(len(actual), self.K)
+        score /= len(recs)
+        print("recs: {} actual: {} hits: {}  score {}".format(len(recs), len(actual), num_hits, score))
+
+        return score
+
+    def average_recall_k(self, recs, actual):
+        score = Decimal(0.0)
+        num_hits = 0
+
+        for i, p in enumerate(recs):
+            tp = p[0] in actual
+
+            if tp and p not in recs[:i]:
+                num_hits += 1.0
+                score += Decimal(num_hits / (i + 1.0))
+
+        print("recs: {} hits: {}  score {}".format(len(recs), num_hits, score))
+        score = score / (len(actual) - num_hits)
 
         return score
 

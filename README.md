@@ -43,6 +43,43 @@ if you are running Anaconda you can also use conda virtual environment instead.
 pip install -r requirements.txt
 ```
 
+### [OPTIONAL] install and use PostGreSQL
+
+## The database
+If you dont have postgres running then you should start out installing it. 
+It's a free, and easy to install. 
+Get it here [postgresql download](https://www.postgresql.org/download/) 
+and follow the instructions on the site.
+
+
+## The database driver
+When the database is spinning its time for the python driver. I recommend using the following 
+[http://initd.org/psycopg/](http://initd.org/psycopg/), 
+
+First download the driver, unzip (if zipped) then run
+```bash
+> python setup.py install
+```
+
+```bash
+> pip install psycopg2
+```
+
+## Configuration
+
+in prs_project/settings.py
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'db_name',                      
+        'USER': 'db_user',
+        'PASSWORD': 'db_user_password',
+        'HOST': '',
+        'PORT': 'db_port_number',
+    }
+}
+
 ### Create the dbs. 
 If you have a database running on your machine I would encourage 
 you to connect it, by updating the settings in `prs_project/settings.py`. To set up another database is 

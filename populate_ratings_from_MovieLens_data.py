@@ -53,4 +53,4 @@ if __name__ == '__main__':
     print("Usage: python populate_ratings_from_MovieLens_data.py ")
     print("Starting MovieGeeks Population script...")
     delete_db()
-    populate('/Users/u0157492/Downloads/ml-latest/ratings.csv')
+    populate('/Users/u0157492/Downloads/ml-latest-small/ratings.csv')

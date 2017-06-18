@@ -1,31 +1,34 @@
+from decimal import Decimal
 import os
-import time
-import datetime
-import json
-import pandas as pd
 
-from collections import defaultdict
+import datetime
+import pandas as pd
+import numpy as np
+
 from sklearn.model_selection import KFold
 
-from builder import data_helper
-from builder.algorithm_evaluator import PrecissionAtK
+from builder.algorithm_evaluator import PrecissionAtK, MeanAverageError
 from builder.item_similarity_calculator import ItemSimilarityMatrixBuilder
 from recs.neighborhood_based_recommender import NeighborhoodBasedRecs
+from django.db.models import Count
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "prs_project.settings")
 import django
-
-from django.db.models import Count
+from datetime import datetime
+import time
 
 django.setup()
-import numpy as np
+
 from analytics.models import Rating
 
+
 class EvaluationRunner(object):
-    def __init__(self, folds, builder, recommender):
+
+    def __init__(self, folds, builder, recommender, K = 10):
         self.folds = folds
         self.builder = builder
         self.recommender = recommender
+        self.K = K
 
     def clean_data(self, ratings, min_ratings=5):
         print("cleaning data only to contain users with atleast {} ratings".format(min_ratings))
@@ -34,16 +37,27 @@ class EvaluationRunner(object):
 
         user_count = ratings[['user_id', 'movie_id']].groupby('user_id').count()
         user_count = user_count.reset_index()
-        user_ids = user_count[user_count['movie_id'] > min_ratings]['user_id'][:1000]
+        user_ids = user_count[user_count['movie_id'] > min_ratings]['user_id']
 
         ratings = ratings[ratings['user_id'].isin(user_ids)]
         new_size = ratings.shape[0]
         print('reduced dataset from {} to {}'.format(original_size, new_size))
         return ratings
 
-    def calculate(self, min_number_of_ratings=5, min_rank=10):
+    def calculate(self, min_number_of_ratings=5, min_rank=10, number_test_users=-1):
 
-        ratings_rows = Rating.objects.all().values()
+        ratings_count = Rating.objects.all().count()
+        print('{} ratings available'.format(ratings_count))
+
+        if number_test_users == -1:
+            ratings_rows = Rating.objects.all().values()
+
+        else:
+            user_ids = Rating.objects.values('user_id').annotate(movie_count=Count('movie_id')).order_by('-movie_count')
+            user_ids = user_ids.values('user_id')[:number_test_users]
+
+            ratings_rows = Rating.objects.filter(user_id__in=user_ids).values()
+
         all_ratings = pd.DataFrame.from_records(ratings_rows)
 
         return self.calculate_using_ratings(all_ratings, min_number_of_ratings, min_rank)
@@ -56,7 +70,8 @@ class EvaluationRunner(object):
         kf = self.split_users()
 
         validation_no = 0
-        results = []
+        paks = Decimal(0.0)
+        maes = Decimal(0.0)
 
         for train, test in kf.split(users):
             print('starting validation no {}'.format(validation_no))
@@ -71,8 +86,10 @@ class EvaluationRunner(object):
             self.builder.build(train_data)
             print("Build is finished")
 
-            result = PrecissionAtK(10, self.recommender).calculate(train_data, test_data)
-            results.append(result)
+            paks += PrecissionAtK(self.K, self.recommender).calculate(train_data, test_data)
+            maes += MeanAverageError(self.recommender).calculate(train_data, test_data)
+            print("MAE = {}".format(maes))
+            results = {'pak': paks/self.folds, 'mae': maes/self.folds}
 
         print(results)
         return results
@@ -87,60 +104,38 @@ class EvaluationRunner(object):
 
         test_temp['rank'] = test_temp.groupby('user_id')['rating_timestamp'].rank(ascending=False)
         test = test_temp[test_temp['rank'] > min_rank]
-
         additional_training_data = test_temp[test_temp['rank'] >= min_rank]
+
         train = train.append(additional_training_data)
 
         return test, train
 
-    def split_ratings_sql(self):
-
-        sql = """select  *,
-           ( select  count(*)
-             from    analytics_rating as rating2
-             where   rating2.rating_timestamp < rating1.rating_timestamp
-             and     rating1.user_id = rating2.user_id
-            ) as rank
-        from    analytics_rating as rating1
-        where    rank < 3"""
-
-        columns = ['user_id', 'movie_id', 'rating', 'type']
-        rating_data = data_helper.get_data_frame(sql, columns)
-
-        print('found {} ratings'.format(rating_data.count()))
-        return rating_data
-
 if __name__ == '__main__':
-    TEST = False
+    min_number_of_ratings = 30
+    min_overlap = 25
+    min_sim = 0
+    K = 25 #redo
+    min_rank = 5
 
-    if TEST:
-        er = EvaluationRunner(5, ItemSimilarityMatrixBuilder(2), NeighborhoodBasedRecs())
-        ratings = pd.DataFrame(
-            [[1, '11', 5, '2013-10-12 23:20:27+00:00'],
-             [1, '12', 3, '2014-10-12 23:20:27+00:00'],
-             [1, '14', 2, '2015-10-12 23:20:27+00:00'],
-             [2, '11', 4, '2013-10-12 23:20:27+00:00'],
-             [2, '12', 3, '2014-10-12 23:20:27+00:00'],
-             [2, '13', 4, '2015-10-12 23:20:27+00:00'],
-             [3, '11', 5, '2013-10-12 23:20:27+00:00'],
-             [3, '12', 2, '2014-10-12 23:20:27+00:00'],
-             [3, '13', 5, '2015-10-12 23:20:27+00:00'],
-             [3, '14', 2, '2016-10-12 23:20:27+00:00'],
-             [4, '11', 3, '2013-10-12 23:20:27+00:00'],
-             [4, '12', 5, '2014-10-12 23:20:27+00:00'],
-             [4, '13', 3, '2015-10-12 23:20:27+00:00'],
-             [5, '11', 3, '2013-10-12 23:20:27+00:00'],
-             [5, '12', 3, '2014-10-12 23:20:27+00:00'],
-             [5, '13', 3, '2015-10-12 23:20:27+00:00'],
-             [5, '14', 2, '2016-10-12 23:20:27+00:00'],
-             [6, '11', 2, '2013-10-12 23:20:27+00:00'],
-             [6, '12', 3, '2014-10-12 23:20:27+00:00'],
-             [6, '13', 2, '2015-10-12 23:20:27+00:00'],
-             [6, '14', 3, '2016-10-12 23:20:27+00:00'],
-             ], columns=['user_id', 'movie_id', 'rating', 'rating_timestamp'])
+    timestr = time.strftime("%Y%m%d-%H%M%S")
+    file_name = '{}-min_number_of_ratings_training.csv'.format(timestr)
 
-        result = er.calculate_using_ratings(ratings, min_number_of_ratings=2, min_rank=2)
-        print(result)
-    else:
-        er = EvaluationRunner(5, ItemSimilarityMatrixBuilder(), NeighborhoodBasedRecs())
-        er.calculate(min_number_of_ratings=30, min_rank=15)
+    with open(file_name, 'a', 1) as logfile:
+        logfile.write("pak, mae, min_overlap, min_sim, K, min_num_of_ratings, min_rank\n")
+
+        for min_number_of_ratings in np.arange(5, 30, 10):
+            min_rank = min_number_of_ratings/2
+            min_overlap = min_number_of_ratings - min_rank
+            er = EvaluationRunner(3,
+                                  ItemSimilarityMatrixBuilder(min_overlap, min_sim=min_sim),
+                                  NeighborhoodBasedRecs(),
+                                  K)
+            result = er.calculate(min_number_of_ratings, min_rank, number_test_users=1000)
+            pak = result['pak']
+            mae = result['mae']
+            logfile.write("{}, {}, {}, {}, {}, {}, {} \n".format(pak, mae, min_overlap,
+                                                                 min_sim, K,
+                                                                 min_number_of_ratings,
+                                                                 min_rank, datetime.now()))
+
+
