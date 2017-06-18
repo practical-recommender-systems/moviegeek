@@ -45,14 +45,14 @@ pip install -r requirements.txt
 
 ### [OPTIONAL] install and use PostGreSQL
 
-## The database
+#### The database
 If you dont have postgres running then you should start out installing it. 
 It's a free, and easy to install. 
 Get it here [postgresql download](https://www.postgresql.org/download/) 
 and follow the instructions on the site.
 
 
-## The database driver
+#### The database driver
 When the database is spinning its time for the python driver. I recommend using the following 
 [http://initd.org/psycopg/](http://initd.org/psycopg/), 
 
@@ -65,7 +65,7 @@ First download the driver, unzip (if zipped) then run
 > pip install psycopg2
 ```
 
-## Configuration
+#### Configuration
 
 in prs_project/settings.py
 
@@ -82,8 +82,9 @@ DATABASES = {
 
 ### Create the dbs. 
 If you have a database running on your machine I would encourage 
-you to connect it, by updating the settings in `prs_project/settings.py`. To set up another database is 
-described in the Django docs [here](https://docs.djangoproject.com/en/1.10/ref/databases/)
+you to connect it, by updating the settings in `prs_project/settings.py` (fx like shown above). 
+
+To set up another database is described in the Django docs [here](https://docs.djangoproject.com/en/1.10/ref/databases/)
 ```bash
 > python manage.py makemigrations
 > python manage.py migrate
