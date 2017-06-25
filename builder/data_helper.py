@@ -18,7 +18,8 @@ def get_query_cursor(sql):
     conn = connect_to_sqllite()
     c = conn.cursor()
 
-    return c.execute(sql)
+    c.execute(sql)
+    return c
 
 
 def get_data_frame(sql, columns):
