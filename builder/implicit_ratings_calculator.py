@@ -52,31 +52,10 @@ def query_log_data_for_user(userid, conn):
     return Log.objects.filter(user_id=userid)
 
 
-def query_aggregated_log_data_for_user(userid, conn):
-    sql = """
-    SELECT
-        user_id,
-        content_id,
-        mov.title,
-        count(case when event = 'buy' then 1 end) as buys,
-        count(case when event = 'details' then 1 end) as details,
-        count(case when event = 'moredetails' then 1 end) as moredetails
-    FROM   collector_log log
-    JOIN    moviegeeks_movie mov
-    ON      log.content_id = mov.movie_id
-    WHERE
-        user_id like {}
-    group by user_id, content_id, mov.title
-    order by buys desc, details desc, moredetails desc
-    """.format(userid)
+def query_aggregated_log_data_for_user(userid):
 
-    c = conn.cursor()
-
-    user_data = Log.objects.values('user_id', 'content_id', 'event').annotate(count=Count('created'))
+    user_data = Log.objects.filter(user_id = userid).values('user_id', 'content_id', 'event').annotate(count=Count('created'))
     return user_data
-    #print(list(user_data))
-    #print(c.description)
-    #return c.execute(sql)
 
 
 def calculate_implicit_ratings_w_timedecay(userid, conn):
@@ -102,7 +81,7 @@ def calculate_implicit_ratings_w_timedecay(userid, conn):
 
 
 def calculate_implicit_ratings_for_user(userid, conn=connect_to_db()):
-    data = query_aggregated_log_data_for_user(userid, conn=conn)
+    data = query_aggregated_log_data_for_user(userid)
 
     agg_data = dict()
     maxrating = 0
