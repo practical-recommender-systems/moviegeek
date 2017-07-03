@@ -10,7 +10,7 @@ django.setup()
 import datetime
 from datetime import date, timedelta
 import sqlite3
-
+from collections import defaultdict
 from collector.models import Log
 from analytics.models import Rating
 from builder import data_helper
@@ -71,8 +71,12 @@ def query_aggregated_log_data_for_user(userid, conn):
     """.format(userid)
 
     c = conn.cursor()
-    print(c.description)
-    return c.execute(sql)
+
+    user_data = Log.objects.values('user_id', 'content_id', 'event').annotate(count=Count('created'))
+    return user_data
+    #print(list(user_data))
+    #print(c.description)
+    #return c.execute(sql)
 
 
 def calculate_implicit_ratings_w_timedecay(userid, conn):
@@ -100,20 +104,23 @@ def calculate_implicit_ratings_w_timedecay(userid, conn):
 def calculate_implicit_ratings_for_user(userid, conn=connect_to_db()):
     data = query_aggregated_log_data_for_user(userid, conn=conn)
 
-    ratings = dict()
+    agg_data = dict()
     maxrating = 0
 
     for row in data:
-        print(row)
-        content_id = str(row[1])
-        buys = row[3]
-        details = row[4]
-        moredetails = row[5]
+        content_id = str(row['content_id'])
+        if content_id not in agg_data .keys():
+            agg_data[content_id] = defaultdict(int)
 
-        rating = w1 * buys + w2 * details + w3 * moredetails
-        if rating > maxrating:
-            maxrating = rating
-        ratings[content_id] = rating
+        agg_data[content_id][row['event']] = row['count']
+
+    ratings = dict()
+    for k, v in agg_data .items():
+
+        rating = w1 * v['buy'] + w2 * v['details'] + w3 * v['moredetails']
+        maxrating = max(maxrating, rating)
+
+        ratings[k] = rating
 
     for content_id in ratings.keys():
         ratings[content_id] = 10 * ratings[content_id] / maxrating
