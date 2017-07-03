@@ -265,6 +265,17 @@ def events_on_conversions(request):
     data = dictfetchall(cursor)
     print(data)
     return JsonResponse(data, safe=False)
+def ratings_distribution(request):
+    cursor = connection.cursor()
+    cursor.execute("""
+    select rating, count(1) as count_items
+    from analytics_rating
+    group by rating
+    order by rating
+    """)
+    data = dictfetchall(cursor)
+    print(data)
+    return JsonResponse(data, safe=False)
 
 
 def dictfetchall(cursor):
