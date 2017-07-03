@@ -78,8 +78,10 @@ function drawChart(id, endpoint) {
 }
 
 function update_statistics() {
-  var today = new Date().toJSON().slice(0,10);
-  $.getJSON('api/get_statistics?date=' + today, function(result) {
+  var tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  start_data = tomorrow.toJSON().slice(0,10);
+  $.getJSON('api/get_statistics?date=' + start_data, function(result) {
     document.getElementById("items_sold").textContent = result.items_sold;
     document.getElementById("conversions").textContent = result.conversions + "%";
     document.getElementById("visitors_month").textContent = result.visitors;
