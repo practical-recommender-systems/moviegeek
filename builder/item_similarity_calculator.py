@@ -8,7 +8,7 @@ django.setup()
 
 import decimal
 import pandas as pd
-
+import numpy as np
 
 from recommender.models import Similarity
 from analytics.models import Rating
@@ -36,7 +36,7 @@ class ItemSimilarityMatrixBuilder(object):
                 sim = i[j]
                 if sim > self.min_sim:
 
-                    if len(sims) == 1000:
+                    if len(sims) == 100000:
                         Similarity.objects.bulk_create(sims)
                         sims = []
 
@@ -80,22 +80,47 @@ class ItemSimilarityMatrixBuilder(object):
 
         start_time = datetime.now()
         #cor = cosine_similarity(sparse.csr_matrix(rp.transpose()), dense_output=False)
-        cor = rp.corr(method='pearson', min_periods=self.min_overlap)
-        print('correlation is finished, done in {} seconds'.format(datetime.now() - start_time))
-
+        #cor = rp.corr(method='pearson', min_periods=self.min_overlap)
+        cor = sparse.csr_matrix(cosine(rp.transpose()))
+        print(f'correlation is finished, done in {datetime.now() - start_time} seconds')
         if save:
+            start_time = datetime.now()
+
             self.save_sparse_matrix(cor, rp.transpose().index)
+            print('save finished, done in {} seconds'.format(datetime.now() - start_time))
 
         return cor
 
 
+def cosine(A):
+    similarity = np.dot(A, A.T)
+
+    # squared magnitude of preference vectors (number of occurrences)
+    square_mag = np.diag(similarity)
+
+    # inverse squared magnitude
+    inv_square_mag = 1 / square_mag
+
+    # if it doesn't occur, set it's inverse magnitude to zero (instead of inf)
+    inv_square_mag[np.isinf(inv_square_mag)] = 0
+
+    # inverse of the magnitude
+    inv_mag = np.sqrt(inv_square_mag)
+
+    # cosine similarity (elementwise multiply by inverse magnitudes)
+    cosine = similarity * inv_mag
+    return cosine.T * inv_mag
 
 def normalize(x):
 
     x = x.astype(float)
+    x_sum = x.sum()
+    x_num = x.astype(bool).sum()
+    x_mean = x_sum / x_num
+
     if x.std() == 0:
         return 0.0
-    return (x - x.mean()) / (x.max() - x.min())
+    return (x - x_mean) / (x.max() - x.min())
 
 
 def split_ratings2(min_rank=3):

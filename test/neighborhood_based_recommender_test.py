@@ -125,9 +125,9 @@ class TestNeighborhoodBasedRecs(unittest.TestCase):
     def test_top_n(self):
         rec_sys = NeighborhoodBasedRecs()
 
-        recs = rec_sys.recommend_items_by_ratings(10, [{'movie_id': AVENGERS, 'rating': 7 },
+        recs = rec_sys.recommend_items_by_ratings(10, [{'movie_id': AVENGERS, 'rating': 7},
                                                        {'movie_id': ALIEN, 'rating': 10},
-                                                       {'movie_id': CAPTAIN_AMERICA, 'rating': 6 }])
+                                                       {'movie_id': CAPTAIN_AMERICA, 'rating': 6}])
         self.assertIsNotNone(recs)
 
 

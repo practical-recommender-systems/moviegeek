@@ -51,10 +51,11 @@ def user(request, user_id):
 
     genres = {key: value / max_value for key, value in genres.items()}
     cluster_id = cluster.cluster_id if cluster else 'Not in cluster'
+    print(movie_dtos)
     context_dict = {
         'user_id': user_id,
         'avg_rating': 0 if len(movie_dtos) == 0 else round(float(sum_rating) / float(len(movie_dtos)), 2),
-        'movies': movie_dtos,
+        'movies': sorted(movie_dtos, key=lambda item: -float(item.rating)),
         'genres': genres,
         'logs': list(log),
         'cluster': cluster_id,
@@ -212,11 +213,6 @@ def get_api_key():
     return cred['themoviedb_apikey']
 
 
-###### -------------- old code ------------------
-
-
-
-
 def get_statistics(request):
     date_timestamp = time.strptime(request.GET["date"], "%Y-%m-%d")
 
@@ -265,6 +261,8 @@ def events_on_conversions(request):
     data = dictfetchall(cursor)
     print(data)
     return JsonResponse(data, safe=False)
+
+
 def ratings_distribution(request):
     cursor = connection.cursor()
     cursor.execute("""
