@@ -54,7 +54,9 @@ def query_log_data_for_user(userid, conn):
 
 def query_aggregated_log_data_for_user(userid):
 
-    user_data = Log.objects.filter(user_id = userid).values('user_id', 'content_id', 'event').annotate(count=Count('created'))
+    user_data = Log.objects.filter(user_id = userid).values('user_id',
+                                                            'content_id',
+                                                            'event').annotate(count=Count('created'))
     return user_data
 
 
@@ -80,11 +82,11 @@ def calculate_implicit_ratings_w_timedecay(userid, conn):
     return ratings
 
 
-def calculate_implicit_ratings_for_user(userid, conn=connect_to_db()):
-    data = query_aggregated_log_data_for_user(userid)
+    def calculate_implicit_ratings_for_user(userid, conn=connect_to_db()):
+        data = query_aggregated_log_data_for_user(userid)
 
-    agg_data = dict()
-    maxrating = 0
+        agg_data = dict()
+        maxrating = 0
 
     for row in data:
         content_id = str(row['content_id'])
