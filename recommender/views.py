@@ -16,21 +16,24 @@ from builder import data_helper
 from gensim import models, corpora, similarities
 
 from recs.content_based_recommender import ContentBasedRecs
+from recs.popularity_recommender import PopularityBasedRecs
 
 
 def get_association_rules_for(request, content_id, take=6):
     data = SeededRecs.objects.filter(source=content_id) \
-               .order_by('confidence') \
+               .order_by('-confidence') \
                .values('target', 'confidence', 'support')[:take]
 
     return JsonResponse(dict(data=list(data)), safe=False)
 
 
 def recs_using_association_rules(request, user_id, take=6):
-    events = Log.objects.filter(user_id=user_id).order_by('created').values_list('content_id', flat=True).distinct()
+    events = Log.objects.filter(user_id=user_id)\
+                        .order_by('created')\
+                        .values_list('content_id', flat=True)\
+                        .distinct()
 
     seeds = set(events[:20])
-
 
     rules = SeededRecs.objects.filter(source__in=seeds) \
         .exclude(target__in=seeds) \
@@ -65,10 +68,9 @@ def chart(request, take=10):
 
 
 def pearson(users, this_user, that_user):
-
     if this_user in users and that_user in users:
-        this_user_avg = sum(users[this_user].values())/len(users[this_user].values())
-        that_user_avg = sum(users[that_user].values())/len(users[that_user].values())
+        this_user_avg = sum(users[this_user].values()) / len(users[this_user].values())
+        that_user_avg = sum(users[that_user].values()) / len(users[that_user].values())
 
         all_movies = set(users[this_user].keys()) & set(users[that_user].keys())
 
@@ -145,7 +147,7 @@ def similar_users(request, user_id, type):
     return JsonResponse(data, safe=False)
 
 
-def similar_content(request, content_id, num = 6):
+def similar_content(request, content_id, num=6):
     # lda = models.ldamodel.LdaModel.load('./lda/model.lda')
     #
     # dictionary = corpora.Dictionary.load('./lda/dict.lda')
@@ -174,17 +176,16 @@ def similar_content(request, content_id, num = 6):
     #         else:
     #             content_sims[target] = movie
 
-        sorted_items = ContentBasedRecs().recommend_items_from_items([content_id], num)
-        data = {
-            'source_id': content_id,
-            'data': sorted_items
-        }
+    sorted_items = ContentBasedRecs().recommend_items_from_items([content_id], num)
+    data = {
+        'source_id': content_id,
+        'data': sorted_items
+    }
 
-        return JsonResponse(data, safe=False)
+    return JsonResponse(data, safe=False)
 
 
-def recs_cb(request, user_id, num = 6):
-
+def recs_cb(request, user_id, num=6):
     sorted_items = ContentBasedRecs().recommend_items(user_id, num)
 
     data = {
@@ -194,7 +195,8 @@ def recs_cb(request, user_id, num = 6):
 
     return JsonResponse(data, safe=False)
 
-def recs_funksvd(request, user_id, num = 6):
+
+def recs_funksvd(request, user_id, num=6):
     recs = Recs.objects.filter(user='u' + user_id)
 
     top_num = sorted(recs.values(), key=lambda rec: rec['rating'])
@@ -205,15 +207,16 @@ def recs_funksvd(request, user_id, num = 6):
     }
     return JsonResponse(data, safe=False)
 
-def recs_cf(request, user_id, num = 6):
+
+def recs_cf(request, user_id, num=6):
     active_user_items = Rating.objects.filter(user_id=user_id)
 
     movie_ids = {movie.movie_id: movie.rating for movie in active_user_items}
-    #todo: get similar items
+    # todo: get similar items
     candidate_items = Similarity.objects.filter(source__in=movie_ids.keys())
     candidate_items = candidate_items.distinct().order_by('-similarity')
 
-    #todo: calculate predictions
+    # todo: calculate predictions
     recs = dict()
     print(candidate_items)
     for candiate in candidate_items:
@@ -228,13 +231,23 @@ def recs_cf(request, user_id, num = 6):
                 r = movie_ids[sim_item.source]
                 pre += sim_item.similarity * r
 
-            recs[target] = {'prediction': pre/len(rated_items),
+            recs[target] = {'prediction': pre / len(rated_items),
                             'sim_items': [r.source for r in rated_items]}
 
     sorted_items = sorted(recs.items(), key=lambda item: -float(item[1]['prediction']))[:num]
     print('Collaborative filtering recommendations for user {} \n {}'.format(user_id, sorted_items))
     data = {'user_id': user_id,
             'data': sorted_items}
+
+    return JsonResponse(data, safe=False)
+
+
+def recs_pop(request, user_id, num=60):
+    top_num = PopularityBasedRecs().recommend_items(user_id, num)
+    data = {
+        'user_id': user_id,
+        'data': top_num[:num]
+    }
 
     return JsonResponse(data, safe=False)
 
