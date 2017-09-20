@@ -25,8 +25,10 @@ def plot(user_ratings, kmeans, k):
         h = 0.2
         reduced_data = PCA(n_components=2).fit_transform(user_ratings)
         print("cluster reduced data")
-        kmeans = KMeans(init='k-means++', n_clusters=k, n_init=10)
-        kmeans.fit(reduced_data)
+
+        if not kmeans:
+            kmeans = KMeans(init='k-means++', n_clusters=k, n_init=10)
+            kmeans.fit(reduced_data)
 
         print("plot clustered reduced data")
         x_min, x_max = reduced_data[:, 0].min() - 1, reduced_data[:, 0].max() + 1
@@ -50,34 +52,33 @@ def plot(user_ratings, kmeans, k):
         plt.scatter(centroids[:, 0], centroids[:, 1],
                     marker='x', s=169, linewidths=3,
                     color='w', zorder=10)
-        plt.title('K-means clustering on the digits dataset (PCA-reduced data)\n'
-                  'Centroids are marked with white cross')
+        plt.title('K-means clustering of the user')
         plt.xlim(x_min, x_max)
         plt.ylim(y_min, y_max)
         plt.xticks(())
         plt.yticks(())
-        #plt.show()
+
         plt.savefig('cluster.png')
 
 
 class UserClusterCalculator(object):
 
 
-    def calculate(self):
+    def calculate(self, k = 23):
         print("training k-means clustering")
 
         user_ids, user_ratings = self.load_data()
 
-        k = 23
         kmeans = KMeans(n_clusters=k)
 
-        #clusters = kmeans.fit(user_ratings.tocsr())
+        clusters = kmeans.fit(user_ratings.tocsr())
 
         plot(user_ratings.todense(), kmeans, k)
 
-        #self.save_clusters(clusters, user_ids)
-        #return clusters
-        return []
+        self.save_clusters(clusters, user_ids)
+
+        return clusters
+
 
     def save_clusters(self, clusters, user_ids):
         print("saving clusters")
@@ -97,7 +98,9 @@ class UserClusterCalculator(object):
         content_map = {content_ids[i]['movie_id']: i
                        for i in range(len(content_ids))}
         num_users = len(user_ids)
-        user_ratings = dok_matrix((num_users, len(content_ids)), dtype=np.float32)
+        user_ratings = dok_matrix((num_users,
+                                   len(content_ids)),
+                                  dtype=np.float32)
         for i in range(num_users):
             # each user corresponds to a row, in the order of all_user_names
             ratings = Rating.objects.filter(user_id=user_ids[i]['user_id'])
@@ -112,4 +115,4 @@ if __name__ == '__main__':
     print("Calculating user clusters...")
 
     cluster = UserClusterCalculator()
-    cluster.calculate()
+    cluster.calculate(23)
