@@ -13,42 +13,97 @@ import numpy as np
 from recommender.models import Similarity
 from analytics.models import Rating
 from sklearn.metrics.pairwise import cosine_similarity
-from scipy import sparse
+from scipy.sparse import coo_matrix
 from datetime import datetime
 
+import psycopg2
 
 class ItemSimilarityMatrixBuilder(object):
-
     def __init__(self, min_overlap=15, min_sim=0.2):
         self.min_overlap = min_overlap
         self.min_sim = min_sim
 
-    def save_sparse_matrix(self, sm, index, created=datetime.now()):
+    def save_similarities(self, sm, index, created=datetime.now()):
         start_time = datetime.now()
-        Similarity.objects.all().delete()
+
+        print(f'truncating table in {datetime.now() - start_time} seconds')
         sims = []
         no_saved = 0
+        start_time = datetime.now()
+        coo = coo_matrix(sm)
+        csr = coo.tocsr()
 
-        for i in sm.itertuples():
-            for j in range(1, len(i)):
-                row = i[0]
-                col = sm.columns[j - 1]
-                sim = i[j]
-                if sim > self.min_sim:
+        print(f'instantiation of coo_matrix in {datetime.now() - start_time} seconds')
 
-                    if len(sims) == 100000:
-                        Similarity.objects.bulk_create(sims)
-                        sims = []
+        query = "insert into similarity (created, source, target, similarity) values %s;"
 
-                    if row != col:
-                        new_similarity = Similarity(
-                            created=created,
-                            source=row,
-                            target=col,
-                            similarity=decimal.Decimal(str(sim))
-                        )
-                        no_saved +=1
-                        sims.append(new_similarity)
+        conn = psycopg2.connect("dbname=moviegeek user=postgres password=hullo1!")
+        cur = conn.cursor()
+
+        cur.execute('truncate table similarity')
+
+        print(f'{coo.count_nonzero()} similarities to save')
+        xs, ys = coo.nonzero()
+        for x, y in zip(xs, ys):
+
+            if x == y:
+                continue
+
+            sim = csr[x, y]
+
+            if sim < self.min_sim:
+                continue
+
+            if len(sims) == 500000:
+                psycopg2.extras.execute_values(cur, query, sims)
+                sims = []
+                print(f"{no_saved} saved in {datetime.now() - start_time}")
+
+            new_similarity = (str(created), index[x], index[y], sim)
+            no_saved += 1
+            sims.append(new_similarity)
+
+        psycopg2.extras.execute_values(cur, query, sims, template=None, page_size=1000)
+        conn.commit()
+        print('{} Similarity items saved, done in {} seconds'.format(no_saved, datetime.now() - start_time))
+
+    def save_with_django(self, sm, index, created=datetime.now()):
+        start_time = datetime.now()
+        Similarity.objects.all().delete()
+        print(f'truncating table in {datetime.now() - start_time} seconds')
+        sims = []
+        no_saved = 0
+        start_time = datetime.now()
+        coo = coo_matrix(sm)
+        csr = coo.tocsr()
+
+        print(f'instantiation of coo_matrix in {datetime.now() - start_time} seconds')
+        print(f'{coo.count_nonzero()} similarities to save')
+        xs, ys = coo.nonzero()
+        for x, y in zip(xs, ys):
+
+            if x == y:
+                continue
+
+            sim = csr[x, y]
+
+            if sim < self.min_sim:
+                continue
+
+            if len(sims) == 500000:
+
+                Similarity.objects.bulk_create(sims)
+                sims = []
+                print(f"{no_saved} saved in {datetime.now() - start_time}")
+
+            new_similarity = Similarity(
+                source=index[x],
+                target=index[y],
+                created=created,
+                similarity=sim
+            )
+            no_saved += 1
+            sims.append(new_similarity)
 
         Similarity.objects.bulk_create(sims)
         print('{} Similarity items saved, done in {} seconds'.format(no_saved, datetime.now() - start_time))
@@ -58,61 +113,49 @@ class ItemSimilarityMatrixBuilder(object):
         print("Calculating similarities ... using {} ratings".format(len(ratings)))
         start_time = datetime.now()
 
+        print("create ratings matrix")
+        ratings['rating'] = ratings['rating'].astype(float)
         ratings['avg'] = ratings.groupby('user_id')['rating'].transform(lambda x: normalize(x))
+
         ratings['avg'] = ratings['avg'].astype(float)
+        ratings['user_id'] = ratings['user_id'].astype('category')
+        ratings['movie_id'] = ratings['movie_id'].astype('category')
+
+
+        coo = coo_matrix((ratings['avg'].astype(float),
+                          (ratings['user_id'].cat.codes.copy(),
+                           ratings['movie_id'].cat.codes.copy())))
 
         print("normalized ratings.")
-
-        rp = ratings.pivot_table(index=['movie_id'], columns=['user_id'], values='avg', fill_value=0)
-
-        rp = rp.transpose()
-        items_to_keep = rp.astype(bool).sum(axis=0) > self.min_overlap
-
-        for i, column in zip(rp.columns, items_to_keep):
-            if not column:
-                rp.drop(i, axis=1, inplace=True)
+        overlap_matrix = coo.transpose().astype(bool).astype(int).dot(coo.astype(bool).astype(int))
 
         print(
-            f"rating matrix (size {rp.shape[0]}x{rp.shape[1]})finished, done in {datetime.now() - start_time} seconds")
+            f"rating matrix (size {coo.shape[0]}x{coo.shape[1]})finished, done in {datetime.now() - start_time} seconds")
 
-        sparsity_level = 1-(ratings.shape[0] / (rp.shape[0] * rp.shape[1]))
+        sparsity_level = 1 - (ratings.shape[0] / (coo.shape[0] * coo.shape[1]))
         print("sparsity level is ", sparsity_level)
 
         start_time = datetime.now()
-        #cor = cosine_similarity(sparse.csr_matrix(rp.transpose()), dense_output=False)
-        #cor = rp.corr(method='pearson', min_periods=self.min_overlap)
-        cor = sparse.csr_matrix(cosine(rp.transpose()))
+        cor = cosine_similarity(coo.transpose(), dense_output=False)
+        # cor = rp.corr(method='pearson', min_periods=self.min_overlap)
+        # cor = (cosine(rp.T))
+
+        cor = cor.multiply(cor > self.min_sim)
+        cor = cor.multiply(overlap_matrix > self.min_overlap)
+
+        movies = dict(enumerate(ratings['movie_id'].cat.categories))
         print(f'correlation is finished, done in {datetime.now() - start_time} seconds')
         if save:
-            start_time = datetime.now()
 
-            self.save_sparse_matrix(cor, rp.transpose().index)
+            start_time = datetime.now()
+            print('save starting')
+            self.save_similarities(cor, movies)
             print('save finished, done in {} seconds'.format(datetime.now() - start_time))
 
-        return cor
+        return cor, movies
 
-
-def cosine(A):
-    similarity = np.dot(A, A.T)
-
-    # squared magnitude of preference vectors (number of occurrences)
-    square_mag = np.diag(similarity)
-
-    # inverse squared magnitude
-    inv_square_mag = 1 / square_mag
-
-    # if it doesn't occur, set it's inverse magnitude to zero (instead of inf)
-    inv_square_mag[np.isinf(inv_square_mag)] = 0
-
-    # inverse of the magnitude
-    inv_mag = np.sqrt(inv_square_mag)
-
-    # cosine similarity (elementwise multiply by inverse magnitudes)
-    cosine = similarity * inv_mag
-    return cosine.T * inv_mag
 
 def normalize(x):
-
     x = x.astype(float)
     x_sum = x.sum()
     x_num = x.astype(bool).sum()
@@ -121,17 +164,6 @@ def normalize(x):
     if x.std() == 0:
         return 0.0
     return (x - x_mean) / (x.max() - x.min())
-
-
-def split_ratings2(min_rank=3):
-    print('loading ratings')
-    ratings = Rating.objects.all()
-    print('ranking ratings')
-    df = pd.DataFrame.from_records(ratings.values())
-    print(df.head())
-    df['rank'] = df.groupby('user_id')['rating_timestamp'].rank(ascending=False)
-
-    return df[df['rank'] <= min_rank]
 
 
 def load_all_ratings():
@@ -144,35 +176,5 @@ def load_all_ratings():
 
 
 if __name__ == '__main__':
-    TEST = True
-
-    if TEST:
-        ratings = pd.DataFrame(
-            [[1, '0011', 5, '2013-10-12 23:20:27+00:00'],
-             [1, '12', 3, '2014-10-12 23:20:27+00:00'],
-             [1, '14', 2, '2015-10-12 23:20:27+00:00'],
-             [2, '0011', 4, '2013-10-12 23:20:27+00:00'],
-             [2, '12', 3, '2014-10-12 23:20:27+00:00'],
-             [2, '13', 4, '2015-10-12 23:20:27+00:00'],
-             [3, '0011', 5, '2013-10-12 23:20:27+00:00'],
-             [3, '12', 2, '2014-10-12 23:20:27+00:00'],
-             [3, '13', 5, '2015-10-12 23:20:27+00:00'],
-             [3, '14', 2, '2016-10-12 23:20:27+00:00'],
-             [4, '0011', 3, '2013-10-12 23:20:27+00:00'],
-             [4, '12', 5, '2014-10-12 23:20:27+00:00'],
-             [4, '13', 3, '2015-10-12 23:20:27+00:00'],
-             [5, '0011', 3, '2013-10-12 23:20:27+00:00'],
-             [5, '12', 3, '2014-10-12 23:20:27+00:00'],
-             [5, '13', 3, '2015-10-12 23:20:27+00:00'],
-             [5, '14', 2, '2016-10-12 23:20:27+00:00'],
-             [6, '0011', 2, '2013-10-12 23:20:27+00:00'],
-             [6, '12', 3, '2014-10-12 23:20:27+00:00'],
-             [6, '13', 2, '2015-10-12 23:20:27+00:00'],
-             [6, '14', 3, '2016-10-12 23:20:27+00:00'],
-             ], columns=['user_id', 'movie_id', 'rating', 'rating_timestamp'])
-
-        result = ItemSimilarityMatrixBuilder(2).build(ratings)
-        print(result)
-
-    else:
-        ItemSimilarityMatrixBuilder().build(load_all_ratings())
+    all_ratings = load_all_ratings()
+    ItemSimilarityMatrixBuilder().build(all_ratings)
