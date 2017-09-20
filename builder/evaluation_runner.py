@@ -164,19 +164,19 @@ class EvaluationRunner(object):
 if __name__ == '__main__':
     min_number_of_ratings = 20
     min_overlap = 5
-    min_sim = 0.2
+    min_sim = 0.3
     K = 20
     min_rank = 5
 
     timestr = time.strftime("%Y%m%d-%H%M%S")
-    file_name = '{}-min_number_of_ratings_training_item_similarity.csv'.format(timestr)
+    file_name = '{}-min_overlap_item_similarity.csv'.format(timestr)
 
     with open(file_name, 'a', 1) as logfile:
         logfile.write("rak, pak, mae, min_overlap, min_sim, K, min_num_of_ratings, min_rank\n")
 
         builder = ItemSimilarityMatrixBuilder(min_overlap, min_sim=min_sim)
 
-        for min_number_of_ratings in np.arange(10, 150, 10):
+        for min_overlap in np.arange(0, 20, 1):
             min_rank = min_number_of_ratings/2
             er = EvaluationRunner(0,
                                    builder,
