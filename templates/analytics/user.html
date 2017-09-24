@@ -66,7 +66,6 @@
             $.getJSON(url,
                 function(result) {
                     if ((result.data != null) && (result.data.length > 0)) {
-                        recs = document.getElementById('association_rule_recs')
 
 
                         result.data.forEach(function(element, index, array) {
@@ -89,6 +88,7 @@
 
                                 rec_div.appendChild(a)
 
+                                recs = document.getElementById('association_rule_recs')
 
                                 recs.appendChild(rec_div)
 
@@ -127,7 +127,7 @@
                                 a.appendChild(img)
 
                                 rec_div.appendChild(a)
-
+                                recs = document.getElementById('cb_recs')
                                 recs.appendChild(rec_div)
 
                             })
@@ -145,7 +145,6 @@
             $.getJSON(url,
                 function(result) {
                     if ((result.data != null) && (result.data.length > 0)) {
-                        recs = document.getElementById('cf_recs')
 
 
                         result.data.forEach(function(element, index, array) {
@@ -168,7 +167,7 @@
 
                                 rec_div.appendChild(a)
 
-
+                                recs = document.getElementById('cf_recs')
                                 recs.appendChild(rec_div)
 
                             })
@@ -226,30 +225,29 @@
   </div>
   </div>
   <h2>Personalised recommendations</h2>
-  <div class="row">
-    <div class="col-sm-1">
-      Association rules:
-    </div>
-    <div class="col-sm-11">
-      <div id="association_rule_recs"></div>
-
-    </div>
-
-  </div>
-  <div class="row">
-    <div class="col-sm-1">
-      Content-based recs:
-    </div>
-    <div class="col-sm-11">
-      <div id="cb_recs"></div>
-    </div>
-  </div>
     <div class="row">
-    <div class="col-sm-1">
-      Collaborative-based recs:
+        <div class="col-sm-1">
+          Association rules:
+        </div>
+        <div class="col-sm-11">
+          <div id="association_rule_recs"></div>
+        </div>
     </div>
-    <div class="col-sm-11">
-      <div id="cf_recs"></div>
+    <div class="row well" styles="height: 150px">
+        <div class="col-sm-1">
+          Content-based recs:
+        </div>
+        <div class="col-sm-11">
+          <div id="cb_recs"></div>
+        </div>
+    </div>
+    <div class="row">
+          <div class="col-sm-1">
+           Collaborative-based recs:
+          </div>
+          <div class="col-sm-11">
+            <div id="cf_recs"></div>
+          </div>
     </div>
   </div>
   <div class="row">
