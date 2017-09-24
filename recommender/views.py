@@ -16,6 +16,7 @@ from builder import data_helper
 from gensim import models, corpora, similarities
 
 from recs.content_based_recommender import ContentBasedRecs
+from recs.neighborhood_based_recommender import NeighborhoodBasedRecs
 from recs.popularity_recommender import PopularityBasedRecs
 
 
@@ -209,35 +210,13 @@ def recs_funksvd(request, user_id, num=6):
 
 
 def recs_cf(request, user_id, num=6):
-    active_user_items = Rating.objects.filter(user_id=user_id)
+    sorted_items = NeighborhoodBasedRecs().recommend_items(user_id, num)
 
-    movie_ids = {movie.movie_id: movie.rating for movie in active_user_items}
-    # todo: get similar items
-    candidate_items = Similarity.objects.filter(source__in=movie_ids.keys())
-    candidate_items = candidate_items.distinct().order_by('-similarity')
-
-    # todo: calculate predictions
-    recs = dict()
-    print(candidate_items)
-    for candiate in candidate_items:
-        target = candiate.target
-
-        if target not in movie_ids:
-            pre = 0
-
-            rated_items = [i for i in candidate_items if i.target == target]
-
-            for sim_item in [i for i in candidate_items if i.target == target]:
-                r = movie_ids[sim_item.source]
-                pre += sim_item.similarity * r
-
-            recs[target] = {'prediction': pre / len(rated_items),
-                            'sim_items': [r.source for r in rated_items]}
-
-    sorted_items = sorted(recs.items(), key=lambda item: -float(item[1]['prediction']))[:num]
-    print('Collaborative filtering recommendations for user {} \n {}'.format(user_id, sorted_items))
-    data = {'user_id': user_id,
-            'data': sorted_items}
+    print(f"sorted_items is: {sorted_items}")
+    data = {
+        'user_id': user_id,
+        'data': sorted_items
+    }
 
     return JsonResponse(data, safe=False)
 
