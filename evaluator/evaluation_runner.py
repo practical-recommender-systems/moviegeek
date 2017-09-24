@@ -1,26 +1,19 @@
-from decimal import Decimal
 import os
+from decimal import Decimal
 
-import datetime
-import math
-import pandas as pd
 import numpy as np
-import timeit
-
+import pandas as pd
+from django.db.models import Count
 from sklearn.model_selection import KFold
 
-from builder.algorithm_evaluator import PrecisionAtK, MeanAverageError
 from builder.item_similarity_calculator import ItemSimilarityMatrixBuilder
+from evaluator.algorithm_evaluator import PrecisionAtK, MeanAverageError, RecommenderCoverage
 from recs.neighborhood_based_recommender import NeighborhoodBasedRecs
-from django.db.models import Count
-
-from recs.popularity_recommender import PopularityBasedRecs
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "prs_project.settings")
 import django
 from datetime import datetime
 import time
-from sklearn.model_selection import train_test_split
 
 django.setup()
 
@@ -28,8 +21,7 @@ from analytics.models import Rating
 
 
 class EvaluationRunner(object):
-
-    def __init__(self, folds, builder, recommender, K = 10):
+    def __init__(self, folds, builder, recommender, K=10):
         self.folds = folds
         self.builder = builder
         self.recommender = recommender
@@ -58,9 +50,9 @@ class EvaluationRunner(object):
             ratings_rows = Rating.objects.all().values()
 
         else:
-            user_ids = Rating.objects.values('user_id')\
-                .annotate(movie_count=Count('movie_id'))\
-                .filter(movie_count__gt=min_number_of_ratings)\
+            user_ids = Rating.objects.values('user_id') \
+                .annotate(movie_count=Count('movie_id')) \
+                .filter(movie_count__gt=min_number_of_ratings) \
                 .order_by('-movie_count')
 
             user_ids = user_ids.values('user_id')[:number_test_users]
@@ -70,8 +62,8 @@ class EvaluationRunner(object):
         all_ratings = pd.DataFrame.from_records(ratings_rows)
         if self.folds == 0:
             return self.calculate_using_ratings_no_crossvalidation(all_ratings,
-                                                min_number_of_ratings,
-                                                min_rank)
+                                                                   min_number_of_ratings,
+                                                                   min_rank)
         else:
             return self.calculate_using_ratings(all_ratings,
                                                 min_number_of_ratings,
@@ -82,7 +74,7 @@ class EvaluationRunner(object):
 
         users = ratings.user_id.unique()
 
-        train_data_len = int((len(users)*70/100))
+        train_data_len = int((len(users) * 70 / 100))
         np.random.shuffle(users)
         train_users, test_users = users[:train_data_len], users[train_data_len:]
 
@@ -100,8 +92,8 @@ class EvaluationRunner(object):
         print("Build is finished")
 
         pak, rak = PrecisionAtK(self.K, self.recommender).calculate(train_data, test_data)
-        mae=0
-        #mae = MeanAverageError(self.recommender).calculate(train_data, test_data)
+        mae = 0
+        # mae = MeanAverageError(self.recommender).calculate(train_data, test_data)
         results = {'pak': pak, 'rak': rak, 'mae': mae}
         return results
 
@@ -138,7 +130,7 @@ class EvaluationRunner(object):
             paks += pak
             raks += rak
             maes += MeanAverageError(self.recommender).calculate(train_data, test_data)
-            results = {'pak': paks/self.folds, 'rak': raks/self.folds, 'mae': maes/self.folds}
+            results = {'pak': paks / self.folds, 'rak': raks / self.folds, 'mae': maes / self.folds}
 
         print(results)
         return results
@@ -161,10 +153,11 @@ class EvaluationRunner(object):
 
         return test, train
 
+
 if __name__ == '__main__':
     min_number_of_ratings = 20
     min_overlap = 5
-    min_sim = 0.3
+    min_sim = 0.1
     K = 20
     min_rank = 5
 
@@ -172,28 +165,31 @@ if __name__ == '__main__':
     file_name = '{}-min_overlap_item_similarity.csv'.format(timestr)
 
     with open(file_name, 'a', 1) as logfile:
-        logfile.write("rak, pak, mae, min_overlap, min_sim, K, min_num_of_ratings, min_rank\n")
+        logfile.write("rak, pak, mae, min_overlap, min_sim, K, min_num_of_ratings, min_rank, user_coverage, "
+                      "movie_coverage\n")
 
         builder = ItemSimilarityMatrixBuilder(min_overlap, min_sim=min_sim)
 
-        for min_overlap in np.arange(0, 20, 1):
-            min_rank = min_number_of_ratings/2
+        for min_overlap in np.arange(0, 5, 1):
+            min_rank = min_number_of_ratings / 2
+            recommender = NeighborhoodBasedRecs()
             er = EvaluationRunner(0,
-                                   builder,
-                                   NeighborhoodBasedRecs(),
-                                   K)
+                                  builder,
+                                  recommender,
+                                  K)
             # Run the baseline recommender:
             # er = EvaluationRunner(3, None, PopularityBasedRecs(), K)
 
             result = er.calculate(min_number_of_ratings, min_rank, number_test_users=-1)
+
+            user_coverage, movie_coverage = RecommenderCoverage(recommender).calculate_coverage()
             pak = result['pak']
             mae = result['mae']
             rak = result['rak']
-            logfile.write("{}, {}, {}, {}, {}, {}, {}, {} \n".format(rak, pak, mae, min_overlap,
-                                                                 min_sim, K,
-                                                                 min_number_of_ratings,
-                                                                 min_rank, datetime.now()))
+            logfile.write("{}, {}, {}, {}, {}, {}, {}, {}, {}, {}\n".format(rak, pak, mae, min_overlap,
+                                                                            min_sim, K,
+                                                                            min_number_of_ratings,
+                                                                            min_rank, datetime.now(),
+                                                                            user_coverage,
+                                                                            movie_coverage))
             logfile.flush()
-            #builder = None
-
-

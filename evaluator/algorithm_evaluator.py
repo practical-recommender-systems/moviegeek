@@ -146,10 +146,10 @@ class PrecisionAtK(object):
         return score
 
 
-class CFCoverage(object):
-    def __init__(self):
+class RecommenderCoverage(object):
+    def __init__(self, recommender):
         self.all_users = Rating.objects.all().values('user_id').distinct()
-        self.cf = NeighborhoodBasedRecs()
+        self.recommender = recommender
         self.items_in_rec = defaultdict(int)
         self.users_with_recs = []
 
@@ -158,7 +158,7 @@ class CFCoverage(object):
         print('calculating coverage for all users ({} in total)'.format(len(self.all_users)))
         for user in self.all_users:
             user_id = str(user['user_id'])
-            recset = self.cf.recommend_items(user_id)
+            recset = self.recommender.recommend_items(user_id)
             if recset:
                 self.users_with_recs.append(user)
                 for rec in recset:
@@ -170,6 +170,10 @@ class CFCoverage(object):
 
         no_movies = Movie.objects.all().count()
         no_movies_in_rec = len(self.items_in_rec.items())
-
-        print("{} {} {}".format(no_movies, no_movies_in_rec, float(no_movies / no_movies_in_rec)))
-        return no_movies_in_rec / no_movies
+        no_users = self.all_users.count()
+        no_users_in_rec = len(self.users_with_recs)
+        user_coverage = float(no_users_in_rec/ no_users)
+        movie_coverage = float(no_movies_in_rec/ no_movies)
+        print("{} {} {}".format(no_users, no_users_in_rec), user_coverage)
+        print("{} {} {}".format(no_movies, no_movies_in_rec, movie_coverage))
+        return user_coverage, movie_coverage

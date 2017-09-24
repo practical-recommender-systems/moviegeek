@@ -2,11 +2,10 @@ import os
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "prs_project.settings")
 
-import django
 import decimal
 import pandas as pd
 
-from builder.evaluation_runner import EvaluationRunner
+from evaluator.evaluation_runner import EvaluationRunner
 from builder.item_similarity_calculator import ItemSimilarityMatrixBuilder
 from recs.neighborhood_based_recommender import NeighborhoodBasedRecs
 
