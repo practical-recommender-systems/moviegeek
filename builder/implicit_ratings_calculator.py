@@ -82,11 +82,11 @@ def calculate_implicit_ratings_w_timedecay(userid, conn):
     return ratings
 
 
-    def calculate_implicit_ratings_for_user(userid, conn=connect_to_db()):
-        data = query_aggregated_log_data_for_user(userid)
+def calculate_implicit_ratings_for_user(userid, conn=connect_to_db()):
+    data = query_aggregated_log_data_for_user(userid)
 
-        agg_data = dict()
-        maxrating = 0
+    agg_data = dict()
+    maxrating = 0
 
     for row in data:
         content_id = str(row['content_id'])
@@ -115,15 +115,15 @@ def save_ratings(ratings, userid, type, conn=data_helper.connect_to_db()):
     i = 0
 
     for content_id, rating in ratings.items():
-
-        Rating(
-            user_id=userid,
-            movie_id=str(content_id),
-            rating=rating,
-            rating_timestamp=datetime.datetime.now(),
-            type=type
-        ).save()
-        print ('{} {}'.format(userid, str(content_id)))
+        if rating > 0:
+            Rating(
+                user_id=userid,
+                movie_id=str(content_id),
+                rating=rating,
+                rating_timestamp=datetime.datetime.now(),
+                type=type
+            ).save()
+            print ('{} {}'.format(userid, str(content_id)))
         #conn.cursor().execute(sql)
 
         i += 1
