@@ -78,7 +78,14 @@ class TestItemSimilarityMatrixBuilder(unittest.TestCase):
         self.assertEqual(av_log.target, AVENGERS)
         self.assertAlmostEqual(float(av_log.similarity), 0.71066905451870177)
 
+    def test_overlap(self):
+        builder = ItemSimilarityMatrixBuilder(1, -1)
 
+        cor, movies = builder.build(ratings=self.ratings, save=False)
+
+        self.assertIsNotNone(cor)
+
+        self.assertEqual(cor.count_nonzero(), 9)
 
 if __name__ == '__main__':
     unittest.main()
