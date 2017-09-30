@@ -163,7 +163,7 @@ class RecommenderCoverage(object):
                 self.users_with_recs.append(user)
                 for rec in recset:
                     self.items_in_rec[rec[0]] += 1
-                print('found recs for {}'.format(user_id))
+
 
         print('writing cf coverage to file.')
         json.dump(self.items_in_rec, open('cf_coverage.json', 'w'))
@@ -174,6 +174,6 @@ class RecommenderCoverage(object):
         no_users_in_rec = len(self.users_with_recs)
         user_coverage = float(no_users_in_rec/ no_users)
         movie_coverage = float(no_movies_in_rec/ no_movies)
-        print("{} {} {}".format(no_users, no_users_in_rec), user_coverage)
+        print("{} {} {}".format(no_users, no_users_in_rec, user_coverage))
         print("{} {} {}".format(no_movies, no_movies_in_rec, movie_coverage))
         return user_coverage, movie_coverage
