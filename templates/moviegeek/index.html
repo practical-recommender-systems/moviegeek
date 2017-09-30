@@ -14,7 +14,7 @@
             });
           });
 
-                function get_cb_recs(userid) {
+          function get_cb_recs(userid) {
             url = '/rec/cb/user/' + userid + '/'
 
             $.getJSON(url,
@@ -225,11 +225,11 @@
         <div id="movies" class="row"></div>
 
         <div id="association_rules_recs" class="row" style="display: none">
-            <h2>recommended for you</h2>
+            <h2>Based on what you and others have bought</h2>
 
         </div>
         <div id="cf_recs" class="row" style="display: none">
-            <h2>Based on what you and others have bought</h2>
+            <h2>Users who liked what you like also like</h2>
 
         </div>
          <div id="cb_recs" class="row" style="display: none">
