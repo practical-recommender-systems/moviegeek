@@ -3,13 +3,13 @@ from django.db import models
 class MovieDescriptions(models.Model):
     movie_id = models.CharField(max_length=8)
     imdb_id = models.CharField(max_length=8)
-    title = models.CharField(max_length=56)
-    description = models.CharField(max_length=512)
+    title = models.CharField(max_length=512)
+    description = models.CharField(max_length=1024)
     genres = models.CharField(max_length=512, default='')
     lda_vector = models.CharField(max_length=56, null=True)
 
     def __str__(self):
-        return self.imdb_id
+        return "{}: {}".format(self.imdb_id, self.title)
 
 
 class Similarity(models.Model):
