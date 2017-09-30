@@ -1,9 +1,12 @@
 import os
-import logging
+import sys
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "prs_project.settings")
-
 import django
+
+
+
+import logging
 import json
 import numpy as np
 
@@ -58,11 +61,13 @@ def load_data():
 
 class LdaModel(object):
 
+    def __init__(self):
+        self.dirname, self.filename = os.path.split(os.path.abspath(__file__))
     def train(self, data, docs):
 
-        NUM_TOPICS = 50
+        NUM_TOPICS = 10
         n_products = len(data)
-        self.lda_path = './../lda/'
+        self.lda_path = self.dirname + '/../lda/'
         if not os.path.exists(self.lda_path):
             os.makedirs(self.lda_path)
 
@@ -73,13 +78,12 @@ class LdaModel(object):
 
         return [tokenizer.tokenize(d) for d in data]
 
-
     def build_lda_model(self, data, docs, n_topics=5):
 
         texts = []
         tokenizer = RegexpTokenizer(r'\w+')
-        for data in data:
-            raw = data.lower()
+        for d in data:
+            raw = d.lower()
 
             tokens = tokenizer.tokenize(raw)
 
@@ -110,7 +114,7 @@ class LdaModel(object):
         return dictionary, texts, lda_model
 
     def save_lda_model(self, lda_model, corpus, dictionary):
-        pyLDAvis.save_json(pyLDAvis.gensim.prepare(lda_model, corpus, dictionary), './../static/js/lda.json')
+        pyLDAvis.save_json(pyLDAvis.gensim.prepare(lda_model, corpus, dictionary), self.lda_path + '/../static/js/lda.json')
         print(lda_model.print_topics())
         lda_model.save(self.lda_path + 'model.lda')
 

@@ -1,3 +1,4 @@
+from datetime import datetime
 from decimal import Decimal
 from math import sqrt
 
@@ -187,6 +188,9 @@ def similar_content(request, content_id, num=6):
 
 
 def recs_cb(request, user_id, num=6):
+    start_time = datetime.now()
+
+    print(f"lda loaded in {datetime.now()-start_time}")
     sorted_items = ContentBasedRecs().recommend_items(user_id, num)
 
     data = {
@@ -210,7 +214,8 @@ def recs_funksvd(request, user_id, num=6):
 
 
 def recs_cf(request, user_id, num=6):
-    sorted_items = NeighborhoodBasedRecs().recommend_items(user_id, num)
+    min_sim = request.GET.get('min_sim', 0.1)
+    sorted_items = NeighborhoodBasedRecs(min_sim=min_sim).recommend_items(user_id, num)
 
     print(f"sorted_items is: {sorted_items}")
     data = {

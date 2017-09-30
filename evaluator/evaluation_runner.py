@@ -4,10 +4,13 @@ from decimal import Decimal
 import numpy as np
 import pandas as pd
 from django.db.models import Count
+from gensim import corpora
+from gensim import similarities
 from sklearn.model_selection import KFold
 
 from builder.item_similarity_calculator import ItemSimilarityMatrixBuilder
 from evaluator.algorithm_evaluator import PrecisionAtK, MeanAverageError, RecommenderCoverage
+from recs.content_based_recommender import ContentBasedRecs
 from recs.neighborhood_based_recommender import NeighborhoodBasedRecs
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "prs_project.settings")
@@ -153,8 +156,7 @@ class EvaluationRunner(object):
 
         return test, train
 
-
-if __name__ == '__main__':
+def evaluate_cf_recommender():
     min_number_of_ratings = 20
     min_overlap = 5
     min_sim = 0.1
@@ -170,7 +172,7 @@ if __name__ == '__main__':
 
         builder = ItemSimilarityMatrixBuilder(min_overlap, min_sim=min_sim)
 
-        for min_overlap in np.arange(0, 5, 1):
+        for min_overlap in np.arange(0, 20, 2):
             min_rank = min_number_of_ratings / 2
             recommender = NeighborhoodBasedRecs()
             er = EvaluationRunner(0,
@@ -189,7 +191,46 @@ if __name__ == '__main__':
             logfile.write("{}, {}, {}, {}, {}, {}, {}, {}, {}, {}\n".format(rak, pak, mae, min_overlap,
                                                                             min_sim, K,
                                                                             min_number_of_ratings,
-                                                                            min_rank, datetime.now(),
+                                                                            min_rank,
                                                                             user_coverage,
                                                                             movie_coverage))
             logfile.flush()
+
+def evaluate_cb_recommender():
+
+    K = 20
+    timestr = time.strftime("%Y%m%d-%H%M%S")
+    file_name = '{}-cb-k.csv'.format(timestr)
+
+    lda_path = './lda/'
+    corpus = corpora.MmCorpus(lda_path + 'corpus.mm'),
+    index = similarities.MatrixSimilarity.load(lda_path + 'index.lda')
+
+    with open(file_name, 'a', 1) as logfile:
+        logfile.write("rak, pak, mae, min_overlap, min_sim, K, min_num_of_ratings, min_rank, user_coverage, "
+                      "movie_coverage\n")
+
+        for K in np.arange(2, 20, 2):
+            recommender = ContentBasedRecs()
+
+            er = EvaluationRunner(0,
+                                  None,
+                                  recommender,
+                                  K)
+
+            result = er.calculate(1, 5, number_test_users=-1)
+
+            user_coverage, movie_coverage = RecommenderCoverage(recommender).calculate_coverage()
+            pak = result['pak']
+            mae = result['mae']
+            rak = result['rak']
+            logfile.write("{}, {}, {}, {}, {}, {}, {}, {}, {}, {}\n".format(rak, pak, mae, min_overlap,
+                                                                            min_sim, K,
+                                                                            min_number_of_ratings,
+                                                                            min_rank,
+                                                                            user_coverage,
+                                                                            movie_coverage))
+            logfile.flush()
+
+if __name__ == '__main__':
+    evaluate_cb_recommender()
