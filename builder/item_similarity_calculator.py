@@ -121,22 +121,24 @@ class ItemSimilarityMatrixBuilder(object):
         ratings['user_id'] = ratings['user_id'].astype('category')
         ratings['movie_id'] = ratings['movie_id'].astype('category')
 
-
         coo = coo_matrix((ratings['avg'].astype(float),
-                          (ratings['user_id'].cat.codes.copy(),
-                           ratings['movie_id'].cat.codes.copy())))
+                          (ratings['movie_id'].cat.codes.copy(),
+                           ratings['user_id'].cat.codes.copy())))
 
-        print("normalized ratings.")
-        overlap_matrix = coo.transpose().astype(bool).astype(int).dot(coo.astype(bool).astype(int))
-
-        print(
-            f"rating matrix (size {coo.shape[0]}x{coo.shape[1]})finished, done in {datetime.now() - start_time} seconds")
+        print("calculating overlaps between the items")
+        overlap_matrix = coo.astype(bool).astype(int).dot(coo.transpose().astype(bool).astype(int))
+        print(f"overlap matrix leaves {(overlap_matrix > self.min_overlap).count_nonzero()} out of {overlap_matrix.count_nonzero()} with {self.min_overlap}")
+        for i in range(0, self.min_overlap+1):
+            print(f"{i}, {(overlap_matrix > i).count_nonzero()}")
+        print()
+        print(f"rating matrix (size {coo.shape[0]}x{coo.shape[1]})finished,",
+            f" done in {datetime.now() - start_time} seconds")
 
         sparsity_level = 1 - (ratings.shape[0] / (coo.shape[0] * coo.shape[1]))
         print("sparsity level is ", sparsity_level)
 
         start_time = datetime.now()
-        cor = cosine_similarity(coo.transpose(), dense_output=False)
+        cor = cosine_similarity(coo, dense_output=False)
         # cor = rp.corr(method='pearson', min_periods=self.min_overlap)
         # cor = (cosine(rp.T))
 
@@ -166,15 +168,20 @@ def normalize(x):
     return (x - x_mean) / (x.max() - x.min())
 
 
-def load_all_ratings():
+def load_all_ratings(min_ratings=1):
     columns = ['user_id', 'movie_id', 'rating', 'type']
 
     ratings_data = Rating.objects.all().values(*columns)
-    ratings = pd.SparseDataFrame.from_records(ratings_data, columns=columns)
+
+    ratings = pd.DataFrame.from_records(ratings_data, columns=columns)
+    user_count = ratings[['user_id', 'movie_id']].groupby('user_id').count()
+    user_count = user_count.reset_index()
+    user_ids = user_count[user_count['movie_id'] > min_ratings]['user_id']
+    ratings = ratings[ratings['user_id'].isin(user_ids)]
     ratings['rating'] = ratings['rating'].astype(float)
     return ratings
 
 
 if __name__ == '__main__':
     all_ratings = load_all_ratings()
-    ItemSimilarityMatrixBuilder().build(all_ratings)
+    ItemSimilarityMatrixBuilder(min_overlap=20, min_sim=0.0).build(all_ratings)
