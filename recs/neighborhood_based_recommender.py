@@ -8,7 +8,11 @@ from decimal import Decimal
 
 
 class NeighborhoodBasedRecs(base_recommender):
-    neighborhood_size = 15
+
+    def __init__(self, neighborhood_size=15, min_sim=0.0):
+        self.neighborhood_size = neighborhood_size
+        self.min_sim = min_sim
+        self.max_candidates = 100
 
     def recommend_items(self, user_id, num=6):
 
@@ -23,8 +27,10 @@ class NeighborhoodBasedRecs(base_recommender):
         user_mean = sum(movie_ids.values()) / len(movie_ids)
 
         candidate_items = Similarity.objects.filter(Q(source__in=movie_ids.keys())
-                                                    & ~Q(target__in=movie_ids.keys()))
-        candidate_items = candidate_items.order_by('-similarity')
+                                                    & ~Q(target__in=movie_ids.keys())
+                                                    & Q(similarity__gt=self.min_sim)
+                                                    )
+        candidate_items = candidate_items.order_by('-similarity')[:self.max_candidates]
 
 
         recs = dict()
@@ -38,15 +44,15 @@ class NeighborhoodBasedRecs(base_recommender):
 
             if len(rated_items) > 1:
                 for sim_item in rated_items:
-                    r = Decimal(movie_ids[sim_item.source]) - user_mean
+                    r = Decimal(movie_ids[sim_item.source] - user_mean)
                     pre += sim_item.similarity * r
                     sim_sum += sim_item.similarity
                 if sim_sum > 0:
-                    recs[target] = {'prediction': user_mean + pre / sim_sum,
+                    recs[target] = {'prediction': Decimal(user_mean) + pre / sim_sum,
                                     'sim_items': [r.source for r in rated_items]}
 
         sorted_items = sorted(recs.items(), key=lambda item: -float(item[1]['prediction']))[:num]
-        print("Time spend on rec ", user_id, " time: ", time.time() - start, "items: ",len( sorted_items))
+        #print("Time spend on rec ", user_id, " time: ", time.time() - start, "items: ",len( sorted_items))
         return sorted_items
 
     def predict_score(self, user_id, item_id):
@@ -61,7 +67,7 @@ class NeighborhoodBasedRecs(base_recommender):
         bottom = 0
 
         candidate_items = Similarity.objects.filter(source__in=movie_ids.keys()).filter(target=item_id)
-        candidate_items = candidate_items.distinct().order_by('-similarity')[:100]
+        candidate_items = candidate_items.distinct().order_by('-similarity')[:self.max_candidates]
 
         if len(candidate_items) == 0:
             return 0
