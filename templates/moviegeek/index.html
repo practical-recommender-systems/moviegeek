@@ -25,7 +25,7 @@
 
                         result.data.forEach(function(element, index, array) {
 
-                            $.getJSON(get_url(element.target), function(mov) {
+                            $.getJSON(get_url(element[0]), function(mov) {
                                 image_url = 'http://image.tmdb.org/t/p/w500/'
                                 + mov.movie_results[0].poster_path
 
@@ -33,7 +33,7 @@
                                 rec_div.setAttribute('class', "col-sm-2 img-responsive")
 
                                 a = document.createElement('a')
-                                a.setAttribute('href', '/movies/movie/' + element.id)
+                                a.setAttribute('href', '/movies/movie/' + element[0])
 
                                 img = document.createElement('img')
                                 img.setAttribute('src', image_url)
