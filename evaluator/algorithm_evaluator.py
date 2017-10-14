@@ -95,19 +95,21 @@ class PrecisionAtK(object):
             dict_for_rec = training_data_for_user.to_dict(orient='records')
             #print("dict_for_rec ",dict_for_rec )
             relevant_ratings = list(users_test_data['movie_id'])
+            rects = []
 
-            recs = list(self.rec.recommend_items_by_ratings(user_id,
-                                                            dict_for_rec,
-                                                            self.K))
+            if len(dict_for_rec) > 0:
+                recs = list(self.rec.recommend_items_by_ratings(user_id,
+                                                                dict_for_rec,
+                                                                self.K))
 
-            if len(recs) > 0:
-                AP = self.average_precision_k(recs, relevant_ratings)
-                AR = self.average_recall_k(recs, relevant_ratings)
-                print("recs: {} actual: {} p@k {} r@k {} ".format(len(recs), len(relevant_ratings), AP, AR))
-                arks.append(AP)
-                apks.append(AR)
-                total_precision_score += AP
-                total_recall_score += AR
+                if len(recs) > 0:
+                    AP = self.average_precision_k(recs, relevant_ratings)
+                    AR = self.average_recall_k(recs, relevant_ratings)
+                    print("recs: {} actual: {} p@k {} r@k {} ".format(len(recs), len(relevant_ratings), AP, AR))
+                    arks.append(AP)
+                    apks.append(AR)
+                    total_precision_score += AP
+                    total_recall_score += AR
 
         mean_average_recall = np.mean(arks)
         mean_average_precision = np.mean(apks)
