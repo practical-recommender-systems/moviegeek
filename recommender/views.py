@@ -150,35 +150,8 @@ def similar_users(request, user_id, type):
 
 
 def similar_content(request, content_id, num=6):
-    # lda = models.ldamodel.LdaModel.load('./lda/model.lda')
-    #
-    # dictionary = corpora.Dictionary.load('./lda/dict.lda')
-    #
-    # corpus = corpora.MmCorpus('./lda/corpus.mm')
-    # content_sims = dict()
-    #
-    # md = MovieDescriptions.objects.filter(imdb_id=content_id).first()
-    #
-    #
-    # if md is not None:
-    #     index = similarities.MatrixSimilarity.load('./lda/index.lda')
-    #
-    #     lda_vector = lda[corpus[int(md.lda_vector)]]
-    #     sims = index[lda_vector]
-    #
-    #     sorted_sims = sorted(enumerate(sims), key=lambda item: -item[1])[:num]
-    #
-    #     movies = get_movie_ids(sorted_sims, corpus, dictionary)
-    #
-    #     for movie in movies:
-    #         target = movie['target']
-    #         if target in content_sims.keys():
-    #             if movie['sim'] > content_sims[target]['sim']:
-    #                 content_sims[target] = movie
-    #         else:
-    #             content_sims[target] = movie
 
-    sorted_items = ContentBasedRecs().recommend_items_from_items([content_id], num)
+    sorted_items = ContentBasedRecs().seeded_rec([content_id], num)
     data = {
         'source_id': content_id,
         'data': sorted_items
@@ -217,7 +190,7 @@ def recs_cf(request, user_id, num=6):
     min_sim = request.GET.get('min_sim', 0.1)
     sorted_items = NeighborhoodBasedRecs(min_sim=min_sim).recommend_items(user_id, num)
 
-    print(f"sorted_items is: {sorted_items}")
+    print(f"cf sorted_items is: {sorted_items}")
     data = {
         'user_id': user_id,
         'data': sorted_items
