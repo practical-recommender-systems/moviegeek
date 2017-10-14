@@ -1,9 +1,12 @@
 import os
 import sys
 
+import psycopg2
+from scipy.sparse import coo_matrix
+
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "prs_project.settings")
 import django
-
+from datetime import datetime
 
 
 import logging
@@ -23,7 +26,7 @@ from gensim import corpora, models, similarities
 
 django.setup()
 
-from recommender.models import MovieDescriptions
+from recommender.models import MovieDescriptions, LdaSimilarity
 
 
 def dot_product(v1, v2):
@@ -40,7 +43,7 @@ def vector_cos(v1, v2):
 
 def cosine_similarity(ldas):
     size = ldas.shape[0]
-    similarity_matrix = np.zeros((size,size))
+    similarity_matrix = np.zeros((size, size))
 
     for i in range(ldas.shape[0]):
 
@@ -61,8 +64,10 @@ def load_data():
 
 class LdaModel(object):
 
-    def __init__(self):
+    def __init__(self, min_sim=0.1):
         self.dirname, self.filename = os.path.split(os.path.abspath(__file__))
+        self.min_sim = min_sim
+
     def train(self, data, docs):
 
         NUM_TOPICS = 10
@@ -105,11 +110,17 @@ class LdaModel(object):
         index = similarities.MatrixSimilarity(corpus)
 
         index.save(self.lda_path + 'index.lda')
+        cor = coo_matrix(index)
+        cor = cor.multiply(cor > self.min_sim)
+        print(cor.count_nonzero())
         for i in range(len(texts)):
+            lda_vector = corpus[i]
+            #docs[i].sim_list = index[lda_vector]
             docs[i].lda_vector = i
             docs[i].save()
 
         self.save_lda_model(lda_model, corpus, dictionary)
+        self.save_similarities(corpus, index, docs)
 
         return dictionary, texts, lda_model
 
@@ -127,9 +138,54 @@ class LdaModel(object):
         stopped_tokens = [token for token in tokenized_data if token not in en_stop]
         return stopped_tokens
 
+    def save_similarities(self, corpus, index, docs, created=datetime.now()):
+
+        start_time = datetime.now()
+        print(f'truncating table in {datetime.now() - start_time} seconds')
+        sims = []
+        no_saved = 0
+        start_time = datetime.now()
+        coo = coo_matrix(index)
+        csr = coo.tocsr()
+
+        print(f'instantiation of coo_matrix in {datetime.now() - start_time} seconds')
+
+        query = "insert into lda_similarity (created, source, target, similarity) values %s;"
+
+        conn = psycopg2.connect("dbname=moviegeek user=postgres password=hullo1!")
+        cur = conn.cursor()
+
+        cur.execute('truncate table lda_similarity')
+
+        print(f'{coo.count_nonzero()} similarities to save')
+        xs, ys = coo.nonzero()
+        for x, y in zip(xs, ys):
+
+            if x == y:
+                continue
+
+            sim = float(csr[x, y])
+            x_id = str(docs[x].movie_id)
+            y_id = str(docs[y].movie_id)
+            if sim < self.min_sim:
+                continue
+
+            if len(sims) == 100000:
+                psycopg2.extras.execute_values(cur, query, sims)
+                sims = []
+                print(f"{no_saved} saved in {datetime.now() - start_time}")
+
+            new_similarity = (str(created), x_id, y_id, sim)
+            no_saved += 1
+            sims.append(new_similarity)
+
+        psycopg2.extras.execute_values(cur, query, sims, template=None, page_size=1000)
+        conn.commit()
+        print('{} Similarity items saved, done in {} seconds'.format(no_saved, datetime.now() - start_time))
+
+
 if __name__ == '__main__':
     print("Calculating lda model...")
-
 
     logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
     data, docs = load_data()
