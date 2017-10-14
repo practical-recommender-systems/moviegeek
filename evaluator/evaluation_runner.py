@@ -210,7 +210,7 @@ def evaluate_cb_recommender():
         logfile.write("rak, pak, mae, min_overlap, min_sim, K, min_num_of_ratings, min_rank, user_coverage, "
                       "movie_coverage\n")
 
-        for K in np.arange(2, 20, 2):
+        for K in np.arange(5, 20, 3):
             recommender = ContentBasedRecs()
 
             er = EvaluationRunner(0,
@@ -221,15 +221,11 @@ def evaluate_cb_recommender():
             result = er.calculate(1, 5, number_test_users=-1)
 
             user_coverage, movie_coverage = RecommenderCoverage(recommender).calculate_coverage()
+
             pak = result['pak']
             mae = result['mae']
             rak = result['rak']
-            logfile.write("{}, {}, {}, {}, {}, {}, {}, {}, {}, {}\n".format(rak, pak, mae, min_overlap,
-                                                                            min_sim, K,
-                                                                            min_number_of_ratings,
-                                                                            min_rank,
-                                                                            user_coverage,
-                                                                            movie_coverage))
+            logfile.write("{}, {}, {}, {}, {}, {}\n".format(rak, pak, mae, K, user_coverage, movie_coverage))
             logfile.flush()
 
 if __name__ == '__main__':
