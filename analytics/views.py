@@ -1,3 +1,5 @@
+import decimal
+
 from django.shortcuts import render
 from django.db.models import Count
 from django.http import JsonResponse
@@ -29,7 +31,7 @@ def user(request, user_id):
 
     movie_dtos = list()
     sum_rating = 0
-
+    user_avg = sum([r.rating for r in ratings.values()])/decimal.Decimal(len(ratings))
 
     genres = {g['name']: 0 for g in Genre.objects.all().values('name').distinct()}
     for movie in movies:
@@ -40,11 +42,10 @@ def user(request, user_id):
         r = rating.rating
         sum_rating += r
         movie_dtos.append(MovieDto(id, movie.title, r))
-
         for genre in movie.genres.all():
 
             if genre.name in genres.keys():
-                genres[genre.name] += r
+                genres[genre.name] += r - user_avg
 
     max_value = max(genres.values())
     max_value = max(max_value,1)
@@ -54,8 +55,8 @@ def user(request, user_id):
     print(movie_dtos)
     context_dict = {
         'user_id': user_id,
-        'avg_rating': 0 if len(movie_dtos) == 0 else round(float(sum_rating) / float(len(movie_dtos)), 2),
-        'movies': sorted(movie_dtos, key=lambda item: -float(item.rating)),
+        'avg_rating': user_avg,
+        'movies': sorted(movie_dtos, key=lambda item: -float(item.rating))[:20],
         'genres': genres,
         'logs': list(log),
         'cluster': cluster_id,
@@ -98,8 +99,6 @@ def lda(request):
         "number_of_topics": lda.num_topics
 
     }
-
-
     return render(request, 'analytics/lda_model.html', context_dict)
 
 
@@ -147,8 +146,6 @@ class MovieDto(object):
 
 def top_content(request):
 
-    #todo: use django ORM instead of raw sql.
-
     cursor = connection.cursor()
     cursor.execute('SELECT \
                         content_id,\
@@ -188,23 +185,6 @@ def similarity_graph(request):
         "nodes": nodes,
         "edges": edges
     }
-    # context_dict = {
-    #     "nodes": [
-    #         {"id": 2, "label": 'Node 2'},
-    #         {"id": 3, "label": 'Node 3'},
-    #         {"id": 4, "label": 'Node 4'},
-    #         {"id": 5, "label": 'Node 5'},
-    #         {"id": 1, "label": 'Node 1'},
-    #     ],
-    #     "edges": [
-    #         {"from": 1, "to": 3},
-    #         {"from": 1, "to": 2},
-    #         {"from": 2, "to": 4},
-    #         {"from": 2, "to": 5},
-    #         {"from": 1, "to": 5}
-    #     ]
-    #
-    # }
     return render(request, 'analytics/similarity_graph.html', context_dict)
 
 def get_api_key():
