@@ -1,5 +1,6 @@
 import os
 from decimal import Decimal
+from random import random
 
 import numpy as np
 import pandas as pd
@@ -9,8 +10,10 @@ from gensim import similarities
 from sklearn.model_selection import KFold
 
 from builder.item_similarity_calculator import ItemSimilarityMatrixBuilder
+from builder.matrix_factorization_calculator import MatrixFactorization
 from evaluator.algorithm_evaluator import PrecisionAtK, MeanAverageError, RecommenderCoverage
 from recs.content_based_recommender import ContentBasedRecs
+from recs.funksvd_recommender import FunkSVDRecs
 from recs.neighborhood_based_recommender import NeighborhoodBasedRecs
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "prs_project.settings")
@@ -24,11 +27,12 @@ from analytics.models import Rating
 
 
 class EvaluationRunner(object):
-    def __init__(self, folds, builder, recommender, K=10):
+    def __init__(self, folds, builder, recommender, K=10, params = None):
         self.folds = folds
         self.builder = builder
         self.recommender = recommender
         self.K = K
+        self.params = params
 
     def clean_data(self, ratings, min_ratings=5):
         print("cleaning data only to contain users with at least {} ratings".format(min_ratings))
@@ -58,9 +62,9 @@ class EvaluationRunner(object):
                 .filter(movie_count__gt=min_number_of_ratings) \
                 .order_by('-movie_count')
 
-            user_ids = user_ids.values('user_id')[:number_test_users]
+            test_user_ids = set(user_ids.values('user_id')[:number_test_users])
 
-            ratings_rows = Rating.objects.filter(user_id__in=user_ids).values()
+            ratings_rows = Rating.objects.filter(user_id__in=test_user_ids).values()
 
         all_ratings = pd.DataFrame.from_records(ratings_rows)
         if self.folds == 0:
@@ -78,6 +82,7 @@ class EvaluationRunner(object):
         users = ratings.user_id.unique()
 
         train_data_len = int((len(users) * 70 / 100))
+        np.random.seed(42)
         np.random.shuffle(users)
         train_users, test_users = users[:train_data_len], users[train_data_len:]
 
@@ -90,14 +95,17 @@ class EvaluationRunner(object):
                                                                           len(test_data)))
 
         if self.builder:
-            self.builder.build(train_data)
+            if self.params:
+                self.builder.build(train_data, self.params)
+                self.recommender.set_save_path(self.params['save_path'])
+            else:
+                self.builder.build(train_data)
 
         print("Build is finished")
 
         pak, rak = PrecisionAtK(self.K, self.recommender).calculate(train_data, test_data)
         mae = 0
-        # mae = MeanAverageError(self.recommender).calculate(train_data, test_data)
-        results = {'pak': pak, 'rak': rak, 'mae': mae}
+        results = {'pak': pak, 'rak': rak, 'mae': mae, 'users': len(users)}
         return results
 
     def calculate_using_ratings(self, all_ratings, min_number_of_ratings=5, min_rank=5):
@@ -228,5 +236,40 @@ def evaluate_cb_recommender():
             logfile.write("{}, {}, {}, {}, {}, {}\n".format(rak, pak, mae, K, user_coverage, movie_coverage))
             logfile.flush()
 
+
+def evaluate_funksvd_recommender():
+    save_path = '/Users/u0157492/Projects/moviegeek/evaluation/precision/'
+    K = 20
+    timestr = time.strftime("%Y%m%d-%H%M%S")
+    file_name = '{}-funksvd-k.csv'.format(timestr)
+
+    with open(file_name, 'a', 1) as logfile:
+        logfile.write("rak,pak,mae,k,user_coverage,movie_coverage\n")
+
+        #builder = MatrixFactorization(save_path)
+        for k in np.arange(5, 50, 2):
+
+            recommender = FunkSVDRecs()
+
+            er = EvaluationRunner(0,
+                                  None, #builder,
+                                  recommender,
+                                  k,
+                                  params={'k': 20,
+                                          'save_path': save_path + 'model/'})
+
+            result = er.calculate(1, 5)
+
+            builder = None # Enough to train it once.
+
+            #user_coverage, movie_coverage = RecommenderCoverage(recommender).calculate_coverage()
+            user_coverage, movie_coverage = 0,0
+            pak = result['pak']
+            mae = result['mae']
+            rak = result['rak']
+            logfile.write("{}, {}, {}, {}, {}, {}\n".format(rak, pak, mae, k, user_coverage, movie_coverage))
+            #logfile.write("{}, {}, {}, {}\n".format(rak, pak, mae, K))
+            logfile.flush()
+
 if __name__ == '__main__':
-    evaluate_cb_recommender()
+    evaluate_funksvd_recommender()

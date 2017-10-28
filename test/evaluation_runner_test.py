@@ -109,7 +109,7 @@ class TestEvaluationRunner(unittest.TestCase):
              [10, DR_STRANGELOVE, 8, '2016-10-12 23:20:27+00:00'],
 
              ], columns=['user_id', 'movie_id', 'rating', 'rating_timestamp'])
-
+        ratings['rating'] = ratings['rating'].astype(decimal.Decimal)
         result = er.calculate_using_ratings(ratings, min_number_of_ratings=4, min_rank=5)
 
         #figure out what to do with result ;)
