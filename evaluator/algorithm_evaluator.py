@@ -34,7 +34,7 @@ class MeanAverageError(object):
             user_error = Decimal(0.0)
 
             ratings_for_rec = train_ratings[train_ratings.user_id == user_id]
-            movies = {m['movie_id']: m['rating'] for m in
+            movies = {m['movie_id']: Decimal(m['rating']) for m in
                       ratings_for_rec[['movie_id', 'rating']].to_dict(orient='records')}
 
             this_test_ratings = test_ratings[test_ratings['user_id'] == user_id]
@@ -79,21 +79,16 @@ class PrecisionAtK(object):
         total_precision_score = Decimal(0.0)
         total_recall_score = Decimal(0.0)
 
-        #with open(file_name, 'a') as the_file:
-        #    the_file.write("user_id, num_recs, num_test_data, test_data, recs\n")
-            # use test users.
-
         apks = []
         arks = []
         user_id_count = 0
-        #timestr = time.strftime("%Y%m%d-%H%M%S")
-
+        no_rec = 0
         for user_id, users_test_data in test_ratings.groupby('user_id'):
             user_id_count += 1
             training_data_for_user = train_ratings[train_ratings['user_id'] == user_id][:20]
-            #print("training_data_for_user ",training_data_for_user)
+
             dict_for_rec = training_data_for_user.to_dict(orient='records')
-            #print("dict_for_rec ",dict_for_rec )
+
             relevant_ratings = list(users_test_data['movie_id'])
             rects = []
 
@@ -101,37 +96,35 @@ class PrecisionAtK(object):
                 recs = list(self.rec.recommend_items_by_ratings(user_id,
                                                                 dict_for_rec,
                                                                 self.K))
-
                 if len(recs) > 0:
                     AP = self.average_precision_k(recs, relevant_ratings)
-                    AR = self.average_recall_k(recs, relevant_ratings)
-                    print("recs: {} actual: {} p@k {} r@k {} ".format(len(recs), len(relevant_ratings), AP, AR))
-                    arks.append(AP)
-                    apks.append(AR)
+                    AR = self.recall_at_k(recs, relevant_ratings)
+                    arks.append(AR)
+                    apks.append(AP)
                     total_precision_score += AP
                     total_recall_score += AR
+                else:
+                    no_rec += 1
 
-        mean_average_recall = np.mean(arks)
-        mean_average_precision = np.mean(apks)
-        print("MAP: ( ap@k: {}, ar@k{}, {}) = {}".format(total_precision_score,
-                                                         total_recall_score,
-                                                         user_id_count,
-                                                         mean_average_precision))
-        return mean_average_precision, mean_average_recall
+        average_recall = total_recall_score/len(arks) if len(arks) > 0 else 0
+        mean_average_precision = total_precision_score/len(apks) if len(apks) > 0 else 0
+        print("ap@k: {}, ar@k{}, #userid {}, MAP{}, len-ap{}, len-ar{}, no_recs{}".format(total_precision_score,
+                                                                         total_recall_score,
+                                                                         user_id_count,
+                                                                         mean_average_precision,
+                                                                         len(apks),
+                                                                         len(arks),
+                                                                         np.mean(apks)))
+        return mean_average_precision, average_recall
 
-    def average_recall_k(self, recs, actual):
-        score = Decimal(0.0)
-        num_hits = 0
+    def recall_at_k(self, recs, actual):
 
-        for i, p in enumerate(recs):
-            TP = p[0] in actual
-            if TP:
-                num_hits += 1.0
-            score += Decimal(num_hits / min(len(actual), len(recs)))
-        score /= len(recs)
+        if len(actual) == 0:
+            return Decimal(0.0)
 
+        TP = set([r[0] for r in recs if r[0] in actual])
 
-        return score
+        return Decimal(len(TP) / len(actual))
 
     def average_precision_k(self, recs, actual):
         score = Decimal(0.0)
@@ -143,8 +136,7 @@ class PrecisionAtK(object):
                 num_hits += 1.0
             score += Decimal(num_hits / (i + 1.0))
 
-        score /= len(recs)
-
+        score /= min(len(recs), len(actual))
         return score
 
 
@@ -166,7 +158,6 @@ class RecommenderCoverage(object):
                 for rec in recset:
                     self.items_in_rec[rec[0]] += 1
 
-
         print('writing cf coverage to file.')
         json.dump(self.items_in_rec, open('cf_coverage.json', 'w'))
 
@@ -174,8 +165,8 @@ class RecommenderCoverage(object):
         no_movies_in_rec = len(self.items_in_rec.items())
         no_users = self.all_users.count()
         no_users_in_rec = len(self.users_with_recs)
-        user_coverage = float(no_users_in_rec/ no_users)
-        movie_coverage = float(no_movies_in_rec/ no_movies)
+        user_coverage = float(no_users_in_rec / no_users)
+        movie_coverage = float(no_movies_in_rec / no_movies)
         print("{} {} {}".format(no_users, no_users_in_rec, user_coverage))
         print("{} {} {}".format(no_movies, no_movies_in_rec, movie_coverage))
         return user_coverage, movie_coverage
