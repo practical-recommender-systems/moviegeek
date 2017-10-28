@@ -109,22 +109,14 @@ class LdaModel(object):
 
         index = similarities.MatrixSimilarity(corpus)
 
-        index.save(self.lda_path + 'index.lda')
-        cor = coo_matrix(index)
-        cor = cor.multiply(cor > self.min_sim)
-        print(cor.count_nonzero())
-        for i in range(len(texts)):
-            lda_vector = corpus[i]
-            #docs[i].sim_list = index[lda_vector]
-            docs[i].lda_vector = i
-            docs[i].save()
-
-        self.save_lda_model(lda_model, corpus, dictionary)
-        self.save_similarities(corpus, index, docs)
+        self.save_lda_model(lda_model, corpus, dictionary, index)
+        self.save_similarities(index, docs)
 
         return dictionary, texts, lda_model
 
-    def save_lda_model(self, lda_model, corpus, dictionary):
+    def save_lda_model(self, lda_model, corpus, dictionary, index):
+
+        index.save(self.lda_path + 'index.lda')
         pyLDAvis.save_json(pyLDAvis.gensim.prepare(lda_model, corpus, dictionary), self.lda_path + '/../static/js/lda.json')
         print(lda_model.print_topics())
         lda_model.save(self.lda_path + 'model.lda')
@@ -133,12 +125,13 @@ class LdaModel(object):
         corpora.MmCorpus.serialize(self.lda_path + 'corpus.mm', corpus)
 
     def remove_stopwords(self, tokenized_data):
+
         en_stop = get_stop_words('en')
 
         stopped_tokens = [token for token in tokenized_data if token not in en_stop]
         return stopped_tokens
 
-    def save_similarities(self, corpus, index, docs, created=datetime.now()):
+    def save_similarities(self, index, docs, created=datetime.now()):
 
         start_time = datetime.now()
         print(f'truncating table in {datetime.now() - start_time} seconds')
