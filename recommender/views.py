@@ -17,6 +17,7 @@ from builder import data_helper
 from gensim import models, corpora, similarities
 
 from recs.content_based_recommender import ContentBasedRecs
+from recs.funksvd_recommender import FunkSVDRecs
 from recs.neighborhood_based_recommender import NeighborhoodBasedRecs
 from recs.popularity_recommender import PopularityBasedRecs
 
@@ -175,13 +176,11 @@ def recs_cb(request, user_id, num=6):
 
 
 def recs_funksvd(request, user_id, num=6):
-    recs = Recs.objects.filter(user='u' + user_id)
-
-    top_num = sorted(recs.values(), key=lambda rec: rec['rating'])
+    sorted_items = FunkSVDRecs().recommend_items(user_id, num)
 
     data = {
         'user_id': user_id,
-        'data': top_num[:num]
+        'data': sorted_items
     }
     return JsonResponse(data, safe=False)
 
