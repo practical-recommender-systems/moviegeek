@@ -52,7 +52,6 @@ class NeighborhoodBasedRecs(base_recommender):
                                     'sim_items': [r.source for r in rated_items]}
 
         sorted_items = sorted(recs.items(), key=lambda item: -float(item[1]['prediction']))[:num]
-        #print("Time spend on rec ", user_id, " time: ", time.time() - start, "items: ",len( sorted_items))
         return sorted_items
 
     def predict_score(self, user_id, item_id):
