@@ -6,9 +6,7 @@ import django
 
 django.setup()
 
-import decimal
 import pandas as pd
-import numpy as np
 
 from recommender.models import Similarity
 from analytics.models import Rating
@@ -18,7 +16,9 @@ from datetime import datetime
 
 import psycopg2
 
+
 class ItemSimilarityMatrixBuilder(object):
+
     def __init__(self, min_overlap=15, min_sim=0.2):
         self.min_overlap = min_overlap
         self.min_sim = min_sim
@@ -163,7 +163,7 @@ def normalize(x):
     x_num = x.astype(bool).sum()
     x_mean = x_sum / x_num
 
-    if x.std() == 0:
+    if x_num == 1 or x.std() == 0:
         return 0.0
     return (x - x_mean) / (x.max() - x.min())
 
