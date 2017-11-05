@@ -1,34 +1,23 @@
 import os
 import sys
 import random
+import logging
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "prs_project.settings")
 
 import django
-from django.db.models import Avg, Count
-
-from scipy.sparse import coo_matrix
-from sklearn.cluster import KMeans
-from sklearn.decomposition import PCA
 import pickle
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import json
-import decimal
 
 from collections import defaultdict
 import math
 from datetime import datetime
 
-from builder import data_helper
-
 django.setup()
 
-from analytics.models import Rating, Cluster
-from moviegeeks.models import Movie
-from recommender.models import Recs
+from analytics.models import Rating
 
 
 def ensure_dir(file_path):
@@ -38,13 +27,13 @@ def ensure_dir(file_path):
 
 
 class MatrixFactorization(object):
+
     Regularization = 0.02
-    NumFactors = 3
-    BiasLearnRate = 0.7
-    BiasReg = 0.02
+    NumFactors = 40
+    BiasLearnRate = 0.02
+    BiasReg = 0.002
     FrequencyRegularization = 1
     LearnRate = 0.001
-    k = 25
     all_movies_mean = 0
     number_of_ratings = 0
 
@@ -56,16 +45,18 @@ class MatrixFactorization(object):
     MINIMUM_IMPROVEMENT = 0.00001
 
     def __init__(self, save_path):
+        self.logger = logging.getLogger('funkSVD')
         self.save_path = save_path
-        self.saved_predictions = None
         self.user_factors = None
         self.item_factors = None
+        self.u_inx = None
+        self.i_inx = None
         self.user_ids = None
         self.movie_ids = None
 
         self.all_movies_mean = 0.0
         self.number_of_ratings = 0
-        self.MAX_ITERATIONS = 20
+        self.MAX_ITERATIONS = 40
 
         ensure_dir(save_path)
 
@@ -76,20 +67,17 @@ class MatrixFactorization(object):
         self.u_inx = {r: i for i, r in enumerate(self.user_ids)}
         self.i_inx = {r: i for i, r in enumerate(self.movie_ids)}
 
-        self.saved_predictions = np.zeros((len(self.user_ids), len(self.user_ids)))
-        # self.item_factors = 1 / k * np.random.randn(len(self.i_inx), k)
         self.item_factors = np.full((len(self.i_inx), k), 0.1)
-        # self.user_factors = 1 / k * np.random.randn(len(self.u_inx), k)
         self.user_factors = np.full((len(self.u_inx), k), 0.1)
 
-        self.all_movies_mean = self.calculate_all_movies_mean(ratings)
-        print("user_factors are {}".format(self.user_factors.shape))
+        self.all_movies_mean = calculate_all_movies_mean(ratings)
+        self.logger.info("user_factors are {}".format(self.user_factors.shape))
         self.user_bias = defaultdict(lambda: 0)
         self.item_bias = defaultdict(lambda: 0)
 
     def predict(self, user, item):
 
-        pq = np.dot(self.item_factors[item],self.user_factors[user].T)
+        pq = np.dot(self.item_factors[item], self.user_factors[user].T)
         b_ui = self.all_movies_mean + self.user_bias[user] + self.item_bias[item]
         prediction = b_ui + pq
 
@@ -100,15 +88,11 @@ class MatrixFactorization(object):
         return prediction
 
     def build(self, ratings, params):
+
         if params:
             k = params['k']
+
         self.train(ratings, k)
-
-    def loss(self, factor, i, rating, u):
-
-        prediction_error = (float(rating) - self.predict(u, i))
-
-        return prediction_error
 
     def split_data(self, min_rank, ratings):
 
@@ -129,8 +113,9 @@ class MatrixFactorization(object):
 
     def meta_parameter_train(self, ratings_df):
 
-        for k in [15, 20, 30, 40, 50, 75, 100, 125, 150, 200]:
+        for k in [15, 20, 30, 40, 50, 75, 100]:
             self.initialize_factors(ratings_df, k)
+            self.logger.info("Training model with {} factors".format(k))
             self.log(str(k), "factor, iterations, train_mse, test_mse, time")
 
             test_data, train_data = self.split_data(10,
@@ -152,7 +137,6 @@ class MatrixFactorization(object):
                 finished = False
 
                 while not finished:
-                    start_time = datetime.now()
                     train_mse = self.stocastic_gradient_descent(factor,
                                                                 index_randomized,
                                                                 ratings)
@@ -172,7 +156,7 @@ class MatrixFactorization(object):
 
                     self.log(str(k), f"{factor}, {iterations}, {train_mse}, {test_mse}, {datetime.now() - factor_time}")
 
-                self.save(factor, finished)
+            self.save(k, False)
 
     def calculate_mse(self, ratings, factor):
 
@@ -183,16 +167,17 @@ class MatrixFactorization(object):
             pq = np.dot(self.item_factors[item][:factor], self.user_factors[user][:factor].T)
             b_ui = self.all_movies_mean + self.user_bias[user] + self.item_bias[item]
             prediction = b_ui + pq
-
-            return (prediction - float(row[2])) ** 2
+            MSE = (prediction - float(row[2])) ** 2
+            RMSE = ((prediction - float(row[2]))/2)**2
+            return RMSE
 
         squared = np.apply_along_axis(difference, 1, ratings).sum()
-        return squared / ratings.shape[0]
+        return math.sqrt(squared / ratings.shape[0])
 
     def train(self, ratings_df, k=40):
 
         self.initialize_factors(ratings_df, k)
-        print("training matrix factorization at {}".format(datetime.now()))
+        self.logger.info("training matrix factorization at {}".format(datetime.now()))
 
         ratings = ratings_df[['user_id', 'movie_id', 'rating']].as_matrix()
 
@@ -213,16 +198,16 @@ class MatrixFactorization(object):
 
 
                 iterations += 1
-                print("one epoch in {} on f={} i={} err={}".format(datetime.now() - start_time,
-                                                                   factor,
-                                                                   iterations,
-                                                                   iteration_err))
+                self.logger.info("epoch in {}, f={}, i={} err={}".format(datetime.now() - start_time,
+                                                                       factor,
+                                                                       iterations,
+                                                                       iteration_err))
                 finished = self.finished(iterations,
                                          last_err,
                                          iteration_err)
                 last_err = iteration_err
             self.save(factor, finished)
-            print("finished factor {} on f={} i={} err={}".format(factor,
+            self.logger.info("finished factor {} on f={} i={} err={}".format(factor,
                                                                   datetime.now() - factor_time,
                                                                   iterations,
                                                                   iteration_err))
@@ -230,10 +215,10 @@ class MatrixFactorization(object):
     def stocastic_gradient_descent(self, factor, index_randomized, ratings):
 
         lr = self.LearnRate
+        b_lr = self.BiasLearnRate
         r = self.Regularization
         bias_r = self.BiasReg
 
-        current_err = 0
         for inx in index_randomized:
             rating_row = ratings[inx]
 
@@ -243,8 +228,8 @@ class MatrixFactorization(object):
 
             err = (float(rating) - self.predict(u, i))
 
-            self.user_bias[u] += lr * (err - bias_r * self.user_bias[u])
-            self.item_bias[i] += lr * (err - bias_r * self.item_bias[i])
+            self.user_bias[u] += b_lr * (err - bias_r * self.user_bias[u])
+            self.item_bias[i] += b_lr * (err - bias_r * self.item_bias[i])
 
             user_fac = self.user_factors[u][factor].copy()
             item_fac = self.item_factors[i][factor].copy()
@@ -256,20 +241,15 @@ class MatrixFactorization(object):
         return self.calculate_mse(ratings, factor)
 
     def finished(self, iterations, last_err, current_err,
-                 last_test_mse=0, test_mse=0):
+                 last_test_mse=0.0, test_mse=0.0):
 
         if last_test_mse < test_mse or iterations >= self.MAX_ITERATIONS or last_err < current_err:
-            print('Finish w iterations: {}, last_err: {}, current_err {}'
-                  .format(iterations, last_err, current_err))
+            self.logger.info('Finish w iterations: {}, last_err: {}, current_err {}'
+                             .format(iterations, last_err, current_err))
             return True
         else:
             self.iterations += 1
             return False
-
-    def calculate_all_movies_mean(self, ratings):
-
-        avg = ratings['rating'].sum() / ratings.shape[0]
-        return float(avg)
 
     def save(self, factor, finished):
 
@@ -279,7 +259,7 @@ class MatrixFactorization(object):
 
         ensure_dir(save_path)
 
-        print("saving factors in {}".format(save_path))
+        self.logger.info("saving factors in {}".format(save_path))
         user_bias = {uid: self.user_bias[self.u_inx[uid]] for uid in self.u_inx.keys()}
         item_bias = {iid: self.item_bias[self.i_inx[iid]] for iid in self.i_inx.keys()}
 
@@ -305,19 +285,38 @@ class MatrixFactorization(object):
             log_file.write(logtext + '\n')
 
 
-def load_all_ratings():
+def load_all_ratings(min_ratings=1):
     columns = ['user_id', 'movie_id', 'rating', 'type', 'rating_timestamp']
 
     ratings_data = Rating.objects.all().values(*columns)
 
     ratings = pd.DataFrame.from_records(ratings_data, columns=columns)
+
+    user_count = ratings[['user_id', 'movie_id']].groupby('user_id').count()
+    user_count = user_count.reset_index()
+    user_ids = user_count[user_count['movie_id'] > min_ratings]['user_id']
+
+    ratings = ratings[ratings['user_id'].isin(user_ids)]
+
     ratings['rating'] = ratings['rating'].astype(float)
     return ratings
 
 
-if __name__ == '__main__':
-    print("Calculating matrix factorization...")
+def calculate_all_movies_mean(ratings):
 
-    MF = MatrixFactorization(save_path='./models/prod/')
-    # MF.meta_parameter_train(load_all_ratings())
-    MF.train(load_all_ratings(), k=40)
+    avg = ratings['rating'].sum() / ratings.shape[0]
+    return float(avg)
+
+
+if __name__ == '__main__':
+
+    logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
+    logger = logging.getLogger('funkSVD')
+    logger.info("[BEGIN] Calculating matrix factorization")
+
+    MF = MatrixFactorization(save_path='./models/funkSVD/{}/'.format(datetime.now()))
+    loaded_ratings = load_all_ratings()
+    logger.info("using {} ratings".format(loaded_ratings.shape[0]))
+    MF.meta_parameter_train(loaded_ratings)
+    #MF.train(load_all_ratings(), k=40)
+    logger.info("[DONE] Calculating matrix factorization")
