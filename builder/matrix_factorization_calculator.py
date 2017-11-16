@@ -1,3 +1,4 @@
+import decimal
 import os
 import sys
 import random
@@ -10,7 +11,7 @@ import pickle
 
 import numpy as np
 import pandas as pd
-
+from decimal import Decimal
 from collections import defaultdict
 import math
 from datetime import datetime
@@ -28,12 +29,11 @@ def ensure_dir(file_path):
 
 class MatrixFactorization(object):
 
-    Regularization = 0.02
-    NumFactors = 40
-    BiasLearnRate = 0.02
-    BiasReg = 0.002
-    FrequencyRegularization = 1
-    LearnRate = 0.001
+    Regularization = Decimal(0.002)
+    BiasLearnRate = Decimal(0.005)
+    BiasReg = Decimal(0.002)
+
+    LearnRate = Decimal(0.002)
     all_movies_mean = 0
     number_of_ratings = 0
 
@@ -42,13 +42,14 @@ class MatrixFactorization(object):
     beta = 0.02
 
     iterations = 0
-    MINIMUM_IMPROVEMENT = 0.00001
 
-    def __init__(self, save_path):
+    def __init__(self, save_path, max_iterations=40):
         self.logger = logging.getLogger('funkSVD')
         self.save_path = save_path
         self.user_factors = None
         self.item_factors = None
+        self.item_counts = None
+        self.item_sum = None
         self.u_inx = None
         self.i_inx = None
         self.user_ids = None
@@ -56,19 +57,25 @@ class MatrixFactorization(object):
 
         self.all_movies_mean = 0.0
         self.number_of_ratings = 0
-        self.MAX_ITERATIONS = 40
+        self.MAX_ITERATIONS = max_iterations
+        random.seed(42)
 
         ensure_dir(save_path)
 
     def initialize_factors(self, ratings, k=25):
         self.user_ids = set(ratings['user_id'].values)
         self.movie_ids = set(ratings['movie_id'].values)
+        self.item_counts = ratings[['movie_id', 'rating']].groupby('movie_id').count()
+        self.item_counts = self.item_counts.reset_index()
+
+        self.item_sum = ratings[['movie_id', 'rating']].groupby('movie_id').sum()
+        self.item_sum = self.item_sum.reset_index()
 
         self.u_inx = {r: i for i, r in enumerate(self.user_ids)}
         self.i_inx = {r: i for i, r in enumerate(self.movie_ids)}
 
-        self.item_factors = np.full((len(self.i_inx), k), 0.1)
-        self.user_factors = np.full((len(self.u_inx), k), 0.1)
+        self.item_factors = np.full((len(self.i_inx), k), Decimal(0.1))
+        self.user_factors = np.full((len(self.u_inx), k), Decimal(0.1))
 
         self.all_movies_mean = calculate_all_movies_mean(ratings)
         self.logger.info("user_factors are {}".format(self.user_factors.shape))
@@ -81,10 +88,10 @@ class MatrixFactorization(object):
         b_ui = self.all_movies_mean + self.user_bias[user] + self.item_bias[item]
         prediction = b_ui + pq
 
-        if prediction > 10:
-            prediction = 10
-        elif prediction < 1:
-            prediction = 1
+        # if prediction > 10:
+        #     prediction = 10
+        # elif prediction < 1:
+        #     prediction = 1
         return prediction
 
     def build(self, ratings, params):
@@ -142,7 +149,7 @@ class MatrixFactorization(object):
                                                                 ratings)
 
                     iterations += 1
-                    test_mse = self.calculate_mse(test, factor)
+                    test_mse = self.calculate_rmse(test, factor)
 
                     finished = self.finished(factor_iteration,
                                              last_err,
@@ -158,17 +165,17 @@ class MatrixFactorization(object):
 
             self.save(k, False)
 
-    def calculate_mse(self, ratings, factor):
+    def calculate_rmse(self, ratings, factor):
 
         def difference(row):
             user = self.u_inx[row[0]]
             item = self.i_inx[row[1]]
 
-            pq = np.dot(self.item_factors[item][:factor], self.user_factors[user][:factor].T)
+            pq = np.dot(self.item_factors[item][:factor + 1], self.user_factors[user][:factor + 1].T)
             b_ui = self.all_movies_mean + self.user_bias[user] + self.item_bias[item]
             prediction = b_ui + pq
-            MSE = (prediction - float(row[2])) ** 2
-            RMSE = ((prediction - float(row[2]))/2)**2
+            MSE = (prediction - Decimal(row[2])) ** 2
+            RMSE = ((prediction - Decimal(row[2]))/2)**2
             return RMSE
 
         squared = np.apply_along_axis(difference, 1, ratings).sum()
@@ -224,28 +231,28 @@ class MatrixFactorization(object):
 
             u = self.u_inx[rating_row[0]]
             i = self.i_inx[rating_row[1]]
-            rating = rating_row[2]
+            rating = Decimal(rating_row[2])
 
-            err = (float(rating) - self.predict(u, i))
+            err = (rating - self.predict(u, i))
 
             self.user_bias[u] += b_lr * (err - bias_r * self.user_bias[u])
             self.item_bias[i] += b_lr * (err - bias_r * self.item_bias[i])
 
-            user_fac = self.user_factors[u][factor].copy()
-            item_fac = self.item_factors[i][factor].copy()
+            user_fac = self.user_factors[u][factor]
+            item_fac = self.item_factors[i][factor]
 
             self.user_factors[u][factor] += lr * (err * item_fac
                                                   - r * user_fac)
             self.item_factors[i][factor] += lr * (err * user_fac
                                                   - r * item_fac)
-        return self.calculate_mse(ratings, factor)
+        return self.calculate_rmse(ratings, factor)
 
     def finished(self, iterations, last_err, current_err,
                  last_test_mse=0.0, test_mse=0.0):
 
         if last_test_mse < test_mse or iterations >= self.MAX_ITERATIONS or last_err < current_err:
-            self.logger.info('Finish w iterations: {}, last_err: {}, current_err {}'
-                             .format(iterations, last_err, current_err))
+            self.logger.info('Finish w iterations: {}, last_err: {}, current_err {}, lst_rmse {}, rmse {}'
+                             .format(iterations, last_err, current_err, last_test_mse, test_mse))
             return True
         else:
             self.iterations += 1
@@ -292,20 +299,29 @@ def load_all_ratings(min_ratings=1):
 
     ratings = pd.DataFrame.from_records(ratings_data, columns=columns)
 
-    user_count = ratings[['user_id', 'movie_id']].groupby('user_id').count()
-    user_count = user_count.reset_index()
-    user_ids = user_count[user_count['movie_id'] > min_ratings]['user_id']
+    # user_count = ratings[['user_id', 'movie_id']].groupby('user_id').count()
+    # user_count = user_count.reset_index()
+    # user_ids = user_count[user_count['movie_id'] > min_ratings]['user_id']
+    # ratings = ratings[ratings['user_id'].isin(user_ids)]
+    item_count = ratings[['movie_id', 'rating']].groupby('movie_id').count()
 
-    ratings = ratings[ratings['user_id'].isin(user_ids)]
+    item_count = item_count.reset_index()
+    item_ids = item_count[item_count['rating'] > min_ratings]['movie_id']
+    ratings = ratings[ratings['movie_id'].isin(item_ids)]
 
-    ratings['rating'] = ratings['rating'].astype(float)
+    ratings['rating'] = ratings['rating'].astype(Decimal)
     return ratings
 
 
 def calculate_all_movies_mean(ratings):
-
+    # rating_agg = ratings[['movie_id', 'rating']].groupby('movie_id').count().reset_index()
+    # rating_agg['sums'] = ratings[['movie_id', 'rating']].groupby('movie_id').sum().reset_index()['rating']
+    sum_of_ratings = ratings['rating'].sum()
+    # K = 25
     avg = ratings['rating'].sum() / ratings.shape[0]
-    return float(avg)
+    # rating_agg['avg'] = (avg * K + rating_agg['sums'])/(K + rating_agg['rating'])
+    # return rating_agg[['movie_id', 'avg']]
+    return Decimal(avg)
 
 
 if __name__ == '__main__':
@@ -314,8 +330,8 @@ if __name__ == '__main__':
     logger = logging.getLogger('funkSVD')
     logger.info("[BEGIN] Calculating matrix factorization")
 
-    MF = MatrixFactorization(save_path='./models/funkSVD/{}/'.format(datetime.now()))
-    loaded_ratings = load_all_ratings()
+    MF = MatrixFactorization(save_path='./models/funkSVD/{}/'.format(datetime.now()), max_iterations=40)
+    loaded_ratings = load_all_ratings(2)
     logger.info("using {} ratings".format(loaded_ratings.shape[0]))
     MF.meta_parameter_train(loaded_ratings)
     #MF.train(load_all_ratings(), k=40)

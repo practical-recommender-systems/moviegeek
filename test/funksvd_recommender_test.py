@@ -162,12 +162,11 @@ class TestNeighborhoodBasedRecs(unittest.TestCase):
                                                       [{'movie_id': AVENGERS, 'rating': 1}], num=4)
         self.assertIsNotNone(recs4)
         self.assertEqual(len(recs4), 4)
-
+        self.assertAlmostEqual(recs4[1][1]['prediction'], 7.812836963)
         recs6 = recommender.recommend_items_by_ratings('5',
                                                        [{'movie_id': AVENGERS, 'rating': 1}], num=6)
         self.assertIsNotNone(recs6)
         self.assertEqual(len(recs6), 6)
-
         self.compare_recs(recs4, recs6)
 
         recommender = FunkSVDRecs(self.save_path)

@@ -1,9 +1,4 @@
 import os
-
-from scipy.sparse import coo_matrix
-from scipy.sparse import csr_matrix
-
-from builder.matrix_factorization_calculator import MatrixFactorization
 from builder.matrix_factorization_calculator import MatrixFactorization
 from recs.funksvd_recommender import FunkSVDRecs
 
@@ -14,9 +9,9 @@ import django
 django.setup()
 
 import unittest
-
+from decimal import Decimal
 import pandas as pd
-
+import numpy as np
 from recommender.models import Similarity
 from builder.item_similarity_calculator import ItemSimilarityMatrixBuilder
 
@@ -32,10 +27,9 @@ DR_STRANGELOVE = 'doctor strangelove'
 JACQUES = 'jacques'
 
 class TestMatrixFactorizationCalculator(unittest.TestCase):
-
     def setUp(self):
         self.ratings = pd.DataFrame(
-            [['1', STAR_WARS, 9, '2013-10-12 23:21:27+00:00'],
+            [['1' , STAR_WARS, 9, '2013-10-12 23:21:27+00:00'],
              ['1', WONDER_WOMAN, 10, '2014-10-12 23:22:27+00:00'],
              ['1', AVENGERS, 10, '2015-11-12 23:20:27+00:00'],
              ['1', WOLVERINE, 8, '2015-08-12 23:20:27+00:00'],
@@ -115,6 +109,8 @@ class TestMatrixFactorizationCalculator(unittest.TestCase):
              ['10', DR_STRANGELOVE, 8, '2016-10-12 23:20:27+00:00'],
 
              ], columns=['user_id', 'movie_id', 'rating', 'rating_timestamp'])
+        self.ratings['rating'] = self.ratings['rating'].astype(Decimal)
+        print(self.ratings)
 
     def test_simple_factorization(self):
         save_path = './test/'
@@ -125,5 +121,66 @@ class TestMatrixFactorizationCalculator(unittest.TestCase):
 
         self.assertEqual(MF.user_factors.shape[0], len(set(self.ratings['user_id'])))
         self.assertEqual(MF.user_factors.shape[1], k)
+
+    def test_factorization(self):
+        ratings = pd.DataFrame(
+            [['1', "SW", Decimal(5), '2013-10-12 23:21:27+00:00'],
+             ['1', "SW2", Decimal(5), '2014-10-12 23:22:27+00:00'],
+             ['1', "SW3", Decimal(5), '2015-11-12 23:20:27+00:00'],
+             ['1', "MM", Decimal(2), '2015-08-12 23:20:27+00:00'],
+             ['1', "MM2", Decimal(1), '2015-10-12 22:20:27+00:00'],
+
+             ['2', "SW", Decimal(4), '2013-10-12 23:21:27+00:00'],
+             ['2', "SW2", Decimal(5), '2014-10-12 23:22:27+00:00'],
+             ['2', "SW3", Decimal(5), '2015-11-12 23:20:27+00:00'],
+             ['2', "MM", Decimal(1), '2015-08-12 23:20:27+00:00'],
+             ['2', "MM2", Decimal(2), '2015-10-12 22:20:27+00:00'],
+
+             ['3', "SW", Decimal(5), '2013-10-12 23:21:27+00:00'],
+             ['3', "SW2", Decimal(5), '2014-10-12 23:22:27+00:00'],
+
+             ['4', "SW", Decimal(1), '2013-10-12 23:21:27+00:00'],
+             ['4', "SW2", Decimal(2), '2014-10-12 23:22:27+00:00'],
+             ['4', "SW3", Decimal(1), '2015-11-12 23:20:27+00:00'],
+             ['4', "MM", Decimal(5), '2015-08-12 23:20:27+00:00'],
+             ['4', "MM2", Decimal(5), '2015-10-12 22:20:27+00:00'],
+
+             ['5', "SW", Decimal(2), '2013-10-12 23:21:27+00:00'],
+             ['5', "SW2", Decimal(1), '2014-10-12 23:22:27+00:00'],
+             ['5', "SW3", Decimal(2), '2015-11-12 23:20:27+00:00'],
+             ['5', "MM", Decimal(4), '2015-08-12 23:20:27+00:00'],
+             ['5', "MM2", Decimal(5), '2015-10-12 22:20:27+00:00'],
+             ], columns=['user_id', 'movie_id', 'rating', 'rating_timestamp'])
+        ratings['rating'] = ratings['rating'].astype(Decimal)
+
+        save_path = './test/small_model/'
+        k = 2
+
+        MF = MatrixFactorization(save_path=save_path)
+        MF.train(ratings, k=k)
+
+        self.assertEqual(MF.user_factors.shape[0], len(set(ratings['user_id'])))
+        self.assertEqual(MF.user_factors.shape[1], k)
+        u_inx = MF.u_inx['3']
+        i_inx = MF.i_inx['SW3']
+
+        r_sw3 = MF.predict(u_inx, i_inx)
+
+        print(MF.item_factors)
+        print("user factors {}".format(MF.user_factors))
+        print("u_inx {}".format(MF.u_inx))
+        print("i_inx {}".format(MF.i_inx))
+        print("user bias {}".format(dict(MF.user_bias)))
+        print("item bias {}".format(dict(MF.item_bias)))
+
+        i_inx = MF.i_inx['MM']
+        recommendation = {i: MF.predict(u_inx, MF.i_inx[i]) for i in set(ratings['movie_id'])}
+        print(recommendation)
+        print(sorted(recommendation, key=recommendation.__getitem__))
+        r_mm2 = MF.predict(u_inx, i_inx)
+
+        print("SW3 {} vs. MM2 {}".format(r_sw3, r_mm2))
+        self.assertGreater(r_sw3, r_mm2)
+
 
 
