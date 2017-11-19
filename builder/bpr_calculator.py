@@ -1,4 +1,5 @@
 import os
+import pickle
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "prs_project.settings")
 
@@ -35,10 +36,8 @@ class BayesianPersonalizationRanking(object):
     item_bias = None
     user_bias = None
 
-
     def __init__(self, save_path):
         self.save_path = save_path
-        self.saved_predictions = None
         self.user_factors = None
         self.item_factors = None
         self.user_ids = None
@@ -63,7 +62,6 @@ class BayesianPersonalizationRanking(object):
         self.u_inx = {r: i for i, r in enumerate(self.user_ids)}
         self.i_inx = {r: i for i, r in enumerate(self.movie_ids)}
 
-        self.saved_predictions = np.zeros((len(self.user_ids), len(self.user_ids)))
         self.item_factors = np.full((len(self.movie_ids), k), 0.1)
         self.user_factors = np.full((len(self.user_ids), k), 0.1)
 
@@ -92,7 +90,7 @@ class BayesianPersonalizationRanking(object):
         ib = self.item_bias[i]
         jb = self.item_bias[j]
 
-        u_dot_i = np.dot(self.user_factors[u],
+        u_dot_i = np.dot(self.user_factors[u, :],
                          self.item_factors[i, :] - self.item_factors[j, :])
         x = ib - jb + u_dot_i
 
@@ -104,7 +102,8 @@ class BayesianPersonalizationRanking(object):
         jb_update = - z - self.BiasReg * jb
         self.item_bias[j] += lr * jb_update
 
-        update_u = (self.item_factors[i,:] - self.item_factors[j,:]) * z - ur *self.user_factors[u,:]
+        update_u = ((self.item_factors[i,:] - self.item_factors[j,:]) * z
+                    - ur * self.user_factors[u,:])
         self.user_factors[u,:] += lr * update_u
 
         update_i = self.user_factors[u,:] * z - pir * self.item_factors[i,:]
@@ -136,7 +135,9 @@ class BayesianPersonalizationRanking(object):
         return ranking_loss + 0.5 * c
 
     def predict(self, user, item):
-        pq = self.item_factors[item].dot(self.user_factors[user])
+        i_fac = self.item_factors[item]
+        u_fac = self.user_factors[user]
+        pq = i_fac.dot(u_fac)
 
         return pq + self.item_bias[item]
 
@@ -148,7 +149,7 @@ class BayesianPersonalizationRanking(object):
         self.loss_samples = [t for t in self.draw(num_loss_samples)]
         logger.debug("[END]building {} loss samples".format(num_loss_samples))
 
-    def draw(self, no):
+    def draw(self, no=-1):
         if no == -1:
             no = self.ratings.nnz
         r_size = self.ratings.shape[0] - 1
@@ -167,6 +168,30 @@ class BayesianPersonalizationRanking(object):
                 neg = r2[1]
 
             yield self.u_inx[u], self.i_inx[pos], self.i_inx[neg]
+
+    def save(self, factor, finished):
+
+        save_path = self.save_path + '/model/'
+        if not finished:
+            save_path += str(factor) + '/'
+
+        ensure_dir(save_path)
+
+        self.logger.info("saving factors in {}".format(save_path))
+        user_bias = {uid: self.user_bias[self.u_inx[uid]] for uid in self.u_inx.keys()}
+        item_bias = {iid: self.item_bias[self.i_inx[iid]] for iid in self.i_inx.keys()}
+
+        uf = pd.DataFrame(self.user_factors,
+                          index=self.user_ids)
+        it_f = pd.DataFrame(self.item_factors,
+                            index=self.movie_ids)
+
+        with open(save_path + 'user_factors.json', 'w') as outfile:
+            outfile.write(uf.to_json())
+        with open(save_path + 'item_factors.json', 'w') as outfile:
+            outfile.write(it_f.to_json())
+        with open(save_path + 'item_bias.data', 'wb') as ub_file:
+            pickle.dump(item_bias, ub_file)
 
 def load_all_ratings(min_ratings=1):
     columns = ['user_id', 'movie_id', 'rating', 'type', 'rating_timestamp']
@@ -188,13 +213,19 @@ def load_all_ratings(min_ratings=1):
     ratings['rating'] = ratings['rating'].astype(Decimal)
     return ratings
 
+
+def ensure_dir(file_path):
+    directory = os.path.dirname(file_path)
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
 if __name__  == '__main__':
 
     number_of_factors = 10
     logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.DEBUG)
     logger = logging.getLogger('BPR calculator')
 
-    train_data = load_all_ratings(0)[:10000]
+    train_data = load_all_ratings(1)
     bpr = BayesianPersonalizationRanking(save_path='./models/bpr/{}/'.format(datetime.now()))
     bpr.train(train_data, 10, 20)
 
