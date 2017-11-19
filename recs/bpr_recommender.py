@@ -14,7 +14,7 @@ import pickle
 
 class BPRRecs(base_recommender):
 
-    def __init__(self, save_path='/Users/u0157492/Projects/moviegeek/builder/models/bpr/2017-11-14 22:08:47.116843/model/100/'):
+    def __init__(self, save_path='/Users/u0157492/Projects/moviegeek/models/bpr/2017-11-19 12:21:22.191943/model/19/'):
         self.save_path = save_path
         self.load_model(save_path)
         self.avg = list(Rating.objects.all().aggregate(Avg('rating')).values())[0]

@@ -43,6 +43,7 @@ class BayesianPersonalizationRanking(object):
         self.user_ids = None
         self.movie_ids = None
         self.ratings = None
+        self.user_movies = None
 
         self.learning_rate = 0.05
         self.bias_regularization = 1.0
@@ -62,9 +63,9 @@ class BayesianPersonalizationRanking(object):
         self.u_inx = {r: i for i, r in enumerate(self.user_ids)}
         self.i_inx = {r: i for i, r in enumerate(self.movie_ids)}
 
-        self.item_factors = np.full((len(self.movie_ids), k), 0.1)
-        self.user_factors = np.full((len(self.user_ids), k), 0.1)
-
+        self.user_factors = np.random.random_sample((len(self.user_ids), k))
+        self.item_factors = np.random.random_sample((len(self.movie_ids), k))
+        self.user_movies = train_data.groupby('user_id')['movie_id'].apply(lambda x: x.tolist()).to_dict()
         self.item_bias = defaultdict(lambda: 0)
         self.create_loss_samples()
 
@@ -79,6 +80,8 @@ class BayesianPersonalizationRanking(object):
 
             for usr, pos, neg in self.draw(self.ratings.shape[0]):
                 self.step(usr, pos, neg)
+
+            self.save(iteration, False)
 
     def step(self, u, i, j):
 
@@ -151,21 +154,17 @@ class BayesianPersonalizationRanking(object):
 
     def draw(self, no=-1):
         if no == -1:
-            no = self.ratings.nnz
-        r_size = self.ratings.shape[0] - 1
-        size = min(no, r_size)
-        index_randomized = random.sample(range(0, r_size), size)
-        for i in index_randomized:
-            r = self.ratings[i]
-            u = r[0]
-            pos = r[1]
+            no = self.ratings.shape[0] - 1
 
-            user_items = self.ratings[self.ratings[:, 0] == u]
+        for _ in range(no):
+            u = random.choice(tuple(self.user_ids))
+            user_items = self.user_movies[u]
+
+            pos = random.choice(tuple(user_items))
+
             neg = pos
             while neg in user_items:
-                i2 = random.randint(0, r_size)
-                r2 = self.ratings[i2]
-                neg = r2[1]
+                neg = random.choice(tuple(self.movie_ids))
 
             yield self.u_inx[u], self.i_inx[pos], self.i_inx[neg]
 
@@ -177,8 +176,7 @@ class BayesianPersonalizationRanking(object):
 
         ensure_dir(save_path)
 
-        self.logger.info("saving factors in {}".format(save_path))
-        user_bias = {uid: self.user_bias[self.u_inx[uid]] for uid in self.u_inx.keys()}
+        logger.info("saving factors in {}".format(save_path))
         item_bias = {iid: self.item_bias[self.i_inx[iid]] for iid in self.i_inx.keys()}
 
         uf = pd.DataFrame(self.user_factors,
@@ -200,10 +198,6 @@ def load_all_ratings(min_ratings=1):
 
     ratings = pd.DataFrame.from_records(ratings_data, columns=columns)
 
-    # user_count = ratings[['user_id', 'movie_id']].groupby('user_id').count()
-    # user_count = user_count.reset_index()
-    # user_ids = user_count[user_count['movie_id'] > min_ratings]['user_id']
-    # ratings = ratings[ratings['user_id'].isin(user_ids)]
     item_count = ratings[['movie_id', 'rating']].groupby('movie_id').count()
 
     item_count = item_count.reset_index()
@@ -219,7 +213,7 @@ def ensure_dir(file_path):
     if not os.path.exists(directory):
         os.makedirs(directory)
 
-if __name__  == '__main__':
+if __name__ == '__main__':
 
     number_of_factors = 10
     logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.DEBUG)
