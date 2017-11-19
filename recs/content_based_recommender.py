@@ -34,7 +34,6 @@ class ContentBasedRecs(base_recommender):
                                    user_id,
                                    active_user_items,
                                    num=6):
-        content_sims = dict()
 
         start_time = datetime.now()
 
@@ -63,13 +62,12 @@ class ContentBasedRecs(base_recommender):
                 if sim_sum > 0:
                     recs[target] = { 'prediction': Decimal(user_mean) + pre/sim_sum,
                                      'sim_items': [r.source for r in rated_items]}
-        print(f"new way {datetime.now()-start_time}")
 
         return sorted(recs.items(), key=lambda item: -float(item[1]['prediction']))[:num]
 
     def predict_score(self, user_id, item_id):
 
-        active_user_items = Rating.objects.filter(user_id=user_id).order_by('-rating')[:100]
+        active_user_items = Rating.objects.filter(user_id=user_id).order_by('-rating').values()[:100]
 
         movie_ids = {movie['movie_id']: movie['rating'] for movie in active_user_items}
         user_mean = sum(movie_ids.values()) / len(movie_ids)
@@ -78,6 +76,7 @@ class ContentBasedRecs(base_recommender):
                                             & ~Q(target=item_id))
         pre = 0
         sim_sum = 0
+        prediction = Decimal(0.0)
 
         if len(sims) > 0:
             for sim_item in sims:
@@ -85,7 +84,8 @@ class ContentBasedRecs(base_recommender):
                 pre += sim_item.similarity * r
                 sim_sum += sim_item.similarity
 
-        return Decimal(user_mean) + pre / sim_sum
+            prediction = Decimal(user_mean) + pre / sim_sum
+        return prediction
 
 def get_movie_ids(sorted_sims):
     ids = [s[0] for s in sorted_sims]
