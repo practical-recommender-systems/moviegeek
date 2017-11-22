@@ -14,6 +14,7 @@ from collections import defaultdict
 from itertools import combinations
 from datetime import datetime
 
+from collector.models import Log
 from recommender.models import SeededRecs
 
 
@@ -26,15 +27,7 @@ def build_association_rules():
 
 
 def retrieve_transactions():
-    sql = """
-        SELECT *
-         FROM  Collector_log
-         WHERE event = 'buy'
-         ORDER BY session_id, content_id
-    """
-    cursor = data_helper.get_query_cursor(sql)
-    data = data_helper.dictfetchall(cursor)
-
+    data = Log.objects.filter(event='buy').values()
     return data
 
 
@@ -119,8 +112,6 @@ def has_support(perm, one_itemsets):
 
 def save_rules(rules):
 
-    #conn = DataHelper.connect_to_db()
-
     for rule in rules:
         SeededRecs(
             created=rule[0],
@@ -129,12 +120,6 @@ def save_rules(rules):
             support=rule[3],
             confidence=rule[4]
         ).save()
-        sql = """INSERT INTO seeded_recs (created, source, target, support, confidence, type)
-             VALUES ('{}', '{}', '{}', {}, {}, 'associate')"""
-        print(sql.format(rule[0], rule[1], rule[2], rule[3], rule[4]))
-        #conn.cursor().execute(sql.format(rule[0], rule[1], rule[2], rule[3], rule[4]))
-    #conn.commit()
-    #conn.close()
 
 
 if __name__ == '__main__':

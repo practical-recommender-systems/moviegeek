@@ -1,6 +1,7 @@
 from decimal import Decimal
 
 from analytics.models import Rating
+from collector.models import Log
 from recs.base_recommender import base_recommender
 from django.db.models import Count
 from django.db.models import Q
@@ -12,6 +13,14 @@ class PopularityBasedRecs(base_recommender):
         avg_rating = Rating.objects.filter(~Q(user_id=user_id) &
                                            Q(movie_id=item_id)).values('movie_id').aggregate(Avg('rating'))
         return avg_rating['rating__avg']
+
+    def recommend_items_from_log(self, num=6):
+        items = Log.objects.values('content_id')
+        items = items.filter(event='buy').annotate(Count('user_id'))
+
+        sorted_items = sorted(items, key=lambda item: -float(item['user_id__count']))
+
+        return sorted_items[:num]
 
     def recommend_items(self, user_id, num=6):
         pop_items = Rating.objects.filter(~Q(user_id=user_id)).values('movie_id').annotate(Count('user_id'),

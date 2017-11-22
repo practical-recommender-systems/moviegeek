@@ -95,6 +95,7 @@ To set up another database is described in the Django docs [here](https://docs.d
 "/Applications/Python\ 3.6/Install\ Certificates.command". More details [here](https://bugs.python.org/issue28150))
 ```bash
 > python populate_moviegeek.py
+> python populate_ratings.py
 ```
 
 ### Create a themoviedb.org id

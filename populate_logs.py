@@ -157,7 +157,8 @@ def select_film(user):
             , '2267968'
             , '2869728'
             , '3949660'
-            , '3410834']}
+            , '3410834'
+        ,'2250912']}
     genre = user.select_genre()
     interested_films = films[genre]
 
@@ -185,7 +186,7 @@ def main():
     Log.objects.all().delete()
     random.seed(SEED)
 
-    number_of_events = 1000
+    number_of_events = 10000
 
     print("Generating Data")
     users = [
