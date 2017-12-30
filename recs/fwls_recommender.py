@@ -25,9 +25,24 @@ class FeatureWeightedLinearStacking(base_recommender):
             return Decimal(1.0)
         return Decimal(0.0)
 
+    def recommend_items_by_ratings(self,
+                                   user_id,
+                                   active_user_items,
+                                   num=6):
+
+        cb_recs = self.cb.recommend_items_by_ratings(user_id, active_user_items, num * 5)
+        cf_recs = self.cf.recommend_items_by_ratings(user_id, active_user_items, num * 5)
+
+        return self.merge_predictions(user_id, cb_recs, cf_recs, num)
+
+
     def recommend_items(self, user_id, num=6):
         cb_recs = self.cb.recommend_items(user_id, num * 5)
         cf_recs = self.cf.recommend_items(user_id, num * 5)
+
+        return self.merge_predictions(user_id, cb_recs, cf_recs, num)
+
+    def merge_predictions(self, user_id, cb_recs, cf_recs, num):
 
         combined_recs = dict()
         for rec in cb_recs:
@@ -52,7 +67,6 @@ class FeatureWeightedLinearStacking(base_recommender):
             fwls_preds[key] = {'prediction': pred}
         sorted_items = sorted(fwls_preds.items(), key=lambda item: -float(item[1]['prediction']))[:num]
         return sorted_items
-
 
     def predict_score(self, user_id, item_id):
         p_cb = self.cb.predict_score(user_id, item_id)
