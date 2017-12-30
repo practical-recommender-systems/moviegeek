@@ -13,17 +13,11 @@ import sqlite3
 from collections import defaultdict
 from collector.models import Log
 from analytics.models import Rating
-from builder import data_helper
 
-db = './../db.sqlite3'
+
 w1 = 100
 w2 = 50
 w3 = 15
-
-
-def connect_to_db():
-    return sqlite3.connect(db)
-
 
 def calculate_decay(age_in_days):
     return 1/age_in_days
