@@ -32,7 +32,7 @@ Look at the following guide for more details [guide](http://docs.python-guide.or
  
 ```bash
 > cd moviegeek
-> virtualenv prs
+> virtualenv -p python3 prs
 > source prs/bin/activate
 ```
 
@@ -40,10 +40,14 @@ if you are running Anaconda you can also use conda virtual environment instead.
 ### Get the required packages
 
 ```bash
-pip install -r requirements.txt
+pip3 install -r requirements.txt
 ```
 
 ### [OPTIONAL] install and use PostGreSQL
+
+## Database setup
+Django is setup to run with sqllite3 out of the box, and you can also use that when you run the site. However there are things 
+that will be considerable faster if if you install postgres.
 
 #### The database
 If you dont have postgres running then you should start out installing it. 
@@ -58,17 +62,19 @@ When the database is spinning its time for the python driver. I recommend using 
 
 First download the driver, unzip (if zipped) then run
 ```bash
-> python setup.py install
+> python3 setup.py install
 ```
 
 ```bash
-> pip install psycopg2
+> pip3 install psycopg2
 ```
 
 #### Configuration
 
-in prs_project/settings.py
+To update the database in MovieGEEKS go to in prs_project/settings.py 
+and update the following 
 
+```bash
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -79,6 +85,8 @@ DATABASES = {
         'PORT': 'db_port_number',
     }
 }
+```
+you should update the NAME, USER, PASSWORD, HOST, PORT fields.
 
 ### Create the dbs. 
 If you have a database running on your machine I would encourage 
@@ -86,35 +94,39 @@ you to connect it, by updating the settings in `prs_project/settings.py` (fx lik
 
 To set up another database is described in the Django docs [here](https://docs.djangoproject.com/en/1.10/ref/databases/)
 ```bash
-> python manage.py makemigrations
-> python manage.py migrate
+> python3 manage.py makemigrations
+> python3 manage.py migrate
 ```
 ### Populate the db by running the following script. 
 (WARNING: this might take some time.)
 (WARNING: If you are using python >3.6 on a Mac then you need to run 
 "/Applications/Python\ 3.6/Install\ Certificates.command". More details [here](https://bugs.python.org/issue28150))
 ```bash
-> python populate_moviegeek.py
-> python populate_ratings.py
+> python3 populate_moviegeek.py
+> python3 populate_ratings.py
 ```
 
 ### Create a themoviedb.org id
 * go to [https://www.themoviedb.org/account/signup](https://www.themoviedb.org/account/signup) and create an api_key
 * create a file in the root of the directory called "`.prs`" and add 
 `{ "themoviedb_apikey": <INSERT YOUR APIKEY HERE>}`.
-(remember to remove the "<" and ">")
+(remember to remove the "<" and ">") 
+When you are finished, the file contents should look something like 
+```{"themoviedb_apikey": "6d88c9a24b1bc9a60b374d3fe2cd92ac"}```
 
 ### Start the web server
  To start the development server run:
 ```bash
-> python manage.py runserver 127.0.0.1:8000
+> python3 manage.py runserver 127.0.0.1:8000
 ```
 Running the server like this, will make the website available 
 [http://127.0.0.1:8000](http://127.0.0.1:8000) other applications also use this port
 so you might need to try out 8001 instead. 
 
 ### Closing down.
-* when you are finished running the project you can exit the virtual env:
+when you are finished running the project you can:
+* Close down the server by pressing <CLTR>-c  
+* exit the virtual env:
 ```bash
 > deactivate
 ```
