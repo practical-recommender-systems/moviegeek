@@ -2,12 +2,14 @@ import os
 import sys
 
 import psycopg2
+import sqlite3
 from scipy.sparse import coo_matrix
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "prs_project.settings")
 import django
 from datetime import datetime
 
+from prs_project import settings
 
 import logging
 import json
@@ -67,8 +69,12 @@ class LdaModel(object):
     def __init__(self, min_sim=0.1):
         self.dirname, self.filename = os.path.split(os.path.abspath(__file__))
         self.min_sim = min_sim
+        self.db = settings.DATABASES['default']['ENGINE']
 
-    def train(self, data, docs):
+    def train(self, data = None, docs = None):
+
+        if data == None:
+            data, docs = load_data()
 
         NUM_TOPICS = 10
         n_products = len(data)
@@ -132,7 +138,46 @@ class LdaModel(object):
         return stopped_tokens
 
     def save_similarities(self, index, docs, created=datetime.now()):
+        if self.db == 'django.db.backends.postgresql':
+            self.save_similarities_with_postgre(index, docs, created)
+        else:
+            self.save_similarities_with_django(index, docs, created)
 
+    def save_similarities_with_django(self, index, docs, created=datetime.now()):
+        start_time = datetime.now()
+        print(f'truncating table in {datetime.now() - start_time} seconds')
+
+        no_saved = 0
+        start_time = datetime.now()
+        coo = coo_matrix(index)
+        csr = coo.tocsr()
+
+        print(f'instantiation of coo_matrix in {datetime.now() - start_time} seconds')
+
+        conn= self.get_conn()
+        cur = conn.cursor()
+
+        cur.execute('truncate table lda_similarity')
+
+        print(f'{coo.count_nonzero()} similarities to save')
+        xs, ys = coo.nonzero()
+        for x, y in zip(xs, ys):
+
+            if x == y:
+                continue
+
+            sim = float(csr[x, y])
+            x_id = str(docs[x].movie_id)
+            y_id = str(docs[y].movie_id)
+            if sim < self.min_sim:
+                continue
+
+            LdaSimilarity(created, x_id, y_id, sim).save()
+            no_saved += 1
+
+        print('{} Similarity items saved, done in {} seconds'.format(no_saved, datetime.now() - start_time))
+
+    def save_similarities_with_postgre(self, index, docs, created=datetime.now()):
         start_time = datetime.now()
         print(f'truncating table in {datetime.now() - start_time} seconds')
         sims = []
@@ -145,7 +190,7 @@ class LdaModel(object):
 
         query = "insert into lda_similarity (created, source, target, similarity) values %s;"
 
-        conn = psycopg2.connect("dbname=moviegeek user=postgres password=hullo1!")
+        conn= self.get_conn()
         cur = conn.cursor()
 
         cur.execute('truncate table lda_similarity')
@@ -176,7 +221,20 @@ class LdaModel(object):
         conn.commit()
         print('{} Similarity items saved, done in {} seconds'.format(no_saved, datetime.now() - start_time))
 
+    def get_conn(self):
+        if settings.DATABASES['default']['ENGINE'] == 'django.db.backends.postgresql':
+            dbUsername = settings.DATABASES['default']['USER']
+            dbPassword = settings.DATABASES['default']['PASSWORD']
+            dbName = settings.DATABASES['default']['NAME']
+            conn_str = "dbname={} user={} password={}".format(dbName,
+                                                              dbUsername,
+                                                              dbPassword)
+            conn = psycopg2.connect(conn_str)
+        elif settings.DATABASES['default']['ENGINE'] == 'django.db.backends.sqlite3':
+            dbName = settings.DATABASES['default']['NAME']
+            conn = sqlite3.connect(dbName)
 
+        return conn
 if __name__ == '__main__':
     print("Calculating lda model...")
 
