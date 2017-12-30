@@ -2,7 +2,7 @@ from django.db import models
 
 
 class Rating(models.Model):
-    user_id = models.CharField(max_length=8)
+    user_id = models.CharField(max_length=16)
     movie_id = models.CharField(max_length=8)
     rating = models.DecimalField(decimal_places=2, max_digits=4)
     rating_timestamp = models.DateTimeField()
