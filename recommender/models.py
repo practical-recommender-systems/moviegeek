@@ -50,8 +50,8 @@ class SeededRecs(models.Model):
     created = models.DateTimeField()
     source = models.CharField(max_length=8)
     target = models.CharField(max_length=8)
-    support = models.DecimalField(max_digits=8, decimal_places=8)
-    confidence = models.DecimalField(max_digits=8, decimal_places=8)
+    support = models.DecimalField(max_digits=10, decimal_places=8)
+    confidence = models.DecimalField(max_digits=10, decimal_places=8)
     type = models.CharField(max_length=8)
 
     class Meta:
@@ -63,14 +63,18 @@ class SeededRecs(models.Model):
                                                     self.support,
                                                     self.confidence)
 
-
 class Recs(models.Model):
-    user = models.CharField(max_length=8)
+
+    user = models.CharField(max_length=16)
     item = models.CharField(max_length=8)
     rating = models.FloatField()
+    type = models.CharField(max_length=16)
 
     class Meta:
         db_table = 'recs'
 
     def __str__(self):
-        return "(u,i)({}, {})={}".format(self.user, self.item, self.rating)
+        return "(u,i, t)({}, {}, {})= {}".format(self.user,
+                                                 self.item,
+                                                 self.type,
+                                                 self.rating)
