@@ -2,6 +2,9 @@ import os
 
 import logging
 
+from builder.item_similarity_calculator import ItemSimilarityMatrixBuilder
+from builder.lda_model_calculator import LdaModel
+
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "prs_project.settings")
 
 import django
@@ -69,17 +72,17 @@ class FWLSCalculator(object):
         self.logger.debug("[END] calculating functions")
         return None
 
-    def train(self):
-        #model = sm.ols(formula="rating ~ cb1+cb2+cf1+cf2", data=self.train_data[['rating', 'cb1','cb2','cf1','cf2']])
-        #results = model.fit()
-        #self.logger.info(results.summary())
-        #self.logger.info(results.params)
+    def train(self, ratings, train_feature_recs= False):
+
+        if train_feature_recs:
+            ItemSimilarityMatrixBuilder().build(ratings)
+            LdaModel.build()
+
         regr = linear_model.LinearRegression()
 
         regr.fit(self.train_data[['cb1','cb2','cf1','cf2']], self.train_data['rating'])
         self.logger.info(regr.coef_)
         return regr.coef_
-
 
 if __name__ == '__main__':
     logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.DEBUG)
