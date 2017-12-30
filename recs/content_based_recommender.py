@@ -34,8 +34,11 @@ class ContentBasedRecs(base_recommender):
                                    user_id,
                                    active_user_items,
                                    num=6):
+        if len(active_user_items) == 0:
+            return {}
 
         movie_ids = {movie['movie_id']: movie['rating'] for movie in active_user_items}
+
         user_mean = sum(movie_ids.values()) / len(movie_ids)
 
         sims = LdaSimilarity.objects.filter(Q(source__in=movie_ids.keys())
