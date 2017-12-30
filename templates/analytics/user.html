@@ -67,7 +67,6 @@
                 function(result) {
                     if ((result.data != null) && (result.data.length > 0)) {
 
-
                         result.data.forEach(function(element, index, array) {
 
                             $.getJSON(get_url(element.id), function(result) {
@@ -78,7 +77,7 @@
                                 rec_div.setAttribute('class', "col-sm-2 img-responsive")
 
                                 a = document.createElement('a')
-                                a.setAttribute('href', '/movies/movie/' + element.id)
+                                a.setAttribute('href', '/analytics/content/' + element.id)
 
                                 img = document.createElement('img')
                                 img.setAttribute('src', image_url)
@@ -99,7 +98,41 @@
 
                 });
         }
+        function get_recs(algo, userid) {
+            url = '/rec/'+ algo + '/user/' + userid + '/'
 
+            $.getJSON(url,
+                function(result) {
+                    if ((result.data != null) && (result.data.length > 0)) {
+
+                        result.data.forEach(function(element, index, array) {
+
+                            $.getJSON(get_url(element[0]), function(mov) {
+                                image_url = 'http://image.tmdb.org/t/p/w500/'
+                                + mov.movie_results[0].poster_path
+
+                                rec_div = document.createElement('div')
+                                rec_div.setAttribute('class', "col-sm-2 img-responsive")
+
+                                a = document.createElement('a')
+                                a.setAttribute('href', '/analytics/content/' + element[0])
+
+                                img = document.createElement('img')
+                                img.setAttribute('src', image_url)
+                                img.setAttribute('class',"img-responsive")
+                                a.appendChild(img)
+
+                                rec_div.appendChild(a)
+                                recs = document.getElementById(algo +'_recs')
+                                recs.appendChild(rec_div)
+
+                            })
+
+                        });
+                    }
+
+                });
+        }
         function get_cb_recs(userid) {
             url = '/rec/cb/user/' + userid + '/'
 
@@ -119,7 +152,7 @@
                                 rec_div.setAttribute('class', "col-sm-2 img-responsive")
 
                                 a = document.createElement('a')
-                                a.setAttribute('href', '/movies/movie/' + element[0])
+                                a.setAttribute('href', '/analytics/content/' + element[0])
 
                                 img = document.createElement('img')
                                 img.setAttribute('src', image_url)
@@ -157,7 +190,7 @@
                                 rec_div.setAttribute('class', "col-sm-2 img-responsive")
 
                                 a = document.createElement('a')
-                                a.setAttribute('href', '/movies/movie/' + element[0])
+                                a.setAttribute('href', '/analytics/content/' + element[0])
 
                                 img = document.createElement('img')
                                 img.setAttribute('src', image_url)
@@ -175,7 +208,82 @@
 
                 });
         }
+        function get_bpr_recs(userid) {
+            url = '/rec/bpr/user/' + userid + '/'
 
+            $.getJSON(url,
+                function(result) {
+                    if ((result.data != null) && (result.data.length > 0)) {
+                        recs = document.getElementById('funk_recs')
+
+
+                        result.data.forEach(function(element, index, array) {
+
+                            $.getJSON(get_url(element[0]), function(mov) {
+                                image_url = 'http://image.tmdb.org/t/p/w500/'
+                                + mov.movie_results[0].poster_path
+
+                                rec_div = document.createElement('div')
+                                rec_div.setAttribute('class', "col-sm-2 img-responsive")
+
+                                a = document.createElement('a')
+                                a.setAttribute('href', '/analytics/content/' + element[0])
+
+                                img = document.createElement('img')
+                                img.setAttribute('src', image_url)
+                                img.setAttribute('class',"img-responsive")
+                                a.appendChild(img)
+
+                                rec_div.appendChild(a)
+                                recs = document.getElementById('bpr_recs')
+                                recs.appendChild(rec_div)
+
+                            })
+
+                        });
+                    }
+
+                });
+        }
+        function get_fwls_recs(userid) {
+            url = '/rec/fwls/user/' + userid + '/'
+
+            $.getJSON(url,
+                function(result) {
+                    if ((result.data != null) && (result.data.length > 0)) {
+
+
+                        result.data.forEach(function(element, index, array) {
+
+                            $.getJSON(get_url(element[0]), function(mov) {
+                                image_url = 'http://image.tmdb.org/t/p/w500/'
+                                + mov.movie_results[0].poster_path
+
+                                rec_div = document.createElement('div')
+                                rec_div.setAttribute('class', "col-sm-2 img-responsive")
+
+                                a = document.createElement('a')
+                                a.setAttribute('href', '/analytics/content/' + element[0])
+
+                                img = document.createElement('img')
+                                img.setAttribute('src', image_url)
+                                img.setAttribute('class',"img-responsive")
+                                img.setAttribute('title', element[1].sim_items)
+                                a.appendChild(img)
+
+                                rec_div.appendChild(a)
+
+                                recs = document.getElementById('fwls_recs')
+                                recs.appendChild(rec_div)
+
+                            })
+
+                        });
+                    }
+
+                });
+
+        }
         function get_cf_recs(userid) {
             url = '/rec/cf/user/' + userid + '/'
 
@@ -225,12 +333,12 @@
     <h1>User Profile id: {{ user_id }} (in cluster: <a href="/analytics/cluster/{{cluster}}">{{ cluster }}</a>)</h1>
 
     <div>
-      Average rating: {{ avg_rating }} / 10
+      Average rating: {{ avg_rating|floatformat:2 }} / 10
     </div>
 
   </div>
   <div class='row'>
-    <div class="col-sm-3 well">
+    <div class="col-sm-3 well" style="height:525px;">
     <h2>Movie rated</h2>
     <ul>
     {% for movie in movies %}
@@ -238,7 +346,7 @@
     {% endfor %}
     </ul>
   </div>
-  <div class="col-sm-9 well">
+  <div class="col-sm-9 well" style="height:525px;">
     <h2>Taste</h2>
   <div id="chartContainer">
 
@@ -294,10 +402,26 @@
             <div id="funk_recs"></div>
           </div>
     </div>
-  </div>
+    <div class="row well">
+          <div class="col-sm-1">
+           Hybrid based recs:
+          </div>
+          <div class="col-sm-11">
+            <div id="fwls_recs"></div>
+          </div>
+    </div>
+    <div class="row well">
+          <div class="col-sm-1">
+           Ranking based recs:
+          </div>
+          <div class="col-sm-11">
+            <div id="bpr_recs"></div>
+          </div>
+    </div>
+
   <div class="row">
-      <div class="col-sm-3">
-        <h2>Similar users</h2>
+      <div class="col-sm-12">
+        <h2>Users similar to user {{ user_id }} </h2>
         <div class="row">
             <div class="col-sm-6">
                 <strong>Jaccard sim</strong>
@@ -329,9 +453,11 @@
 </div>
 <script type="text/javascript">
         get_association_rule_recs({{user_id}})
-        get_cb_recs({{user_id}})
-        get_cf_recs({{user_id}})
-        get_funk_recs({{user_id}})
+        get_recs('cb', {{ user_id}})
+        get_recs('cf', {{user_id}})
+        get_recs('fwls', {{user_id}})
+        get_recs('bpr', {{user_id}})
+        get_recs('funk', {{user_id}})
     </script>
 </body>
 </html>
