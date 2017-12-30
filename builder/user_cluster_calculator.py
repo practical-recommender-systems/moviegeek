@@ -8,12 +8,11 @@ from django.db.models import Count
 from scipy.sparse import dok_matrix
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
+import matplotlib as mlt
+mlt.use('TkAgg')
 import matplotlib.pyplot as plt
+
 import numpy as np
-
-from builder import data_helper
-
-db = './../db.sqlite3'
 
 django.setup()
 
@@ -73,7 +72,7 @@ class UserClusterCalculator(object):
 
         clusters = kmeans.fit(user_ratings.tocsr())
 
-        plot(user_ratings.todense(), kmeans, k)
+        #plot(user_ratings.todense(), kmeans, k)
 
         self.save_clusters(clusters, user_ids)
 
