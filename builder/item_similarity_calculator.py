@@ -13,8 +13,9 @@ from analytics.models import Rating
 from sklearn.metrics.pairwise import cosine_similarity
 from scipy.sparse import coo_matrix
 from datetime import datetime
-
+from prs_project import settings
 import psycopg2
+import sqlite3
 
 
 class ItemSimilarityMatrixBuilder(object):
@@ -22,6 +23,7 @@ class ItemSimilarityMatrixBuilder(object):
     def __init__(self, min_overlap=15, min_sim=0.2):
         self.min_overlap = min_overlap
         self.min_sim = min_sim
+        self.db = settings.DATABASES['default']['ENGINE']
 
     def save_similarities(self, sm, index, created=datetime.now()):
         start_time = datetime.now()
@@ -37,7 +39,7 @@ class ItemSimilarityMatrixBuilder(object):
 
         query = "insert into similarity (created, source, target, similarity) values %s;"
 
-        conn = psycopg2.connect("dbname=moviegeek user=postgres password=hullo1!")
+        conn= self.get_conn()
         cur = conn.cursor()
 
         cur.execute('truncate table similarity')
@@ -66,6 +68,21 @@ class ItemSimilarityMatrixBuilder(object):
         psycopg2.extras.execute_values(cur, query, sims, template=None, page_size=1000)
         conn.commit()
         print('{} Similarity items saved, done in {} seconds'.format(no_saved, datetime.now() - start_time))
+
+    def get_conn(self):
+        if settings.DATABASES['default']['ENGINE'] == 'django.db.backends.postgresql':
+            dbUsername = settings.DATABASES['default']['USER']
+            dbPassword = settings.DATABASES['default']['PASSWORD']
+            dbName = settings.DATABASES['default']['NAME']
+            conn_str = "dbname={} user={} password={}".format(dbName,
+                                                              dbUsername,
+                                                              dbPassword)
+            conn = psycopg2.connect(conn_str)
+        elif settings.DATABASES['default']['ENGINE'] == 'django.db.backends.sqlite3':
+            dbName = settings.DATABASES['default']['NAME']
+            conn = sqlite3.connect(dbName)
+
+        return conn
 
     def save_with_django(self, sm, index, created=datetime.now()):
         start_time = datetime.now()
@@ -128,7 +145,7 @@ class ItemSimilarityMatrixBuilder(object):
         print("calculating overlaps between the items")
         overlap_matrix = coo.astype(bool).astype(int).dot(coo.transpose().astype(bool).astype(int))
         print(f"overlap matrix leaves {(overlap_matrix > self.min_overlap).count_nonzero()} out of {overlap_matrix.count_nonzero()} with {self.min_overlap}")
-        for i in range(0, self.min_overlap+1):
+        for i in range(0, self.min_overlap + 1):
             print(f"{i}, {(overlap_matrix > i).count_nonzero()}")
         print()
         print(f"rating matrix (size {coo.shape[0]}x{coo.shape[1]})finished,",
@@ -151,7 +168,11 @@ class ItemSimilarityMatrixBuilder(object):
 
             start_time = datetime.now()
             print('save starting')
-            self.save_similarities(cor, movies)
+            if self.db == 'django.db.backends.postgresql':
+                self.save_similarities(cor, movies)
+            else:
+                self.save_with_django(cor, movies)
+
             print('save finished, done in {} seconds'.format(datetime.now() - start_time))
 
         return cor, movies
