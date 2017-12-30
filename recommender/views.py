@@ -11,15 +11,15 @@ from django.db.models import Avg, Count
 
 from analytics.models import Rating
 from collector.models import Log
-from recommender.models import SeededRecs, Recs, MovieDescriptions, Similarity
-from builder import data_helper
-
-from gensim import models, corpora, similarities
+from moviegeeks.models import Movie
+from recs.bpr_recommender import BPRRecs
 
 from recs.content_based_recommender import ContentBasedRecs
 from recs.funksvd_recommender import FunkSVDRecs
+from recs.fwls_recommender import FeatureWeightedLinearStacking
 from recs.neighborhood_based_recommender import NeighborhoodBasedRecs
 from recs.popularity_recommender import PopularityBasedRecs
+from recommender.models import SeededRecs
 
 
 def get_association_rules_for(request, content_id, take=6):
@@ -52,20 +52,16 @@ def recs_using_association_rules(request, user_id, take=6):
 
 
 def chart(request, take=10):
-    sql = """SELECT content_id,
-                mov.title,
-                count(*) as sold
-            FROM    collector_log log
-            JOIN    moviegeeks_movie mov
-            ON      log.content_id = mov.movie_id
-            WHERE 	event like 'buy'
-            GROUP BY content_id, mov.title
-            ORDER BY sold desc
-            LIMIT {}
-            """.format(take)
+    sorted_items = PopularityBasedRecs().recommend_items_from_log(take)
+    ids = [i['content_id'] for i in sorted_items]
 
-    c = data_helper.get_query_cursor(sql)
-    data = data_helper.dictfetchall(c)
+    ms = {m['movie_id']: m['title'] for m in
+          Movie.objects.filter(movie_id__in=ids).values('title', 'movie_id')}
+    sorted_items = [{'movie_id': i['content_id'],
+                      'title': ms[i['content_id']]} for i in sorted_items]
+    data = {
+        'data': sorted_items
+    }
 
     return JsonResponse(data, safe=False)
 
@@ -99,6 +95,7 @@ def pearson(users, this_user, that_user):
 def jaccard(users, this_user, that_user):
     if this_user in users and that_user in users:
         intersect = set(users[this_user].keys()) & set(users[that_user].keys())
+
         union = set(users[this_user].keys()) | set(users[that_user].keys())
 
         return len(intersect) / Decimal(len(union))
@@ -106,7 +103,7 @@ def jaccard(users, this_user, that_user):
         return 0
 
 
-def similar_users(request, user_id, type):
+def similar_users(request, user_id, sim_method):
     min = request.GET.get('min', 1)
 
     ratings = Rating.objects.filter(user_id=user_id)
@@ -132,17 +129,17 @@ def similar_users(request, user_id, type):
 
     for user in sim_users:
 
-        func = switcher.get(type, lambda: "nothing")
+        func = switcher.get(sim_method, lambda: "nothing")
         s = func(users, int(user_id), int(user['user_id']))
 
-        if s > 0.5:
+        if s > 0.2:
             similarity[user['user_id']] = round(s, 2)
     topn = sorted(similarity.items(), key=operator.itemgetter(1), reverse=True)[:10]
 
     data = {
         'user_id': user_id,
         'num_movies_rated': len(ratings),
-        'type': type,
+        'type': sim_method,
         'topn': topn,
         'similarity': topn,
     }
@@ -162,9 +159,7 @@ def similar_content(request, content_id, num=6):
 
 
 def recs_cb(request, user_id, num=6):
-    start_time = datetime.now()
 
-    print(f"lda loaded in {datetime.now()-start_time}")
     sorted_items = ContentBasedRecs().recommend_items(user_id, num)
 
     data = {
@@ -174,6 +169,14 @@ def recs_cb(request, user_id, num=6):
 
     return JsonResponse(data, safe=False)
 
+def recs_fwls(request, user_id, num=6):
+    sorted_items = FeatureWeightedLinearStacking().recommend_items(user_id, num)
+
+    data = {
+        'user_id': user_id,
+        'data': sorted_items
+    }
+    return JsonResponse(data, safe=False)
 
 def recs_funksvd(request, user_id, num=6):
     sorted_items = FunkSVDRecs().recommend_items(user_id, num)
@@ -184,6 +187,14 @@ def recs_funksvd(request, user_id, num=6):
     }
     return JsonResponse(data, safe=False)
 
+def recs_bpr(request, user_id, num=6):
+    sorted_items = BPRRecs().recommend_items(user_id, num)
+
+    data = {
+        'user_id': user_id,
+        'data': sorted_items
+    }
+    return JsonResponse(data, safe=False)
 
 def recs_cf(request, user_id, num=6):
     min_sim = request.GET.get('min_sim', 0.1)
@@ -197,7 +208,6 @@ def recs_cf(request, user_id, num=6):
 
     return JsonResponse(data, safe=False)
 
-
 def recs_pop(request, user_id, num=60):
     top_num = PopularityBasedRecs().recommend_items(user_id, num)
     data = {
@@ -206,16 +216,6 @@ def recs_pop(request, user_id, num=60):
     }
 
     return JsonResponse(data, safe=False)
-
-
-def get_movie_ids(sorted_sims, corpus, dictionary):
-    ids = [s[0] for s in sorted_sims]
-    movies = MovieDescriptions.objects.filter(lda_vector__in=ids)
-
-    return [{"target": movies[i].imdb_id,
-             "title": movies[i].title,
-             "sim": str(sorted_sims[i][1])} for i in range(len(movies))]
-
 
 def lda2array(lda_vector, len):
     vec = np.zeros(len)
