@@ -16,27 +16,13 @@ django.setup()
 
 from analytics.models import Rating
 
+logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.DEBUG)
+logger = logging.getLogger('BPR calculator')
 
 class BayesianPersonalizationRanking(object):
 
-    Regularization = 0.015
-    NumFactors = 3
-    BiasLearnRate = 0.7
-    BiasReg = 0.33
-    RegU = 0.0025
-    RegI = 0.0025
-    FrequencyRegularization = 1
-    LearnRate = 0.01
-    k = 3
-    all_movies_mean = 0
-    number_of_ratings = 0
-
-    item_factors = None
-    user_factors = None
-    item_bias = None
-    user_bias = None
-
     def __init__(self, save_path):
+
         self.save_path = save_path
         self.user_factors = None
         self.item_factors = None
@@ -46,19 +32,17 @@ class BayesianPersonalizationRanking(object):
         self.user_movies = None
 
         self.learning_rate = 0.05
-        self.bias_regularization = 1.0
-        self.user_regularization = 0.0025
-        self.positive_item_regularization = 0.0025
-        self.negative_item_regularization = 0.00025
+        self.bias_regularization = 0.002
+        self.user_regularization = 0.005
+        self.positive_item_regularization = 0.003
+        self.negative_item_regularization = 0.0003
 
-        self.all_movies_mean = 0.0
-        self.number_of_ratings = 0
 
     def initialize_factors(self, train_data, k=25):
         self.ratings = train_data[['user_id', 'movie_id', 'rating']].as_matrix()
         self.k = k
-        self.user_ids = set(train_data['user_id'].values)
-        self.movie_ids = set(train_data['movie_id'].values)
+        self.user_ids = pd.unique(train_data['user_id'])
+        self.movie_ids = pd.unique(train_data['movie_id'])
 
         self.u_inx = {r: i for i, r in enumerate(self.user_ids)}
         self.i_inx = {r: i for i, r in enumerate(self.movie_ids)}
@@ -68,6 +52,14 @@ class BayesianPersonalizationRanking(object):
         self.user_movies = train_data.groupby('user_id')['movie_id'].apply(lambda x: x.tolist()).to_dict()
         self.item_bias = defaultdict(lambda: 0)
         self.create_loss_samples()
+
+    def build(self, ratings, params):
+
+        if params:
+            k = params['k']
+            num_iterations = params['num_iterations']
+
+        self.train(ratings, k, num_iterations)
 
     def train(self, train_data, k=25, num_iterations=4):
 
@@ -81,12 +73,13 @@ class BayesianPersonalizationRanking(object):
             for usr, pos, neg in self.draw(self.ratings.shape[0]):
                 self.step(usr, pos, neg)
 
-            self.save(iteration, False)
+            self.save(iteration, iteration == num_iterations - 1)
 
     def step(self, u, i, j):
 
-        lr = self.LearnRate
+        lr = self.learning_rate
         ur = self.user_regularization
+        br = self.bias_regularization
         pir = self.positive_item_regularization
         nir = self.negative_item_regularization
 
@@ -99,10 +92,10 @@ class BayesianPersonalizationRanking(object):
 
         z = 1.0/(1.0 + exp(x))
 
-        ib_update = z - self.BiasReg * ib
+        ib_update = z - br * ib
         self.item_bias[i] += lr * ib_update
 
-        jb_update = - z - self.BiasReg * jb
+        jb_update = - z - br * jb
         self.item_bias[j] += lr * jb_update
 
         update_u = ((self.item_factors[i,:] - self.item_factors[j,:]) * z
@@ -152,19 +145,17 @@ class BayesianPersonalizationRanking(object):
         self.loss_samples = [t for t in self.draw(num_loss_samples)]
         logger.debug("[END]building {} loss samples".format(num_loss_samples))
 
-    def draw(self, no=-1):
-        if no == -1:
-            no = self.ratings.shape[0] - 1
+    def draw(self, no):
 
         for _ in range(no):
-            u = random.choice(tuple(self.user_ids))
+            u = random.choice(self.user_ids)
             user_items = self.user_movies[u]
 
-            pos = random.choice(tuple(user_items))
+            pos = random.choice(user_items)
 
             neg = pos
             while neg in user_items:
-                neg = random.choice(tuple(self.movie_ids))
+                neg = random.choice(self.movie_ids)
 
             yield self.u_inx[u], self.i_inx[pos], self.i_inx[neg]
 
