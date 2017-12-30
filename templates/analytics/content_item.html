@@ -37,19 +37,18 @@
   </div>
   <div class="row">
     <div class="col-sm-6">
-      <div><h2>Genres</h2>
-
+      <div >
+        <h3>Description</h3>
+          <b>Overview:</b> <span id="overview"></span><br/>
+          <b>Release-date:</b>  <span id="release_date"></span><br/>
+          <b>Lan:</b> <span id="lan"></span><br/>
+          <b>Genres:</b> <span id="genres">
       |{% for genre in genres %}
         {{ genre.name }} |
-      {% endfor %}
+      {% endfor %}</span>
 
       </div>
-      <div >
-        <h3>Overview</h3>
-          Overview: <span id="overview"></span>
-          Release-date:  <span id="release_date"></span>
-          Lan: <span id="lan"></span>
-      </div>
+
     </div>
     <div id="img" class="col-sm-6">
         <img id="poster" class="img-responsive" src="" alt="movie poster"/>
