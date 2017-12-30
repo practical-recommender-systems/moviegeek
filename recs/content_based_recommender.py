@@ -35,8 +35,6 @@ class ContentBasedRecs(base_recommender):
                                    active_user_items,
                                    num=6):
 
-        start_time = datetime.now()
-
         movie_ids = {movie['movie_id']: movie['rating'] for movie in active_user_items}
         user_mean = sum(movie_ids.values()) / len(movie_ids)
 
@@ -45,7 +43,7 @@ class ContentBasedRecs(base_recommender):
                                             & Q(similarity__gt=self.min_sim))
         sims = sims.order_by('-similarity')[:self.max_candidates]
         recs = dict()
-        targets = set(s.target for s in sims)
+        targets = set(s.target for s in sims if not s.target == '')
         for target in targets:
 
             pre = 0
@@ -54,6 +52,7 @@ class ContentBasedRecs(base_recommender):
             rated_items = [i for i in sims if i.target == target]
 
             if len(rated_items) > 0:
+
                 for sim_item in rated_items:
                     r = Decimal(movie_ids[sim_item.source] - user_mean)
                     pre += sim_item.similarity * r
