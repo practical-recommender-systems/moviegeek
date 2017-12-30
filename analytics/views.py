@@ -31,7 +31,11 @@ def user(request, user_id):
 
     movie_dtos = list()
     sum_rating = 0
-    user_avg = sum([r.rating for r in ratings.values()])/decimal.Decimal(len(ratings))
+    if len(ratings) > 0:
+        sum_of_ratings = sum([r.rating for r in ratings.values()])
+        user_avg = sum_of_ratings/decimal.Decimal(len(ratings))
+    else:
+        user_avg = 0
 
     genres = {g['name']: 0 for g in Genre.objects.all().values('name').distinct()}
     for movie in movies:
@@ -48,7 +52,7 @@ def user(request, user_id):
                 genres[genre.name] += r - user_avg
 
     max_value = max(genres.values())
-    max_value = max(max_value,1)
+    max_value = max(max_value, 1)
 
     genres = {key: value / max_value for key, value in genres.items()}
     cluster_id = cluster.cluster_id if cluster else 'Not in cluster'
@@ -56,7 +60,7 @@ def user(request, user_id):
     context_dict = {
         'user_id': user_id,
         'avg_rating': user_avg,
-        'movies': sorted(movie_dtos, key=lambda item: -float(item.rating))[:20],
+        'movies': sorted(movie_dtos, key=lambda item: -float(item.rating))[:15],
         'genres': genres,
         'logs': list(log),
         'cluster': cluster_id,
@@ -67,24 +71,36 @@ def user(request, user_id):
 
 
 def content(request, content_id):
+    print(content_id)
     movie = Movie.objects.filter(movie_id=content_id).first()
-    ratings = Rating.objects.filter(movie_id=content_id).values('rating')
+    user_ratings = Rating.objects.filter(movie_id=content_id)
+    ratings = user_ratings.values('rating')
     logs = Log.objects.filter(content_id=content_id).order_by('-created').values()[:20]
     association_rules = SeededRecs.objects.filter(source=content_id).values('target', 'type')
 
-    genres = movie.genres.values()
+    print(content_id, " rat:", ratings)
 
-    ratings = list(r['rating'] for r in ratings)
-    agv_rating = sum(ratings)/len(ratings)
+    movie_title = 'No Title'
+    agv_rating = 0
+    genre_names = []
+    if movie is not None:
+        movie_genres = movie.genres.all() if movie is not None else []
+        genre_names = list(movie_genres.values('name'))
+
+        ratings = list(r['rating'] for r in ratings)
+        agv_rating = sum(ratings)/len(ratings)
+        movie_title = movie.title
+
     context_dict = {
-        'title': movie.title,
+        'title': movie_title,
         'avg_rating': "{:10.2f}".format(agv_rating),
-        'genres': [g['name'] for g in genres],
+        'genres': genre_names,
+        'api_key': get_api_key(),
         'association_rules': association_rules,
-        'content_id': content_id,
+        'content_id': str(content_id),
+        'rated_by': user_ratings,
         'logs': logs,
-        'number_users': len(ratings)
-    }
+        'number_users': len(ratings)}
 
     return render(request, 'analytics/content_item.html', context_dict)
 
@@ -130,12 +146,15 @@ def cluster(request, cluster_id):
 
     context_dict = {
         'genres': genres,
-        'members':  [m.user_id for m in members],
+        'members':  sorted([m.user_id for m in members]),
         'cluster_id': cluster_id,
         'members_count': len(members),
     }
 
     return render(request, 'analytics/cluster.html', context_dict)
+
+def get_genres():
+    return Genre.objects.all().values('name').distinct()
 
 class MovieDto(object):
     def __init__(self, movie_id, title, rating):
@@ -164,7 +183,9 @@ def top_content(request):
 
 def clusters(request):
 
-    clusters_w_membercount = Cluster.objects.values('cluster_id').annotate(member_count=Count('user_id'))
+    clusters_w_membercount = (Cluster.objects.values('cluster_id')
+                              .annotate(member_count=Count('user_id'))
+                              .order_by('cluster_id'))
 
     context_dict = {
         'cluster': list(clusters_w_membercount)
