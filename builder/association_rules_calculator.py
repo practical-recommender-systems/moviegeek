@@ -14,6 +14,7 @@ from collections import defaultdict
 from itertools import combinations
 from datetime import datetime
 
+from collector.models import Log
 from recommender.models import SeededRecs
 
 
@@ -26,15 +27,7 @@ def build_association_rules():
 
 
 def retrieve_transactions():
-    sql = """
-        SELECT *
-         FROM  Collector_log
-         WHERE event = 'buy'
-         ORDER BY session_id, content_id
-    """
-    cursor = data_helper.get_query_cursor(sql)
-    data = data_helper.dictfetchall(cursor)
-
+    data = Log.objects.filter(event='buy').values()
     return data
 
 
@@ -42,13 +35,12 @@ def generate_transactions(data):
     transactions = dict()
 
     for transaction_item in data:
-        transaction_id = transaction_item["sessionId"]
+        transaction_id = transaction_item["session_id"]
         if transaction_id not in transactions:
             transactions[transaction_id] = []
         transactions[transaction_id].append(transaction_item["content_id"])
 
     return transactions
-
 
 def calculate_support_confidence(transactions, min_sup=0.01):
 
@@ -81,6 +73,7 @@ def calculate_itemsets_one(transactions, min_sup=0.01):
 
     return one_itemsets
 
+
 def calculate_itemsets_two(transactions, one_itemsets, min_sup=0.01):
     two_itemsets = defaultdict(int)
 
@@ -112,26 +105,12 @@ def calculate_association_rules(one_itemsets, two_itemsets, N):
     return rules
 
 
-def generate_transactions(data):
-    transactions = dict()
-
-    for transaction_item in data:
-        transaction_id = transaction_item["session_id"]
-        if transaction_id not in transactions:
-            transactions[transaction_id] = []
-        transactions[transaction_id].append(transaction_item["content_id"])
-
-    return transactions
-
-
 def has_support(perm, one_itemsets):
     return frozenset({perm[0]}) in one_itemsets and \
            frozenset({perm[1]}) in one_itemsets
 
 
 def save_rules(rules):
-
-    #conn = DataHelper.connect_to_db()
 
     for rule in rules:
         SeededRecs(
@@ -141,12 +120,6 @@ def save_rules(rules):
             support=rule[3],
             confidence=rule[4]
         ).save()
-        sql = """INSERT INTO seeded_recs (created, source, target, support, confidence, type)
-             VALUES ('{}', '{}', '{}', {}, {}, 'associate')"""
-        print(sql.format(rule[0], rule[1], rule[2], rule[3], rule[4]))
-        #conn.cursor().execute(sql.format(rule[0], rule[1], rule[2], rule[3], rule[4]))
-    #conn.commit()
-    #conn.close()
 
 
 if __name__ == '__main__':

@@ -16,7 +16,6 @@ def log(request):
         user_id = request.POST['user_id']
         content_id = request.POST['content_id']
         event = request.POST['event_type']
-        visit_count = 0
         session_id = request.POST['session_id']
 
         l = Log(
@@ -24,7 +23,6 @@ def log(request):
             user_id=user_id,
             content_id=str(content_id),
             event=event,
-            visit_count=visit_count,
             session_id=str(session_id))
         l.save()
     else:

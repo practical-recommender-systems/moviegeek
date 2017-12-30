@@ -3,25 +3,29 @@ import os
 import django
 import json
 import requests
+import time
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'prs_project.settings')
 
 django.setup()
 
 from recommender.models import MovieDescriptions
-NUMBER_OF_PAGES = 1000
-start_date = "2016-01-01"
-end_date = "2017-04-22"
+NUMBER_OF_PAGES = 15760
+start_date = "1970-01-01"
+
 
 
 def get_descriptions():
-    url = """https://api.themoviedb.org/3/discover/movie?primary_release_date.gte={}&primary_release_date.lte={}&api_key={}&page={}"""
+
+
+
+    url = """https://api.themoviedb.org/3/discover/movie?primary_release_date.gte={}&api_key={}&page={}"""
     api_key = get_api_key()
 
     #MovieDescriptions.objects.all().delete()
 
-    for page in range(173, NUMBER_OF_PAGES):
-        formated_url = url.format(start_date, end_date, api_key, page)
+    for page in range(1, NUMBER_OF_PAGES):
+        formated_url = url.format(start_date, api_key, page)
         print(formated_url)
         r = requests.get(formated_url)
         for film in r.json()['results']:
@@ -34,6 +38,8 @@ def get_descriptions():
             md.genres = film['genre_ids']
             if None != md.imdb_id:
                 md.save()
+
+        time.sleep(1)
 
         print("{}: {}".format(page, r.json()))
 

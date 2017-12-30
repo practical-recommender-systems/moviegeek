@@ -66,7 +66,6 @@
             $.getJSON(url,
                 function(result) {
                     if ((result.data != null) && (result.data.length > 0)) {
-                        recs = document.getElementById('association_rule_recs')
 
 
                         result.data.forEach(function(element, index, array) {
@@ -89,6 +88,7 @@
 
                                 rec_div.appendChild(a)
 
+                                recs = document.getElementById('association_rule_recs')
 
                                 recs.appendChild(rec_div)
 
@@ -111,7 +111,7 @@
 
                         result.data.forEach(function(element, index, array) {
 
-                            $.getJSON(get_url(element.target), function(mov) {
+                            $.getJSON(get_url(element[0]), function(mov) {
                                 image_url = 'http://image.tmdb.org/t/p/w500/'
                                 + mov.movie_results[0].poster_path
 
@@ -119,7 +119,7 @@
                                 rec_div.setAttribute('class', "col-sm-2 img-responsive")
 
                                 a = document.createElement('a')
-                                a.setAttribute('href', '/movies/movie/' + element.target)
+                                a.setAttribute('href', '/movies/movie/' + element[0])
 
                                 img = document.createElement('img')
                                 img.setAttribute('src', image_url)
@@ -127,7 +127,7 @@
                                 a.appendChild(img)
 
                                 rec_div.appendChild(a)
-
+                                recs = document.getElementById('cb_recs')
                                 recs.appendChild(rec_div)
 
                             })
@@ -138,6 +138,43 @@
                 });
         }
 
+       function get_funk_recs(userid) {
+            url = '/rec/funk/user/' + userid + '/'
+
+            $.getJSON(url,
+                function(result) {
+                    if ((result.data != null) && (result.data.length > 0)) {
+                        recs = document.getElementById('funk_recs')
+
+
+                        result.data.forEach(function(element, index, array) {
+
+                            $.getJSON(get_url(element[0]), function(mov) {
+                                image_url = 'http://image.tmdb.org/t/p/w500/'
+                                + mov.movie_results[0].poster_path
+
+                                rec_div = document.createElement('div')
+                                rec_div.setAttribute('class', "col-sm-2 img-responsive")
+
+                                a = document.createElement('a')
+                                a.setAttribute('href', '/movies/movie/' + element[0])
+
+                                img = document.createElement('img')
+                                img.setAttribute('src', image_url)
+                                img.setAttribute('class',"img-responsive")
+                                a.appendChild(img)
+
+                                rec_div.appendChild(a)
+                                recs = document.getElementById('funk_recs')
+                                recs.appendChild(rec_div)
+
+                            })
+
+                        });
+                    }
+
+                });
+        }
 
         function get_cf_recs(userid) {
             url = '/rec/cf/user/' + userid + '/'
@@ -145,7 +182,6 @@
             $.getJSON(url,
                 function(result) {
                     if ((result.data != null) && (result.data.length > 0)) {
-                        recs = document.getElementById('cf_recs')
 
 
                         result.data.forEach(function(element, index, array) {
@@ -168,7 +204,7 @@
 
                                 rec_div.appendChild(a)
 
-
+                                recs = document.getElementById('cf_recs')
                                 recs.appendChild(rec_div)
 
                             })
@@ -226,30 +262,37 @@
   </div>
   </div>
   <h2>Personalised recommendations</h2>
-  <div class="row">
-    <div class="col-sm-1">
-      Association rules:
+    <div class="row well">
+        <div class="col-sm-1">
+          Association rules:
+        </div>
+        <div class="col-sm-11">
+          <div id="association_rule_recs"></div>
+        </div>
     </div>
-    <div class="col-sm-11">
-      <div id="association_rule_recs"></div>
-
+    <div class="row well" styles="height: 150px">
+        <div class="col-sm-1">
+          Content-based recs:
+        </div>
+        <div class="col-sm-11">
+          <div id="cb_recs"></div>
+        </div>
     </div>
-
-  </div>
-  <div class="row">
-    <div class="col-sm-1">
-      Content-based recs:
+    <div class="row well">
+          <div class="col-sm-1">
+           Collaborative-based recs:
+          </div>
+          <div class="col-sm-11">
+            <div id="cf_recs"></div>
+          </div>
     </div>
-    <div class="col-sm-11">
-      <div id="cb_recs"></div>
-    </div>
-  </div>
-    <div class="row">
-    <div class="col-sm-1">
-      Collaborative-based recs:
-    </div>
-    <div class="col-sm-11">
-      <div id="cf_recs"></div>
+    <div class="row well">
+          <div class="col-sm-1">
+           Matrix factorization Collaborative-based recs:
+          </div>
+          <div class="col-sm-11">
+            <div id="funk_recs"></div>
+          </div>
     </div>
   </div>
   <div class="row">
@@ -288,6 +331,7 @@
         get_association_rule_recs({{user_id}})
         get_cb_recs({{user_id}})
         get_cf_recs({{user_id}})
+        get_funk_recs({{user_id}})
     </script>
 </body>
 </html>

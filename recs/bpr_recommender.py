@@ -12,16 +12,15 @@ import pandas as pd
 import pickle
 
 
-class FunkSVDRecs(base_recommender):
+class BPRRecs(base_recommender):
 
-    def __init__(self, save_path='/Users/u0157492/Projects/moviegeek/builder/models/funkSVD/2017-11-14 22:08:47.116843//model/100/'):
+    def __init__(self, save_path='./models/bpr/'):
         self.save_path = save_path
         self.load_model(save_path)
         self.avg = list(Rating.objects.all().aggregate(Avg('rating')).values())[0]
 
     def load_model(self, save_path):
-        with open(save_path + 'user_bias.data', 'rb') as ub_file:
-            self.user_bias = pickle.load(ub_file)
+
         with open(save_path + 'item_bias.data', 'rb') as ub_file:
             self.item_bias = pickle.load(ub_file)
         with open(save_path + 'user_factors.json', 'r') as infile:
@@ -36,7 +35,7 @@ class FunkSVDRecs(base_recommender):
         self.load_model(save_path)
 
     def predict_score(self, user_id, item_id):
-        rec = Recs.objects.filter(user_id = user_id, item_id=item_id).first()
+        rec = Recs.objects.filter(user_id=user_id, item_id=item_id).first()
         if rec is None:
             return 0
         else:
@@ -49,7 +48,8 @@ class FunkSVDRecs(base_recommender):
 
     def recommend_items_by_ratings(self, user_id, active_user_items, num=6):
 
-        rated_movies = {movie['movie_id']: movie['rating'] for movie in active_user_items}
+        rated_movies = {movie['movie_id']: movie['rating']
+                        for movie in active_user_items}
         recs = {}
         if str(user_id) in self.user_factors.columns:
 
@@ -59,17 +59,12 @@ class FunkSVDRecs(base_recommender):
 
             sorted_scores = scores.sort_values(ascending=False)
             result = sorted_scores[:num + len(rated_movies)]
-            user_bias = 0
-
-            if user_id in self.user_bias.keys():
-                user_bias = self.user_bias[user_id]
-            elif int(user_id) in self.user_bias.keys():
-                user_bias = self.user_bias[int(user_id)]
-            result += user_bias + self.avg
 
             recs = {r[0]: {'prediction': r[1] + self.item_bias[r[0]]}
-                    for r in zip(result.index, result) if r[0] not in rated_movies}
+                    for r in zip(result.index, result)
+                    if r[0] not in rated_movies}
 
-        sorted_items = sorted(recs.items(), key=lambda item: -float(item[1]['prediction']))[:num]
+        sorted_items = sorted(recs.items(),
+                              key=lambda item: -float(item[1]['prediction']))
 
-        return sorted_items
+        return sorted_items[:num]

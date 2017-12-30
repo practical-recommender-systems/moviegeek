@@ -13,35 +13,21 @@ from django.utils.dateparse import parse_datetime
 @ensure_csrf_cookie
 def index(request):
 
-    paginate_by = 18
-
     genre_selected = request.GET.get('genre')
 
     api_key = get_api_key()
 
     if genre_selected:
         selected = Genre.objects.filter(name=genre_selected)[0]
-        movies = selected.movies.order_by('-year')
+        movies = selected.movies.order_by('-year', 'movie_id')
     else:
-        movies = Movie.objects.order_by('-year')
+        movies = Movie.objects.order_by('-year', 'movie_id')
 
     genres = get_genres()
 
-    paginator = Paginator(movies, paginate_by)
-
-    page_number = request.GET.get("page")
-
-    try:
-        page = paginator.page(page_number)
-    except PageNotAnInteger:
-        page_number = 1
-        page = paginator.page(page_number)
-    except EmptyPage:
-        page = paginator.page(movies.count())
-
-    page_number = int(page_number)
-    page_start = 1 if page_number < 5 else page_number - 3
-    page_end = 6 if page_number < 5 else page_number + 2
+    page_number = request.GET.get("page", 1)
+    page, page_end, page_start = handle_pagination(movies,
+                                                   page_number)
 
     context_dict = {'movies': page,
                     'genres': genres,
@@ -54,9 +40,28 @@ def index(request):
     return render(request, 'moviegeek/index.html', context_dict)
 
 
+def handle_pagination(movies, page_number):
+
+    paginate_by = 18
+
+    paginator = Paginator(movies, paginate_by)
+
+    try:
+        page = paginator.page(page_number)
+    except PageNotAnInteger:
+        page_number = 1
+        page = paginator.page(page_number)
+    except EmptyPage:
+        page = paginator.page(paginator.num_pages)
+
+    page_number = int(page_number)
+    page_start = 1 if page_number < 5 else page_number - 3
+    page_end = 6 if page_number < 5 else page_number + 2
+    return page, page_end, page_start
+
+
 @ensure_csrf_cookie
 def genre(request, genre_id):
-    paginate_by = 18
 
     if genre_id:
         selected = Genre.objects.filter(name=genre_id)[0]
@@ -66,21 +71,9 @@ def genre(request, genre_id):
 
     genres = get_genres()
 
-    paginator = Paginator(movies, paginate_by)
-
-    page_number = request.GET.get("page")
-
-    try:
-        page = paginator.page(page_number)
-    except PageNotAnInteger:
-        page_number = 1
-        page = paginator.page(page_number)
-    except EmptyPage:
-        page = paginator.page(movies.count())
-
-    page_number = int(page_number)
-    page_start = 1 if page_number < 5 else page_number - 3
-    page_end = 6 if page_number < 5 else page_number + 2
+    page_number = request.GET.get("page", 1)
+    page, page_end, page_start = handle_pagination(movies,
+                                                   page_number)
 
     print(genres)
     context_dict = {'movies': page,
@@ -164,6 +157,11 @@ def session_id(request):
 
 
 def user_id(request):
+    user_id = request.GET.get("user_id")
+
+    if user_id:
+        request.session['user_id'] = user_id
+
     if not "user_id" in request.session:
         request.session['user_id'] = random.randint(1000000000000, 9000000000000)
 

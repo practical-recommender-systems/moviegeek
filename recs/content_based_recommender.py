@@ -1,91 +1,99 @@
 import os
+
+from datetime import datetime
+
 from recs.base_recommender import base_recommender
 from analytics.models import Rating
-from recommender.models import MovieDescriptions
-
+from recommender.models import MovieDescriptions, LdaSimilarity
+from django.db.models import Q
 from gensim import models, corpora, similarities, matutils
+from decimal import Decimal
+
+lda_path = './lda/'
 
 
 class ContentBasedRecs(base_recommender):
 
-    def __init__(self):
-        self.lda_path = './lda/'
+    def __init__(self, min_sim=0.1):
+        self.min_sim = min_sim
+        self.max_candidates = 100
 
     def recommend_items(self, user_id, num=6):
 
-        ratings = Rating.objects.filter(user_id=user_id)
-        movie_ids = Rating.objects.filter(user_id=user_id).values_list('movie_id', flat=True).distinct()
+        active_user_items = Rating.objects.filter(user_id=user_id).order_by('-rating')[:100]
 
-        return self.recommend_items_from_items(movie_ids, num)
+        return self.recommend_items_by_ratings(user_id, active_user_items.values(), num)
 
-    def recommend_items_from_items(self, movie_ids, num=6):
+    def seeded_rec(self, content_ids, take=6):
+        data = LdaSimilarity.objects.filter(source__in=content_ids) \
+                   .order_by('-similarity') \
+                   .values('target', 'similarity')[:take]
+        return list(data)
 
-        lda = models.ldamodel.LdaModel.load(self.lda_path + 'model.lda')
+    def recommend_items_by_ratings(self,
+                                   user_id,
+                                   active_user_items,
+                                   num=6):
+        if len(active_user_items) == 0:
+            return {}
 
-        dictionary = corpora.Dictionary.load(self.lda_path + 'dict.lda')
+        movie_ids = {movie['movie_id']: movie['rating'] for movie in active_user_items}
 
-        corpus = corpora.MmCorpus(self.lda_path + 'corpus.mm')
+        user_mean = sum(movie_ids.values()) / len(movie_ids)
 
-        content_sims = dict()
-        for movie_id in movie_ids:
+        sims = LdaSimilarity.objects.filter(Q(source__in=movie_ids.keys())
+                                            & ~Q(target__in=movie_ids.keys())
+                                            & Q(similarity__gt=self.min_sim))
+        sims = sims.order_by('-similarity')[:self.max_candidates]
+        recs = dict()
+        targets = set(s.target for s in sims if not s.target == '')
+        for target in targets:
 
-            md = MovieDescriptions.objects.filter(imdb_id=movie_id).first()
-            if md is not None:
-                index = similarities.MatrixSimilarity.load(self.lda_path + 'index.lda')
+            pre = 0
+            sim_sum = 0
 
-                lda_vector = lda[corpus[int(md.lda_vector)]]
-                sims = index[lda_vector]
-                sorted_sims = sorted(enumerate(sims), key=lambda item: -item[1])[:num]
-                movies = get_movie_ids(sorted_sims, corpus, dictionary)
+            rated_items = [i for i in sims if i.target == target]
 
-                for movie in movies:
-                    target = movie['target']
-                    if target in content_sims.keys():
-                        if movie['sim'] > content_sims[target]['sim']:
-                            content_sims[target] = movie
-                    else:
-                        content_sims[target] = movie
-        return sorted(content_sims.values(), key=lambda item: -float(item['sim']))[:num]
+            if len(rated_items) > 0:
+
+                for sim_item in rated_items:
+                    r = Decimal(movie_ids[sim_item.source] - user_mean)
+                    pre += sim_item.similarity * r
+                    sim_sum += sim_item.similarity
+
+                if sim_sum > 0:
+                    recs[target] = { 'prediction': Decimal(user_mean) + pre/sim_sum,
+                                     'sim_items': [r.source for r in rated_items]}
+
+        return sorted(recs.items(), key=lambda item: -float(item[1]['prediction']))[:num]
 
     def predict_score(self, user_id, item_id):
 
-        ratings = Rating.objects.filter(user_id=user_id)
-        rated_movies = {r['movie_id']: r['rating'] for r in ratings.values()}
+        active_user_items = Rating.objects.filter(user_id=user_id).order_by('-rating').values()[:100]
 
-        lda = models.ldamodel.LdaModel.load(self.lda_path + 'model.lda')
-        corpus = corpora.MmCorpus(self.lda_path + 'corpus.mm')
+        movie_ids = {movie['movie_id']: movie['rating'] for movie in active_user_items}
+        user_mean = sum(movie_ids.values()) / len(movie_ids)
 
-        md = MovieDescriptions.objects.filter(imdb_id=item_id).first()
-        rated_movies_desc = MovieDescriptions.objects.filter(imdb_id__in=rated_movies.keys())
+        sims = LdaSimilarity.objects.filter(Q(source__in=movie_ids.keys())
+                                            & ~Q(target=item_id))
+        pre = 0
+        sim_sum = 0
+        prediction = Decimal(0.0)
 
-        if md is None:
-            return 0
+        if len(sims) > 0:
+            for sim_item in sims:
+                r = Decimal(movie_ids[sim_item.source] - user_mean)
+                pre += sim_item.similarity * r
+                sim_sum += sim_item.similarity
 
-        if rated_movies_desc is None:
-            return 0
-        if rated_movies_desc.count() == 0:
-            return 0
+            prediction = Decimal(user_mean) + pre / sim_sum
+        return prediction
 
-        top = 0.0
-        bottom = 0.0
-
-        for rm in rated_movies_desc:
-            lda_vector = lda[corpus[int(md.lda_vector)]]
-            lda_vector_sim = lda[corpus[int(rm.lda_vector)]]
-            sim = matutils.cossim(lda_vector, lda_vector_sim)
-            rating = rated_movies[rm.imdb_id]
-
-            top += sim * float(rating)
-            bottom += sim
-
-        return top / bottom
-
-
-def get_movie_ids(sorted_sims, corpus, dictionary):
+def get_movie_ids(sorted_sims):
     ids = [s[0] for s in sorted_sims]
-    movies = MovieDescriptions.objects.filter(lda_vector__in=ids)
+    movies = list(MovieDescriptions.objects.filter(lda_vector__in=ids))
+    m_info = {str(movie.lda_vector): (movie.imdb_id, movie.title, sorted_sims) for movie in movies}
 
-    return [{"target": movies[i].imdb_id,
-             "title": movies[i].title,
-             "sim": str(sorted_sims[i][1])} for i in range(len(movies))
-            if movies[i].imdb_id is not '']
+    return [{"target": m_info[str(id[0])][0],
+             "title": m_info[str(id[0])][1],
+             "sim": str(id[1])} for id in sorted_sims]

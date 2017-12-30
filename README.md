@@ -32,28 +32,65 @@ Look at the following guide for more details [guide](http://docs.python-guide.or
  
 ```bash
 > cd moviegeek
-> virtualenv prs
+> virtualenv -p python3 prs
 > source prs/bin/activate
 ```
-On OS X, if you installed python3 with ```brew install python3```, then 
-create a virtual env with
-```virtualenv -p python3 prs```
 
 if you are running Anaconda you can also use conda virtual environment instead.
 ### Get the required packages
 
 ```bash
-pip install -r requirements.txt
+pip3 install -r requirements.txt
 ```
 
+## Database setup
+Django is setup to run with sqllite3 out of the box, and you can also use that when you run the site. However there are things 
+that will be considerable faster if if you install postgres. 
+
+### [OPTIONAL] install and use PostGreSQL
+
+#### The database
+If you dont have postgres running then you should start out installing it. 
+It's a free, and easy to install. 
+Get it here [postgresql download](https://www.postgresql.org/download/) 
+and follow the instructions on the site.
+
+
+#### The database driver
+
+When the database is spinning its time for the python driver. I recommend using the following 
+
+```bash
+> pip3 install psycopg2
+```
+
+#### Configuration (if you are using PostgreSQL)
+
+in prs_project/settings.py
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'db_name',                      
+        'USER': 'db_user',
+        'PASSWORD': 'db_user_password',
+        'HOST': '',
+        'PORT': 'db_port_number',
+    }
+}
+
 ### Create the dbs. 
-If you have a database running on your machine I would encourage 
-you to connect it, by updating the settings in `prs_project/settings.py`. To set up another database is 
+If you have a database running on your machine I would encourage you to connect it, by updating 
+the settings in `prs_project/settings.py`. To set up another database is 
 described in the Django docs [here](https://docs.djangoproject.com/en/1.10/ref/databases/)
 
 If you are not using sqllite, then in addition to modifying the database settings in settings.py, 
 you may have to install a database adapter specific to your database. For example, if you are using 
-postgresql, you must install psycopg2 with  ```pip install psycopg2```
+postgresql
+
+you to connect it, by updating the settings in `prs_project/settings.py` (fx like shown above). 
+
+To set up another database is described in the Django docs [here](https://docs.djangoproject.com/en/1.10/ref/databases/)
 
 ```bash
 > python manage.py makemigrations
@@ -65,6 +102,7 @@ postgresql, you must install psycopg2 with  ```pip install psycopg2```
 "/Applications/Python\ 3.6/Install\ Certificates.command". More details [here](https://bugs.python.org/issue28150))
 ```bash
 > python populate_moviegeek.py
+> python populate_ratings.py
 ```
 
 ### Create a themoviedb.org id
@@ -76,15 +114,18 @@ When you are finished, the file contents should look something like
 ```{"themoviedb_apikey": "6d88c9a24b1bc9a60b374d3fe2cd92ac"}```
 
 ### Start the web server
- To start the development server run:
+To start the development server run:
+
 ```bash
-> python manage.py runserver 127.0.0.1:8000
+> python manage.py runserver 8000
 ```
+
 Running the server like this, will make the website available 
 [http://127.0.0.1:8000](http://127.0.0.1:8000) other applications also use this port
 so you might need to try out 8001 instead. 
 
 ### Closing down.
+* The server can be stopped with <CLTR>-c  
 * when you are finished running the project you can exit the virtual env:
 ```bash
 > deactivate

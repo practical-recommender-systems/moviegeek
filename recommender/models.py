@@ -3,19 +3,38 @@ from django.db import models
 class MovieDescriptions(models.Model):
     movie_id = models.CharField(max_length=8)
     imdb_id = models.CharField(max_length=8)
-    title = models.CharField(max_length=56)
-    description = models.CharField(max_length=512)
+    title = models.CharField(max_length=512)
+    description = models.CharField(max_length=1024)
     genres = models.CharField(max_length=512, default='')
     lda_vector = models.CharField(max_length=56, null=True)
+    sim_list = models.CharField(max_length=512, default='')
+
+    class Meta:
+        db_table = 'movie_description'
 
     def __str__(self):
-        return self.imdb_id
+        return "{}: {}".format(self.imdb_id, self.title)
+
+
+class LdaSimilarity(models.Model):
+    created = models.DateField()
+    source = models.CharField(max_length=16, db_index=True)
+    target = models.CharField(max_length=16)
+    similarity = models.DecimalField(max_digits=8, decimal_places=7)
+
+    class Meta:
+        db_table = 'lda_similarity'
+
+    def __str__(self):
+        return "[({} => {}) sim = {}]".format(self.source,
+                                              self.target,
+                                              self.similarity)
 
 
 class Similarity(models.Model):
     created = models.DateField()
-    source = models.CharField(max_length=8)
-    target = models.CharField(max_length=8)
+    source = models.CharField(max_length=16, db_index=True)
+    target = models.CharField(max_length=16)
     similarity = models.DecimalField(max_digits=8, decimal_places=7)
 
     class Meta:

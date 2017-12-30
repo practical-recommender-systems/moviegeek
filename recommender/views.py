@@ -1,3 +1,4 @@
+from datetime import datetime
 from decimal import Decimal
 from math import sqrt
 
@@ -16,21 +17,26 @@ from builder import data_helper
 from gensim import models, corpora, similarities
 
 from recs.content_based_recommender import ContentBasedRecs
+from recs.funksvd_recommender import FunkSVDRecs
+from recs.neighborhood_based_recommender import NeighborhoodBasedRecs
+from recs.popularity_recommender import PopularityBasedRecs
 
 
 def get_association_rules_for(request, content_id, take=6):
     data = SeededRecs.objects.filter(source=content_id) \
-               .order_by('confidence') \
+               .order_by('-confidence') \
                .values('target', 'confidence', 'support')[:take]
 
     return JsonResponse(dict(data=list(data)), safe=False)
 
 
 def recs_using_association_rules(request, user_id, take=6):
-    events = Log.objects.filter(user_id=user_id).order_by('created').values_list('content_id', flat=True).distinct()
+    events = Log.objects.filter(user_id=user_id)\
+                        .order_by('created')\
+                        .values_list('content_id', flat=True)\
+                        .distinct()
 
     seeds = set(events[:20])
-
 
     rules = SeededRecs.objects.filter(source__in=seeds) \
         .exclude(target__in=seeds) \
@@ -72,20 +78,20 @@ def pearson(users, this_user, that_user):
         all_movies = set(users[this_user].keys()) & set(users[that_user].keys())
 
         dividend = 0
-        divisor_a = 0
-        divisor_b = 0
+        a_divisor = 0
+        b_divisor = 0
         for movie in all_movies:
 
             if movie in users[this_user].keys() and movie in users[that_user].keys():
-                nr_a = users[this_user][movie] - this_user_avg
-                nr_b = users[that_user][movie] - that_user_avg
-                dividend += (nr_a) * (nr_b)
-                divisor_a += pow(nr_a, 2)
-                divisor_b += pow(nr_b, 2)
+                a_nr = users[this_user][movie] - this_user_avg
+                b_nr = users[that_user][movie] - that_user_avg
+                dividend += a_nr * b_nr
+                a_divisor += pow(a_nr, 2)
+                b_divisor += pow(b_nr, 2)
 
-        divisor = Decimal(sqrt(divisor_a) * sqrt(divisor_b))
+        divisor = Decimal(sqrt(a_divisor) * sqrt(b_divisor))
         if divisor != 0:
-            return dividend / Decimal(sqrt(divisor_a) * sqrt(divisor_b))
+            return dividend / Decimal(sqrt(a_divisor) * sqrt(b_divisor))
 
     return 0
 
@@ -144,46 +150,21 @@ def similar_users(request, user_id, type):
     return JsonResponse(data, safe=False)
 
 
-def similar_content(request, content_id, num = 6):
-    # lda = models.ldamodel.LdaModel.load('./lda/model.lda')
-    #
-    # dictionary = corpora.Dictionary.load('./lda/dict.lda')
-    #
-    # corpus = corpora.MmCorpus('./lda/corpus.mm')
-    # content_sims = dict()
-    #
-    # md = MovieDescriptions.objects.filter(imdb_id=content_id).first()
-    #
-    #
-    # if md is not None:
-    #     index = similarities.MatrixSimilarity.load('./lda/index.lda')
-    #
-    #     lda_vector = lda[corpus[int(md.lda_vector)]]
-    #     sims = index[lda_vector]
-    #
-    #     sorted_sims = sorted(enumerate(sims), key=lambda item: -item[1])[:num]
-    #
-    #     movies = get_movie_ids(sorted_sims, corpus, dictionary)
-    #
-    #     for movie in movies:
-    #         target = movie['target']
-    #         if target in content_sims.keys():
-    #             if movie['sim'] > content_sims[target]['sim']:
-    #                 content_sims[target] = movie
-    #         else:
-    #             content_sims[target] = movie
+def similar_content(request, content_id, num=6):
 
-        sorted_items = ContentBasedRecs().recommend_items_from_items([content_id], num)
-        data = {
-            'source_id': content_id,
-            'data': sorted_items
-        }
+    sorted_items = ContentBasedRecs().seeded_rec([content_id], num)
+    data = {
+        'source_id': content_id,
+        'data': sorted_items
+    }
 
-        return JsonResponse(data, safe=False)
+    return JsonResponse(data, safe=False)
 
 
-def recs_cb(request, user_id, num = 6):
+def recs_cb(request, user_id, num=6):
+    start_time = datetime.now()
 
+    print(f"lda loaded in {datetime.now()-start_time}")
     sorted_items = ContentBasedRecs().recommend_items(user_id, num)
 
     data = {
@@ -193,47 +174,36 @@ def recs_cb(request, user_id, num = 6):
 
     return JsonResponse(data, safe=False)
 
-def recs_funksvd(request, user_id, num = 6):
-    recs = Recs.objects.filter(user='u' + user_id)
 
-    top_num = sorted(recs.values(), key=lambda rec: rec['rating'])
+def recs_funksvd(request, user_id, num=6):
+    sorted_items = FunkSVDRecs().recommend_items(user_id, num)
 
+    data = {
+        'user_id': user_id,
+        'data': sorted_items
+    }
+    return JsonResponse(data, safe=False)
+
+
+def recs_cf(request, user_id, num=6):
+    min_sim = request.GET.get('min_sim', 0.1)
+    sorted_items = NeighborhoodBasedRecs(min_sim=min_sim).recommend_items(user_id, num)
+
+    print(f"cf sorted_items is: {sorted_items}")
+    data = {
+        'user_id': user_id,
+        'data': sorted_items
+    }
+
+    return JsonResponse(data, safe=False)
+
+
+def recs_pop(request, user_id, num=60):
+    top_num = PopularityBasedRecs().recommend_items(user_id, num)
     data = {
         'user_id': user_id,
         'data': top_num[:num]
     }
-    return JsonResponse(data, safe=False)
-
-def recs_cf(request, user_id, num = 6):
-    active_user_items = Rating.objects.filter(user_id=user_id)
-
-    movie_ids = {movie.movie_id: movie.rating for movie in active_user_items}
-    #todo: get similar items
-    candidate_items = Similarity.objects.filter(source__in=movie_ids.keys())
-    candidate_items = candidate_items.distinct().order_by('-similarity')
-
-    #todo: calculate predictions
-    recs = dict()
-    print(candidate_items)
-    for candiate in candidate_items:
-        target = candiate.target
-
-        if target not in movie_ids:
-            pre = 0
-
-            rated_items = [i for i in candidate_items if i.target == target]
-
-            for sim_item in [i for i in candidate_items if i.target == target]:
-                r = movie_ids[sim_item.source]
-                pre += sim_item.similarity * r
-
-            recs[target] = {'prediction': pre/len(rated_items),
-                            'sim_items': [r.source for r in rated_items]}
-
-    sorted_items = sorted(recs.items(), key=lambda item: -float(item[1]['prediction']))[:num]
-    print('Collaborative filtering recommendations for user {} \n {}'.format(user_id, sorted_items))
-    data = {'user_id': user_id,
-            'data': sorted_items}
 
     return JsonResponse(data, safe=False)
 

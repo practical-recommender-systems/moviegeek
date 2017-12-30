@@ -36,45 +36,77 @@
 
   </div>
   <div class="row">
-    <h2>Genres</h2>
+    <div class="col-sm-6">
+      <div >
+        <h3>Description</h3>
+          <b>Overview:</b> <span id="overview"></span><br/>
+          <b>Release-date:</b>  <span id="release_date"></span><br/>
+          <b>Lan:</b> <span id="lan"></span><br/>
+          <b>Genres:</b> <span id="genres">
+      |{% for genre in genres %}
+        {{ genre.name }} |
+      {% endfor %}</span>
 
-    |{% for genre in genres %}
-      {{ genre }} |
-    {% endfor %}
+      </div>
 
+    </div>
+    <div id="img" class="col-sm-6">
+        <img id="poster" class="img-responsive" src="" alt="movie poster"/>
+    </div>
   </div>
+
 
   <div id="chartContainer">
-  <script src="/lib/d3.v3.4.8.js"></script>
-  <script src="http://dimplejs.org/dist/dimple.v2.2.0.min.js"></script>
-  <script type="text/javascript">
-    var svg = dimple.newSvg("#chartContainer", 590, 400);
-    d3.json("/data/example_data.tsv", function (data) {
-      data = dimple.filterData(data, "Owner", ["Aperture", "Black Mesa"])
-      var myChart = new dimple.chart(svg, data);
-      myChart.setBounds(60, 30, 505, 305);
-      var x = myChart.addCategoryAxis("x", "Month");
-      x.addOrderRule("Date");
-      myChart.addMeasureAxis("y", "Unit Sales");
-      var s = myChart.addSeries("Channel", dimple.plot.area);
-      s.interpolation = "step";
-      s.lineWeight = 1;
-      myChart.addLegend(60, 10, 500, 20, "right");
-      myChart.draw();
-    });
-  </script>
-</div>
-
-
-
+    <script src="/lib/d3.v3.4.8.js"></script>
+    <script src="http://dimplejs.org/dist/dimple.v2.2.0.min.js"></script>
+    <script type="text/javascript">
+      var svg = dimple.newSvg("#chartContainer", 590, 400);
+      d3.json("/data/example_data.tsv", function (data) {
+        data = dimple.filterData(data, "Owner", ["Aperture", "Black Mesa"])
+        var myChart = new dimple.chart(svg, data);
+        myChart.setBounds(60, 30, 505, 305);
+        var x = myChart.addCategoryAxis("x", "Month");
+        x.addOrderRule("Date");
+        myChart.addMeasureAxis("y", "Unit Sales");
+        var s = myChart.addSeries("Channel", dimple.plot.area);
+        s.interpolation = "step";
+        s.lineWeight = 1;
+        myChart.addLegend(60, 10, 500, 20, "right");
+        myChart.draw();
+      });
+    </script>
+  </div>
   <div class="row">
     <h2>Recent Log</h2>
-  <ul>
-    {% for row in logs %}
-      <a href="/analytics/user/{{ row.user_id }}">{{ row.user_id }}</a> | {{ row.event }} | {{ row.created }} <br />
-    {% endfor %}
     <ul>
+      {% for row in logs %}
+        <a href="/analytics/user/{{ row.user_id }}">{{ row.user_id }}</a> | {{ row.event }} | {{ row.created }} <br />
+      {% endfor %}
+    </ul>
   </div>
+
+</div>
+<script type="text/javascript">
+  function getinfo(movieid) {
+            url = 'https://api.themoviedb.org/3/find/tt' + movieid + '?external_source=imdb_id&api_key={{ api_key }}'
+
+            $.getJSON(url,
+                      function(result) {
+                        image_url = 'http://image.tmdb.org/t/p/w500/'
+                            + result.movie_results[0].poster_path
+
+                        img_tag = document.getElementById('poster').setAttribute('src', image_url)
+
+                        document.getElementById('overview').innerHTML = result.movie_results[0].overview
+                        document.getElementById('release_date').innerHTML =  result.movie_results[0].release_date
+                        document.getElementById('lan').innerHTML =  result.movie_results[0].original_language
+
+
+                } )}
+
+  getinfo('{{ content_id }}')
+
+</script>
 </div>
 </body>
 </html>
