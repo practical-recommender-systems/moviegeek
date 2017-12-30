@@ -6,9 +6,6 @@ import django
 from django.db.models import Count
 django.setup()
 
-import pandas as pd
-import numpy as np
-from builder import data_helper
 from collections import defaultdict
 
 from itertools import combinations
