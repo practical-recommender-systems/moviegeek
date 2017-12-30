@@ -1,11 +1,8 @@
 import os
 import time
-import json
-import numpy as np
-
-from collections import defaultdict
 from decimal import Decimal
-import pandas as pd
+
+import numpy as np
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "prs_project.settings")
 
@@ -13,8 +10,6 @@ import django
 
 django.setup()
 
-from recs.neighborhood_based_recommender import NeighborhoodBasedRecs
-from moviegeeks.models import Movie
 from analytics.models import Rating
 
 
@@ -95,7 +90,7 @@ class PrecisionAtK(object):
             if len(dict_for_rec) > 0:
                 recs = list(self.rec.recommend_items_by_ratings(user_id,
                                                                 dict_for_rec,
-                                                                self.K))
+                                                                num=self.K))
                 if len(recs) > 0:
                     AP = self.average_precision_k(recs, relevant_ratings)
                     AR = self.recall_at_k(recs, relevant_ratings)
@@ -140,52 +135,3 @@ class PrecisionAtK(object):
         return score
 
 
-class RecommenderCoverage(object):
-    def __init__(self, recommender):
-        self.ratings = self.load_all_ratings()
-        self.all_users = set(self.ratings['user_id'])
-        self.all_movies = set(self.ratings['movie_id'])
-        self.recommender = recommender
-        self.items_in_rec = defaultdict(int)
-        self.users_with_recs = []
-
-    def calculate_coverage(self):
-
-        print('calculating coverage for all users ({} in total)'.format(len(self.all_users)))
-        for user in self.all_users:
-            user_id = user
-            recset = self.recommender.recommend_items(int(user_id))
-            if recset:
-                self.users_with_recs.append(user)
-                for rec in recset:
-                    self.items_in_rec[rec[0]] += 1
-
-        print('writing cf coverage to file.')
-        json.dump(self.items_in_rec, open('cf_coverage.json', 'w'))
-
-        no_movies = len(self.all_movies)
-        no_movies_in_rec = len(self.items_in_rec)
-        no_users = len(self.all_users)
-        no_users_in_rec = len(self.users_with_recs)
-        user_coverage = float(no_users_in_rec / no_users)
-        movie_coverage = float(no_movies_in_rec / no_movies)
-        print("{} {} {}".format(no_users, no_users_in_rec, user_coverage))
-        print("{} {} {}".format(no_movies, no_movies_in_rec, movie_coverage))
-        return user_coverage, movie_coverage
-
-    def load_all_ratings(self, min_ratings=1):
-        columns = ['user_id', 'movie_id', 'rating', 'type', 'rating_timestamp']
-
-        ratings_data = Rating.objects.all().values(*columns)
-
-        ratings = pd.DataFrame.from_records(ratings_data, columns=columns)
-
-        user_count = ratings[['user_id', 'movie_id']].groupby('user_id').count()
-        user_count = user_count.reset_index()
-        user_ids = user_count[user_count['movie_id'] > min_ratings]['user_id']
-
-        ratings = ratings[ratings['user_id'].isin(user_ids)]
-
-        ratings['rating'] = ratings['rating'].astype(float)
-        print("using {} ratings".format(ratings.shape[0]))
-        return ratings
