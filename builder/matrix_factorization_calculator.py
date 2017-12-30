@@ -299,28 +299,17 @@ def load_all_ratings(min_ratings=1):
 
     ratings = pd.DataFrame.from_records(ratings_data, columns=columns)
 
-    # user_count = ratings[['user_id', 'movie_id']].groupby('user_id').count()
-    # user_count = user_count.reset_index()
-    # user_ids = user_count[user_count['movie_id'] > min_ratings]['user_id']
-    # ratings = ratings[ratings['user_id'].isin(user_ids)]
-    item_count = ratings[['movie_id', 'rating']].groupby('movie_id').count()
-
-    item_count = item_count.reset_index()
-    item_ids = item_count[item_count['rating'] > min_ratings]['movie_id']
-    ratings = ratings[ratings['movie_id'].isin(item_ids)]
+    user_count = ratings[['user_id', 'movie_id']].groupby('user_id').count()
+    user_count = user_count.reset_index()
+    user_ids = user_count[user_count['movie_id'] > min_ratings]['user_id']
+    ratings = ratings[ratings['user_id'].isin(user_ids)]
 
     ratings['rating'] = ratings['rating'].astype(Decimal)
     return ratings
 
 
 def calculate_all_movies_mean(ratings):
-    # rating_agg = ratings[['movie_id', 'rating']].groupby('movie_id').count().reset_index()
-    # rating_agg['sums'] = ratings[['movie_id', 'rating']].groupby('movie_id').sum().reset_index()['rating']
-    sum_of_ratings = ratings['rating'].sum()
-    # K = 25
     avg = ratings['rating'].sum() / ratings.shape[0]
-    # rating_agg['avg'] = (avg * K + rating_agg['sums'])/(K + rating_agg['rating'])
-    # return rating_agg[['movie_id', 'avg']]
     return Decimal(avg)
 
 
