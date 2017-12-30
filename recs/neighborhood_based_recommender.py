@@ -22,6 +22,9 @@ class NeighborhoodBasedRecs(base_recommender):
 
     def recommend_items_by_ratings(self, user_id, active_user_items, num=6):
 
+        if len(active_user_items) == 0:
+            return {}
+
         start = time.time()
         movie_ids = {movie['movie_id']: movie['rating'] for movie in active_user_items}
         user_mean = sum(movie_ids.values()) / len(movie_ids)
@@ -62,8 +65,8 @@ class NeighborhoodBasedRecs(base_recommender):
         return self.predict_score_by_ratings(item_id, movie_ids)
 
     def predict_score_by_ratings(self, item_id, movie_ids):
-        top = 0
-        bottom = 0
+        top = Decimal(0.0)
+        bottom = Decimal(0.0)
 
         candidate_items = Similarity.objects.filter(source__in=movie_ids.keys()).filter(target=item_id)
         candidate_items = candidate_items.distinct().order_by('-similarity')[:self.max_candidates]
@@ -76,4 +79,4 @@ class NeighborhoodBasedRecs(base_recommender):
             top += sim_item.similarity * r
             bottom += sim_item.similarity
 
-        return top / bottom
+        return Decimal(top/bottom)
