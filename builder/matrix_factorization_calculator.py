@@ -43,7 +43,7 @@ class MatrixFactorization(object):
 
     iterations = 0
 
-    def __init__(self, save_path, max_iterations=40):
+    def __init__(self, save_path, max_iterations=10):
         self.logger = logging.getLogger('funkSVD')
         self.save_path = save_path
         self.user_factors = None
@@ -88,16 +88,17 @@ class MatrixFactorization(object):
         b_ui = self.all_movies_mean + self.user_bias[user] + self.item_bias[item]
         prediction = b_ui + pq
 
-        # if prediction > 10:
-        #     prediction = 10
-        # elif prediction < 1:
-        #     prediction = 1
+        if prediction > 10:
+            prediction = 10
+        elif prediction < 1:
+            prediction = 10
         return prediction
 
     def build(self, ratings, params):
 
         if params:
             k = params['k']
+            self.save_path = params['save_path']
 
         self.train(ratings, k)
 
@@ -131,7 +132,7 @@ class MatrixFactorization(object):
             ratings = train_data[columns].as_matrix()
             test = test_data[columns].as_matrix()
 
-            self.MAX_ITERATIONS = 100
+            self.MAX_ITERATIONS = 10
             iterations = 0
             index_randomized = random.sample(range(0, len(ratings)), (len(ratings) - 1))
 
@@ -250,7 +251,7 @@ class MatrixFactorization(object):
     def finished(self, iterations, last_err, current_err,
                  last_test_mse=0.0, test_mse=0.0):
 
-        if last_test_mse < test_mse or iterations >= self.MAX_ITERATIONS or last_err < current_err:
+        if last_test_mse < test_mse or iterations >= self.MAX_ITERATIONS or last_err - current_err < 0.01:
             self.logger.info('Finish w iterations: {}, last_err: {}, current_err {}, lst_rmse {}, rmse {}'
                              .format(iterations, last_err, current_err, last_test_mse, test_mse))
             return True
@@ -320,8 +321,8 @@ if __name__ == '__main__':
     logger.info("[BEGIN] Calculating matrix factorization")
 
     MF = MatrixFactorization(save_path='./models/funkSVD/{}/'.format(datetime.now()), max_iterations=40)
-    loaded_ratings = load_all_ratings(2)
+    loaded_ratings = load_all_ratings(20)
     logger.info("using {} ratings".format(loaded_ratings.shape[0]))
-    MF.meta_parameter_train(loaded_ratings)
-    #MF.train(load_all_ratings(), k=40)
+    #MF.meta_parameter_train(loaded_ratings)
+    MF.train(load_all_ratings(), k=20)
     logger.info("[DONE] Calculating matrix factorization")
