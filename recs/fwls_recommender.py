@@ -4,7 +4,7 @@ from analytics.models import Rating
 from recs.base_recommender import base_recommender
 from recs.content_based_recommender import ContentBasedRecs
 from recs.neighborhood_based_recommender import NeighborhoodBasedRecs
-
+import pickle
 
 class FeatureWeightedLinearStacking(base_recommender):
     def __init__(self):
@@ -24,6 +24,14 @@ class FeatureWeightedLinearStacking(base_recommender):
         if count > 3.0:
             return Decimal(1.0)
         return Decimal(0.0)
+
+    def set_save_path(self, save_path):
+        with open(save_path + 'fwls_parameters.data', 'rb') as ub_file:
+            parameters = pickle.load(ub_file)
+            self.wcb1 = parameters['cb1']
+            self.wcb2 = parameters['cb2']
+            self.wcf1 = parameters['cb1']
+            self.wcf2 = parameters['cf2']
 
     def recommend_items_by_ratings(self,
                                    user_id,

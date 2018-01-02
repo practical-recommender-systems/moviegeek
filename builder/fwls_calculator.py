@@ -13,6 +13,7 @@ from django.db.models import Count
 django.setup()
 
 import pandas as pd
+import pickle
 import numpy as np
 from sklearn import linear_model
 
@@ -26,10 +27,15 @@ from sklearn.model_selection import train_test_split
 
 import statsmodels.formula.api as sm
 
+def ensure_dir(file_path):
+    directory = os.path.dirname(file_path)
+    if not os.path.exists(directory):
+        os.makedirs(directory)
 
 class FWLSCalculator(object):
 
-    def __init__(self, data_size = 1000):
+    def __init__(self, save_path, data_size = 1000):
+        self.save_path = save_path
         self.logger = logging.getLogger('FWLS')
         self.train_data = None
         self.test_data = None
@@ -72,7 +78,21 @@ class FWLSCalculator(object):
         self.logger.debug("[END] calculating functions")
         return None
 
-    def train(self, ratings, train_feature_recs= False):
+    def build(self, train_data = None, params = None):
+
+        if params:
+            self.save_path = params['save_path']
+
+        if train_data is None:
+            self.get_real_training_data()
+
+        self.train_data = train_data
+        self.calculate_predictions_for_training_data()
+        self.calculate_feature_functions_for_training_data()
+
+        return self.train()
+
+    def train(self, ratings = None, train_feature_recs= False):
 
         if train_feature_recs:
             ItemSimilarityMatrixBuilder().build(ratings)
@@ -82,7 +102,17 @@ class FWLSCalculator(object):
 
         regr.fit(self.train_data[['cb1','cb2','cf1','cf2']], self.train_data['rating'])
         self.logger.info(regr.coef_)
-        return regr.coef_
+
+        result = {'cb1': regr.coef_[0],
+                'cb2': regr.coef_[1],
+                'cf1': regr.coef_[2],
+                'cf2': regr.coef_[3]
+                }
+
+        ensure_dir(self.save_path)
+        with open(self.save_path + 'fwls_parameters.data', 'wb') as ub_file:
+            pickle.dump(result, ub_file)
+        return result
 
 if __name__ == '__main__':
     logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.DEBUG)
