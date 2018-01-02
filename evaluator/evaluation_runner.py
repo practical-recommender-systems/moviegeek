@@ -51,7 +51,8 @@ class EvaluationRunner(object):
 
         original_size = ratings.shape[0]
 
-        user_count = ratings[['user_id', 'movie_id']].groupby('user_id').count()
+        user_count = ratings[['user_id', 'movie_id']]
+        user_count = user_count.groupby('user_id').count()
         user_count = user_count.reset_index()
         user_ids = user_count[user_count['movie_id'] > min_ratings]['user_id']
 
@@ -115,9 +116,9 @@ class EvaluationRunner(object):
 
         self.logger.info("Build is finished")
 
-        pak, rak = PrecisionAtK(self.K, self.recommender).calculate(train_data, test_data)
+        map, ar = PrecisionAtK(self.K, self.recommender).calculate_mean_average_precision(train_data, test_data)
         mae = 0
-        results = {'pak': pak, 'rak': rak, 'mae': mae, 'users': len(users)}
+        results = {'map': map, 'ar': ar, 'mae': mae, 'users': len(users)}
         return results
 
     def calculate_using_ratings(self, all_ratings, min_number_of_ratings=5, min_rank=5):
@@ -128,8 +129,8 @@ class EvaluationRunner(object):
         kf = self.split_users()
 
         validation_no = 0
-        paks = Decimal(0.0)
-        raks = Decimal(0.0)
+        maps = Decimal(0.0)
+        ars = Decimal(0.0)
         maes = Decimal(0.0)
 
         for train, test in kf.split(users):
@@ -148,12 +149,14 @@ class EvaluationRunner(object):
 
             self.logger.info("Build is finished")
 
-            pak, rak = PrecisionAtK(self.K, self.recommender).calculate(train_data, test_data)
+            map, ar = PrecisionAtK(self.K, self.recommender).calculate_mean_average_precision(train_data, test_data)
 
-            paks += pak
-            raks += rak
+            maps += map
+            ars += ar
             maes += MeanAverageError(self.recommender).calculate(train_data, test_data)
-            results = {'pak': paks / self.folds, 'rak': raks / self.folds, 'mae': maes / self.folds}
+            results = {'map': maps / self.folds,
+                       'ar': ars / self.folds,
+                       'mae': maes / self.folds}
 
         self.logger.info(results)
         return results
@@ -188,55 +191,13 @@ def evaluate_pop_recommender(coverage = False):
     file_name = '{}-pop.csv'.format(timestr)
 
     with open(file_name, 'a', 1) as logfile:
-        logfile.write("rak, pak, mae, min_overlap, min_sim, K, min_num_of_ratings, min_rank, user_coverage, "
+        logfile.write("ar, map, mae, min_overlap, min_sim, K, min_num_of_ratings, min_rank, user_coverage, "
                       "movie_coverage\n")
 
         builder = None
 
         for k in np.arange(0, 20, 2):
             recommender = PopularityBasedRecs()
-            er = EvaluationRunner(0,
-                                  None,
-                                  recommender,
-                                  k)
-
-            result = er.calculate(min_number_of_ratings, min_rank, number_test_users=-1)
-
-            user_coverage, movie_coverage = 0,0
-            if coverage:
-                user_coverage, movie_coverage = RecommenderCoverage(recommender).calculate_coverage(k)
-
-            pak = result['pak']
-            mae = result['mae']
-            rak = result['rak']
-            logfile.write("{}, {}, {}, {}, {}, {}, {}, {}, {}, {}\n".format(rak, pak, mae, min_overlap,
-                                                                            min_sim, k,
-                                                                            min_number_of_ratings,
-                                                                            min_rank,
-                                                                            user_coverage,
-                                                                            movie_coverage))
-            logfile.flush()
-
-
-def evaluate_cf_recommender(coverage = False):
-    min_number_of_ratings = 20
-    min_overlap = 5
-    min_sim = 0.1
-    K = 20
-    min_rank = 5
-
-    timestr = time.strftime("%Y%m%d-%H%M%S")
-    file_name = '{}-cf.csv'.format(timestr)
-
-    with open(file_name, 'a', 1) as logfile:
-        logfile.write("rak, pak, mae, min_overlap, min_sim, K, min_num_of_ratings, min_rank, user_coverage, "
-                      "movie_coverage\n")
-
-        builder = ItemSimilarityMatrixBuilder(min_overlap, min_sim=min_sim)
-
-        for k in np.arange(0, 20, 2):
-            min_rank = min_number_of_ratings / 2
-            recommender = NeighborhoodBasedRecs()
             er = EvaluationRunner(0,
                                   builder,
                                   recommender,
@@ -248,10 +209,52 @@ def evaluate_cf_recommender(coverage = False):
             if coverage:
                 user_coverage, movie_coverage = RecommenderCoverage(recommender).calculate_coverage(k)
 
-            pak = result['pak']
+            map = result['map']
             mae = result['mae']
-            rak = result['rak']
-            logfile.write("{}, {}, {}, {}, {}, {}, {}, {}, {}, {}\n".format(rak, pak, mae, min_overlap,
+            ar = result['ar']
+            logfile.write("{}, {}, {}, {}, {}, {}, {}, {}, {}, {}\n".format(ar, map, mae, min_overlap,
+                                                                            min_sim, k,
+                                                                            min_number_of_ratings,
+                                                                            min_rank,
+                                                                            user_coverage,
+                                                                            movie_coverage))
+            logfile.flush()
+
+
+def evaluate_cf_recommender(coverage = False):
+    min_number_of_ratings = 5
+    min_overlap = 5
+    min_sim = 0.1
+    k = 10
+    min_rank = 5
+
+    timestr = time.strftime("%Y%m%d-%H%M%S")
+    file_name = '{}-cf.csv'.format(timestr)
+
+    with open(file_name, 'a', 1) as logfile:
+        logfile.write("ar, map, mae, min_overlap, min_sim, K, min_num_of_ratings, min_rank, user_coverage, "
+                      "movie_coverage\n")
+
+        builder = ItemSimilarityMatrixBuilder(min_overlap, min_sim=min_sim)
+
+        for k in np.arange(0, 20, 2):
+            min_rank = min_number_of_ratings / 2
+            recommender = NeighborhoodBasedRecs()
+            er = EvaluationRunner(0,
+                                  ItemSimilarityMatrixBuilder(min_overlap, min_sim=min_sim),
+                                  recommender,
+                                  k)
+
+            result = er.calculate(min_number_of_ratings, min_rank, number_test_users=-1)
+
+            user_coverage, movie_coverage = 0,0
+            if coverage:
+                user_coverage, movie_coverage = RecommenderCoverage(recommender).calculate_coverage(k)
+
+            map = result['map']
+            mae = result['mae']
+            ar = result['ar']
+            logfile.write("{}, {}, {}, {}, {}, {}, {}, {}, {}, {}\n".format(ar, map, mae, min_overlap,
                                                                             min_sim, k,
                                                                             min_number_of_ratings,
                                                                             min_rank,
@@ -266,7 +269,7 @@ def evaluate_cb_recommender(coverage = False):
     file_name = '{}-cb-k.csv'.format(timestr)
 
     with open(file_name, 'a', 1) as logfile:
-        logfile.write("rak, pak, mae, min_overlap, min_sim, K, min_num_of_ratings, min_rank, user_coverage, "
+        logfile.write("ar, map, mae, min_overlap, min_sim, K, min_num_of_ratings, min_rank, user_coverage, "
                       "movie_coverage\n")
 
         for k in np.arange(5, 20, 3):
@@ -277,35 +280,35 @@ def evaluate_cb_recommender(coverage = False):
                                   recommender,
                                   k)
 
-            result = er.calculate(1, 5, number_test_users=-1)
+            result = er.calculate(10, 5, number_test_users=-1)
 
             user_coverage, movie_coverage = 0,0
             if coverage:
                 user_coverage, movie_coverage = RecommenderCoverage(recommender).calculate_coverage(k)
 
-            pak = result['pak']
+            map = result['map']
             mae = result['mae']
-            rak = result['rak']
-            logfile.write("{}, {}, {}, {}, {}, {}\n".format(rak, pak, mae, k, user_coverage, movie_coverage))
+            ar = result['ar']
+            logfile.write("{}, {}, {}, {}, {}, {}\n".format(ar, map, mae, k, user_coverage, movie_coverage))
             logfile.flush()
 
 
 def evaluate_fwls_recommender(coverage = False):
-
-    min_number_of_ratings = 20
+    save_path = './models/fwls/'
+    min_number_of_ratings = 10
     min_overlap = 3
     min_sim = 0.1
     K = 5
     min_rank = 5
 
     timestr = time.strftime("%Y%m%d-%H%M%S")
-    file_name = '{}-min_overlap_item_similarity.csv'.format(timestr)
+    file_name = '{}-fwls.csv'.format(timestr)
 
     with open(file_name, 'a', 1) as logfile:
-        logfile.write("rak, pak, mae, min_overlap, min_sim, K, min_num_of_ratings, min_rank, user_coverage, "
+        logfile.write("ar, map, mae, min_overlap, min_sim, K, min_num_of_ratings, min_rank, user_coverage, "
                       "movie_coverage\n")
 
-        builder = FWLSCalculator(min_overlap)
+        builder = FWLSCalculator(min_overlap, save_path)
 
         for k in np.arange(2, 20, 2):
             min_rank = min_number_of_ratings / 2
@@ -313,17 +316,20 @@ def evaluate_fwls_recommender(coverage = False):
             er = EvaluationRunner(0,
                                   builder,
                                   recommender,
-                                  k)
+                                  k,
+                                  params={'save_path': save_path}
+                                  )
 
-            result = er.calculate(min_number_of_ratings, min_rank, number_test_users=1000)
+            result = er.calculate(min_number_of_ratings, min_rank)
             user_coverage, movie_coverage = 0,0
             if coverage:
                 user_coverage, movie_coverage = RecommenderCoverage(recommender).calculate_coverage(k)
 
-            pak = result['pak']
+            builder = None
+            map = result['map']
             mae = result['mae']
-            rak = result['rak']
-            logfile.write("{}, {}, {}, {}, {}, {}, {}, {}, {}, {}\n".format(rak, pak, mae, min_overlap,
+            ar = result['ar']
+            logfile.write("{}, {}, {}, {}, {}, {}, {}, {}, {}, {}\n".format(ar, map, mae, min_overlap,
                                                                             min_sim, k,
                                                                             min_number_of_ratings,
                                                                             min_rank,
@@ -333,7 +339,7 @@ def evaluate_fwls_recommender(coverage = False):
 
 
 def evaluate_funksvd_recommender(coverage = False):
-    save_path = './models/funkSVD/prod/model/'
+    save_path = './models/funkSVD/'
     K = 20
     timestr = time.strftime("%Y%m%d-%H%M%S")
     file_name = '{}-funksvd-k.csv'.format(timestr)
@@ -343,7 +349,7 @@ def evaluate_funksvd_recommender(coverage = False):
 
         builder = MatrixFactorization(save_path)
 
-        for k in np.arange(10, 100, 10):
+        for k in np.arange(0, 20, 2):
 
             recommender = FunkSVDRecs()
 
@@ -351,18 +357,18 @@ def evaluate_funksvd_recommender(coverage = False):
                                   builder,
                                   recommender,
                                   k,
-                                  params={'k': 40,
+                                  params={'k': 20,
                                           'save_path': save_path + 'model/'})
 
-            result = er.calculate(1, 5)
+            result = er.calculate(20, 10)
             builder = None
             user_coverage, movie_coverage = 0,0
             if coverage:
                 user_coverage, movie_coverage = RecommenderCoverage(recommender).calculate_coverage(k)
-            pak = result['pak']
+            map = result['map']
             mae = result['mae']
-            rak = result['rak']
-            logfile.write("{}, {}, {}, {}, {}, {}\n".format(rak, pak, mae, k, user_coverage, movie_coverage))
+            ar = result['ar']
+            logfile.write("{}, {}, {}, {}, {}, {}\n".format(ar, map, mae, k, user_coverage, movie_coverage))
 
             logfile.flush()
 
@@ -376,7 +382,7 @@ def evaluate_bpr_recommender(coverage = False):
     with open(file_name, 'a', 1) as logfile:
         logfile.write("rak,pak,mae,k,user_coverage,movie_coverage\n")
         builder = BayesianPersonalizationRanking(save_path)
-        for k in np.arange(10, 100, 10):
+        for k in np.arange(0, 20, 2):
 
             recommender = BPRRecs()
 
@@ -394,10 +400,10 @@ def evaluate_bpr_recommender(coverage = False):
             if coverage:
                 user_coverage, movie_coverage = RecommenderCoverage(recommender).calculate_coverage(k)
 
-            pak = result['pak']
+            map = result['map']
             mae = result['mae']
-            rak = result['rak']
-            logfile.write("{}, {}, {}, {}, {}, {}\n".format(rak, pak, mae, k, user_coverage, movie_coverage))
+            ar = result['ar']
+            logfile.write("{}, {}, {}, {}, {}, {}\n".format(ar, map, mae, k, user_coverage, movie_coverage))
             logfile.flush()
 
 if __name__ == '__main__':
