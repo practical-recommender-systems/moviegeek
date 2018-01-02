@@ -48,18 +48,10 @@ class RecommenderCoverage(object):
 
                 for rec in recset:
                     self.items_in_rec[rec[0]] += 1
-                    self.user_recs.append({"userid": user,
-                                           "itemid": rec[0],
-                                           "prediction": float(rec[1]['prediction']),
-                                           "inx": inx})
+                    self.add_user_recs(inx, rec, user)
                     inx += 1
 
-        timestr = time.strftime("%Y%m%d-%H%M%S")
-        file_name = '{}-evaluation_data.csv'.format(timestr)
-
-        logger.debug('writing cf coverage to file.')
-        json.dump(self.items_in_rec, open('{}_item_coverage.json'.format(recName), 'w'))
-        json.dump(self.user_recs, open('{}_user_coverage.json'.format(recName), 'w'), cls=DecimalEncoder)
+        self.save_user_recs(recName)
 
         no_movies = len(self.all_movies)
         no_movies_in_rec = len(self.items_in_rec)
@@ -70,6 +62,18 @@ class RecommenderCoverage(object):
         logger.info("{} {} {}".format(no_users, no_users_in_rec, user_coverage))
         logger.info("{} {} {}".format(no_movies, no_movies_in_rec, movie_coverage))
         return user_coverage, movie_coverage
+
+    def save_user_recs(self, recName):
+        timestr = time.strftime("%Y%m%d-%H%M%S")
+        logger.debug('writing cf coverage to file.')
+        json.dump(self.items_in_rec, open('{}-{}_item_coverage.json'.format(timestr, recName), 'w'))
+        json.dump(self.user_recs, open('{}-{}_user_coverage.json'.format(timestr, recName), 'w'), cls=DecimalEncoder)
+
+    def add_user_recs(self, inx, rec, user):
+        self.user_recs.append({"userid": user,
+                               "itemid": rec[0],
+                               "prediction": float(rec[1]['prediction']),
+                               "inx": inx})
 
     def load_all_ratings(self, min_ratings=1):
         columns = ['user_id', 'movie_id', 'rating', 'type', 'rating_timestamp']
