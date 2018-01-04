@@ -176,8 +176,7 @@ class MatrixFactorization(object):
             b_ui = self.all_movies_mean + self.user_bias[user] + self.item_bias[item]
             prediction = b_ui + pq
             MSE = (prediction - Decimal(row[2])) ** 2
-            RMSE = ((prediction - Decimal(row[2]))/2)**2
-            return RMSE
+            return MSE
 
         squared = np.apply_along_axis(difference, 1, ratings).sum()
         return math.sqrt(squared / ratings.shape[0])
