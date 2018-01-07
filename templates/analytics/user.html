@@ -447,7 +447,7 @@
     <h2>Recent Log</h2>
 
     {% for row in logs %}
-      <a href="/analytics/content/{{ row.content_id }}"/>{{row.content_id}}</a> | {{ row.event }} | {{ row.created }} <br />
+      <a href="/analytics/content/{{ row.content_id }}">{{row.content_id}}</a> | {{ row.event }} | {{ row.created }} <br />
     {% endfor %}
   </div>
 </div>
