@@ -80,7 +80,7 @@
     <h2>Recent Log</h2>
     <ul>
       {% for row in logs %}
-        <a href="/analytics/user/{{ row.user_id }}">{{ row.user_id }}</a> | {{ row.event }} | {{ row.created }} <br />
+       <li><a href="/analytics/user/{{ row.user_id }}">{{ row.user_id }}</a> | {{ row.event }} | {{ row.created }} </li>
       {% endfor %}
     </ul>
   </div>
@@ -107,6 +107,6 @@
   getinfo('{{ content_id }}')
 
 </script>
-</div>
+
 </body>
 </html>
