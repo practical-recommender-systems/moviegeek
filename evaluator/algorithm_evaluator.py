@@ -1,7 +1,8 @@
 import os
 import time
+import logging
 from decimal import Decimal
-
+from tqdm import tqdm
 import numpy as np
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "prs_project.settings")
@@ -16,11 +17,14 @@ from analytics.models import Rating
 class MeanAverageError(object):
     def __init__(self, recommender):
         self.rec = recommender
+        logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s',
+                            level=logging.DEBUG)
+        self.l = logging.getLogger('Evaluation runner')
 
     def calculate(self, train_ratings, test_ratings):
 
         user_ids = test_ratings['user_id'].unique()
-        print('evaluating based on {} users (MAE)'.format(len(user_ids)))
+        self.l.info('evaluating based on {} users (MAE)'.format(len(user_ids)))
         error = Decimal(0.0)
 
         if len(user_ids) == 0:
@@ -100,13 +104,13 @@ class PrecisionAtK(object):
 
         average_recall = total_recall_score/len(arks) if len(arks) > 0 else 0
         mean_average_precision = total_precision_score/len(apks) if len(apks) > 0 else 0
-        print("ap@k: {}, ar@k{}, #userid {}, MAP{}, len-ap{}, len-ar{}, no_recs{}".format(total_precision_score,
-                                                                         total_recall_score,
-                                                                         user_id_count,
-                                                                         mean_average_precision,
-                                                                         len(apks),
-                                                                         len(arks),
-                                                                         np.mean(apks)))
+        output_str = "#userid {}, MAP {}, average recall {}, len-ap {}, len-ar {}, no_recs {}"
+        print(output_str.format(user_id_count,
+                                mean_average_precision,
+                                average_recall,
+                                len(apks),
+                                len(arks),
+                                no_rec))
         return mean_average_precision, average_recall
 
     def recall_at_k(self, recs, actual):
