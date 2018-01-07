@@ -8,8 +8,6 @@ from decimal import Decimal
 from collections import defaultdict
 import pandas as pd
 
-
-
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "prs_project.settings")
 
 import django
@@ -101,20 +99,6 @@ class DecimalEncoder(json.JSONEncoder):
             # which wouldn't work (see my comment below), so...
             return (str(o) for o in [o])
         return super(DecimalEncoder, self)._iterencode(o, markers)
-
-def main():
-
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument("rec", type=int, help="the recommender to use")
-    args = parser.parse_args()
-
-    rec = None
-    if args.rec == "neighborhood_based_recommender":
-        rec = NeighborhoodBasedRecs()
-
-    RecommenderCoverage(rec)
-
 
 if __name__ == '__main__':
 
