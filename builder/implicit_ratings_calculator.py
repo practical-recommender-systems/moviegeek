@@ -9,7 +9,6 @@ django.setup()
 
 import datetime
 from datetime import date, timedelta
-import sqlite3
 from collections import defaultdict
 from collector.models import Log
 from analytics.models import Rating
