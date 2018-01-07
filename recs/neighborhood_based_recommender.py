@@ -59,8 +59,9 @@ class NeighborhoodBasedRecs(base_recommender):
 
     def predict_score(self, user_id, item_id):
 
-        active_user_items = Rating.objects.exclude(movie_id=item_id).filter(user_id=user_id).order_by('-rating')[:100]
-        movie_ids = {movie.movie_id: movie.rating for movie in active_user_items}
+        user_items = Rating.objects.filter(user_id=user_id)
+        user_items = user_items.exclude(movie_id=item_id).order_by('-rating')[:100]
+        movie_ids = {movie.movie_id: movie.rating for movie in user_items}
 
         return self.predict_score_by_ratings(item_id, movie_ids)
 
