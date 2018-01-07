@@ -51,6 +51,6 @@ class TestEvaluationRunner(unittest.TestCase):
              ], columns=['user_id', 'movie_id', 'rating', 'rating_timestamp'] )
 
         bpr = BayesianPersonalizationRanking('')
-
-        for d in bpr.draw(ratings, 2):
+        bpr.initialize_factors(ratings)
+        for d in bpr.draw(2):
             print(d)

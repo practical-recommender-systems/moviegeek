@@ -2,7 +2,7 @@ import os
 import pickle
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "prs_project.settings")
-
+from tqdm import tqdm
 from datetime import datetime
 import logging
 import numpy as np
@@ -30,6 +30,7 @@ class BayesianPersonalizationRanking(object):
         self.movie_ids = None
         self.ratings = None
         self.user_movies = None
+        self.error = 0
 
         self.learning_rate = 0.05
         self.bias_regularization = 0.002
@@ -64,11 +65,10 @@ class BayesianPersonalizationRanking(object):
     def train(self, train_data, k=25, num_iterations=4):
 
         self.initialize_factors(train_data, k)
+        for iteration in tqdm(range(num_iterations)):
+            self.error = self.loss()
 
-        for iteration in range(num_iterations):
-            logger.debug('iteration {} loss {}'.format(iteration, self.loss()))
-            logger.debug('User factor [{}]: {}'.format(5, self.user_factors[5]))
-            logger.debug('Item factor [{}]: {}'.format(5, self.item_factors[5]))
+            logger.debug('iteration {} loss {}'.format(iteration, self.error))
 
             for usr, pos, neg in self.draw(self.ratings.shape[0]):
                 self.step(usr, pos, neg)

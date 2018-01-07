@@ -16,7 +16,7 @@ class BPRRecs(base_recommender):
 
     def __init__(self, save_path='./models/bpr/'):
         self.save_path = save_path
-        self.load_model(save_path)
+        self.model_loaded = False
         self.avg = list(Rating.objects.all().aggregate(Avg('rating')).values())[0]
 
     def load_model(self, save_path):
@@ -28,25 +28,34 @@ class BPRRecs(base_recommender):
         with open(save_path + 'item_factors.json', 'r') as infile:
             self.item_factors = pd.DataFrame(json.load(infile)).T
         self.ordered_item_bias = list(collections.OrderedDict(sorted(self.item_bias.items())).values())
+        self.model_loaded = True
 
     def set_save_path(self, save_path):
         self.save_path = save_path
 
         self.load_model(save_path)
 
+
     def predict_score(self, user_id, item_id):
-        rec = Recs.objects.filter(user_id=user_id, item_id=item_id).first()
-        if rec is None:
-            return 0
-        else:
-            return rec.rating
+
+        if not self.model_loaded:
+            self.load_model(self.save_path)
+
+        return self.avg
 
     def recommend_items(self, user_id, num=6):
+
+        if not self.model_loaded:
+            self.load_model(self.save_path)
+
         active_user_items = Rating.objects.filter(user_id=user_id).order_by('-rating')[:100]
 
         return self.recommend_items_by_ratings(user_id, active_user_items.values())
 
     def recommend_items_by_ratings(self, user_id, active_user_items, num=6):
+
+        if not self.model_loaded:
+            self.load_model(self.save_path)
 
         rated_movies = {movie['movie_id']: movie['rating']
                         for movie in active_user_items}
