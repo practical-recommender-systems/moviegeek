@@ -10,11 +10,12 @@ from gensim import models, corpora, similarities, matutils
 from decimal import Decimal
 
 lda_path = './lda/'
-
+import logging
 
 class ContentBasedRecs(base_recommender):
 
     def __init__(self, min_sim=0.1):
+
         self.min_sim = min_sim
         self.max_candidates = 100
 
@@ -44,6 +45,7 @@ class ContentBasedRecs(base_recommender):
         sims = LdaSimilarity.objects.filter(Q(source__in=movie_ids.keys())
                                             & ~Q(target__in=movie_ids.keys())
                                             & Q(similarity__gt=self.min_sim))
+
         sims = sims.order_by('-similarity')[:self.max_candidates]
         recs = dict()
         targets = set(s.target for s in sims if not s.target == '')
@@ -68,14 +70,15 @@ class ContentBasedRecs(base_recommender):
         return sorted(recs.items(), key=lambda item: -float(item[1]['prediction']))[:num]
 
     def predict_score(self, user_id, item_id):
+        user_items = Rating.objects.filter(user_id=user_id).order_by('-rating').values()[:100]
 
-        active_user_items = Rating.objects.filter(user_id=user_id).order_by('-rating').values()[:100]
-
-        movie_ids = {movie['movie_id']: movie['rating'] for movie in active_user_items}
+        movie_ids = {movie['movie_id']: movie['rating'] for movie in user_items}
         user_mean = sum(movie_ids.values()) / len(movie_ids)
 
         sims = LdaSimilarity.objects.filter(Q(source__in=movie_ids.keys())
-                                            & ~Q(target=item_id))
+                                            & Q(target=item_id)
+                                            & Q(similarity__gt=self.min_sim)).order_by('-similarity')
+
         pre = 0
         sim_sum = 0
         prediction = Decimal(0.0)
@@ -88,6 +91,7 @@ class ContentBasedRecs(base_recommender):
 
             prediction = Decimal(user_mean) + pre / sim_sum
         return prediction
+
 
 def get_movie_ids(sorted_sims):
     ids = [s[0] for s in sorted_sims]
