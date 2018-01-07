@@ -6,10 +6,6 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from moviegeeks.models import Movie, Genre
 
-from django import template
-from django.utils.dateparse import parse_datetime
-
-
 @ensure_csrf_cookie
 def index(request):
 
