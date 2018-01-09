@@ -16,82 +16,59 @@
 
           function get_cb_recs(userid) {
             url = '/rec/cb/user/' + userid + '/'
+            element_name = 'cb_recs'
 
-            $.getJSON(url,
-                function(result) {
-                    if ((result.data != null) && (result.data.length > 0)) {
-                        recs = document.getElementById('cb_recs')
-                        recs.style.display = 'block'
-
-                        result.data.forEach(function(element, index, array) {
-
-                            $.getJSON(get_url(element[0]), function(mov) {
-                                image_url = 'http://image.tmdb.org/t/p/w500/'
-                                + mov.movie_results[0].poster_path
-
-                                rec_div = document.createElement('div')
-                                rec_div.setAttribute('class', "col-sm-2 img-responsive")
-
-                                a = document.createElement('a')
-                                a.setAttribute('href', '/movies/movie/' + element[0])
-
-                                img = document.createElement('img')
-                                img.setAttribute('src', image_url)
-                                img.setAttribute('class',"img-responsive")
-                                a.appendChild(img)
-
-                                rec_div.appendChild(a)
-
-                                recs.appendChild(rec_div)
-
-                            })
-
-                        });
-                    }
-
-                });
+            get_recs(url, element_name)
         }
 
         function get_cf_recs(userid) {
             url = '/rec/cf/user/' + userid + '/'
+            element_name = 'cf_recs'
 
-            $.getJSON(url,
-                function(result) {
-                    if ((result.data != null) && (result.data.length > 0)) {
-                        recs = document.getElementById('cf_recs')
-                        recs.style.display = 'block'
-
-                        result.data.forEach(function(element, index, array) {
-
-                            $.getJSON(get_url(element[0]), function(mov) {
-                                image_url = 'http://image.tmdb.org/t/p/w500/'
-                                + mov.movie_results[0].poster_path
-
-                                rec_div = document.createElement('div')
-                                rec_div.setAttribute('class', "col-sm-2 img-responsive")
-
-                                a = document.createElement('a')
-                                a.setAttribute('href', '/movies/movie/' + element[0])
-
-                                img = document.createElement('img')
-                                img.setAttribute('src', image_url)
-                                img.setAttribute('class',"img-responsive")
-                                img.setAttribute('title', element[1].sim_items)
-                                a.appendChild(img)
-
-                                rec_div.appendChild(a)
-
-                                recs.appendChild(rec_div)
-
-                            })
-
-                        });
-
-                    }
-
-                });
+            get_recs(url, element_name)
         }
 
+        function get_recs(url, element_name) {
+            $.getJSON(url,
+                    function(result) {
+                        if ((result.data != null) && (result.data.length > 0)) {
+                            recs = document.getElementById(element_name)
+                            recs.style.display = 'block'
+
+                            result.data.forEach(function(element, index, array) {
+                                add_movie(element[0], recs)
+
+                            });
+
+                        }
+
+                    });
+        }
+
+        function add_movie(id, recs) {
+            $.getJSON(get_url(id), function(mov) {
+                image_url = 'http://image.tmdb.org/t/p/w500/'
+                + mov.movie_results[0].poster_path
+
+                rec_div = document.createElement('div')
+                rec_div.setAttribute('class', "col-sm-2 img-responsive")
+
+                a = document.createElement('a')
+                a.setAttribute('href', '/movies/movie/' + id)
+
+                img = document.createElement('img')
+                img.setAttribute('src', image_url)
+                img.setAttribute('class',"img-responsive")
+                img.setAttribute('title', mov.movie_results[0].title)
+                a.appendChild(img)
+
+                rec_div.appendChild(a)
+
+                recs.appendChild(rec_div)
+
+            })
+
+        }
         function get_association_rule_recs(userid) {
             url = '/rec/ar/' + userid + '/'
 
@@ -103,27 +80,7 @@
 
                         result.data.forEach(function(element, index, array) {
 
-                            $.getJSON(get_url(element.id), function(result) {
-                                image_url = 'http://image.tmdb.org/t/p/w500/'
-                                + result.movie_results[0].poster_path
-
-                                rec_div = document.createElement('div')
-                                rec_div.setAttribute('class', "col-sm-2 img-responsive")
-
-                                a = document.createElement('a')
-                                a.setAttribute('href', '/movies/movie/' + element.id)
-
-                                img = document.createElement('img')
-                                img.setAttribute('src', image_url)
-                                img.setAttribute('class',"img-responsive")
-                                a.appendChild(img)
-
-                                rec_div.appendChild(a)
-
-                                recs = document.getElementById('association_rules_recs')
-                                recs.appendChild(rec_div)
-
-                            })
+                            add_movie(element.id, recs)
 
                         });
                     }
