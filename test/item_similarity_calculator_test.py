@@ -1,8 +1,5 @@
 import os
 
-from scipy.sparse import coo_matrix
-from scipy.sparse import csr_matrix
-
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "prs_project.settings")
 
 import django

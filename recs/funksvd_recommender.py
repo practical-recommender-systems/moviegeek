@@ -1,16 +1,15 @@
-from decimal import Decimal
-import json
-
-from django.db.models import Avg
-
-from recommender.models import Recs
-from analytics.models import Rating
-from recs.base_recommender import base_recommender
 import collections
 import decimal
-import numpy as np
-import pandas as pd
+import json
 import pickle
+from decimal import Decimal
+
+import pandas as pd
+from django.db.models import Avg
+
+from analytics.models import Rating
+from recommender.models import Recs
+from recs.base_recommender import base_recommender
 
 
 class FunkSVDRecs(base_recommender):

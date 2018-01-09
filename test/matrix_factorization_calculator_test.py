@@ -1,6 +1,6 @@
 import os
+
 from builder.matrix_factorization_calculator import MatrixFactorization
-from recs.funksvd_recommender import FunkSVDRecs
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "prs_project.settings")
 
@@ -11,9 +11,6 @@ django.setup()
 import unittest
 from decimal import Decimal
 import pandas as pd
-import numpy as np
-from recommender.models import Similarity
-from builder.item_similarity_calculator import ItemSimilarityMatrixBuilder
 
 STAR_WARS = 'star wars'
 WONDER_WOMAN = 'wonder woman'

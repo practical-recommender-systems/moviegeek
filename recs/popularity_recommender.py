@@ -14,7 +14,8 @@ class PopularityBasedRecs(base_recommender):
                                            Q(movie_id=item_id)).values('movie_id').aggregate(Avg('rating'))
         return avg_rating['rating__avg']
 
-    def recommend_items_from_log(self, num=6):
+    @staticmethod
+    def recommend_items_from_log(num=6):
         items = Log.objects.values('content_id')
         items = items.filter(event='buy').annotate(Count('user_id'))
 
@@ -28,7 +29,8 @@ class PopularityBasedRecs(base_recommender):
         sorted_items = sorted(pop_items, key=lambda item: -float(item['user_id__count']))[:num]
         return sorted_items
 
-    def recommend_items_by_ratings(self, user_id, active_user_items, num=6):
+    @staticmethod
+    def recommend_items_by_ratings(user_id, active_user_items, num=6):
         item_ids = [i['id'] for i in active_user_items]
         pop_items = Rating.objects.filter(~Q(movie_id__in=item_ids)).values('movie_id').annotate(Count('user_id'),
                                                                                            Avg('rating'))
@@ -36,7 +38,8 @@ class PopularityBasedRecs(base_recommender):
         sorted_items = sorted(recs.items(), key=lambda item: -float(item[1]['pop']))[:num]
         return sorted_items
 
-    def predict_score_by_ratings(self, item_id, movies):
+    @staticmethod
+    def predict_score_by_ratings(item_id, movies):
         item = Rating.objects.filter(movie_id=item_id).values('movie_id').annotate(Avg('rating')).first()
         if not item:
             return 0

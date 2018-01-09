@@ -17,10 +17,12 @@ class FeatureWeightedLinearStacking(base_recommender):
         self.wcf2 = Decimal(0.09139193)
         self.intercept = Decimal(0)
 
-    def fun1(self):
+    @staticmethod
+    def fun1():
         return Decimal(1.0)
 
-    def fun2(self, user_id):
+    @staticmethod
+    def fun2(user_id):
         count = Rating.objects.filter(user_id=user_id).count()
         if count > 3.0:
             return Decimal(1.0)

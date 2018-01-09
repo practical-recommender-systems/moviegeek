@@ -1,25 +1,21 @@
-from datetime import datetime
+import operator
 from decimal import Decimal
 from math import sqrt
 
 import numpy as np
-import operator
-import os
-
-from django.http import JsonResponse
 from django.db.models import Avg, Count
+from django.http import JsonResponse
 
 from analytics.models import Rating
 from collector.models import Log
 from moviegeeks.models import Movie
+from recommender.models import SeededRecs
 from recs.bpr_recommender import BPRRecs
-
 from recs.content_based_recommender import ContentBasedRecs
 from recs.funksvd_recommender import FunkSVDRecs
 from recs.fwls_recommender import FeatureWeightedLinearStacking
 from recs.neighborhood_based_recommender import NeighborhoodBasedRecs
 from recs.popularity_recommender import PopularityBasedRecs
-from recommender.models import SeededRecs
 
 
 def get_association_rules_for(request, content_id, take=6):

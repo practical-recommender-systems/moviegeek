@@ -4,6 +4,7 @@ from decimal import Decimal
 
 import logging
 import numpy as np
+from numpy import random
 import pandas as pd
 from django.db.models import Count
 
@@ -163,7 +164,8 @@ class EvaluationRunner(object):
         kf = KFold(n_splits=self.folds)
         return kf
 
-    def split_data(self, min_rank, ratings, test_users, train_users):
+    @staticmethod
+    def split_data(min_rank, ratings, test_users, train_users):
 
         train = ratings[ratings['user_id'].isin(train_users)]
 
@@ -346,7 +348,7 @@ def evaluate_funksvd_recommender():
             map = result['map']
             mae = result['mae']
             ar = result['ar']
-            logfile.write("{}, {}, {}, {}, {}, {}\n".format(ar, map, mae, k))
+            logfile.write("{}, {}, {}, {}\n".format(ar, map, mae, k))
 
             logfile.flush()
 

@@ -3,10 +3,9 @@ import unittest
 from evaluator.evaluation_runner import EvaluationRunner
 from recs.funksvd_recommender import FunkSVDRecs
 
+
 class FunkSvdTest(unittest.TestCase):
-
     def test_funksvd_ev_build(self):
-
         k = 5
         save_path = 'evaluation/precision/'
         recommender = FunkSVDRecs()

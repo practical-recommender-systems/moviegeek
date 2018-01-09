@@ -1,19 +1,15 @@
-import os
-
-from datetime import datetime
-
-from recs.base_recommender import base_recommender
-from analytics.models import Rating
-from recommender.models import MovieDescriptions, LdaSimilarity
-from django.db.models import Q
-from gensim import models, corpora, similarities, matutils
 from decimal import Decimal
 
+from django.db.models import Q
+
+from analytics.models import Rating
+from recommender.models import MovieDescriptions, LdaSimilarity
+from recs.base_recommender import base_recommender
+
 lda_path = './lda/'
-import logging
+
 
 class ContentBasedRecs(base_recommender):
-
     def __init__(self, min_sim=0.1):
 
         self.min_sim = min_sim
@@ -25,7 +21,8 @@ class ContentBasedRecs(base_recommender):
 
         return self.recommend_items_by_ratings(user_id, active_user_items.values(), num)
 
-    def seeded_rec(self, content_ids, take=6):
+    @staticmethod
+    def seeded_rec(content_ids, take=6):
         data = LdaSimilarity.objects.filter(source__in=content_ids) \
                    .order_by('-similarity') \
                    .values('target', 'similarity')[:take]
@@ -64,8 +61,8 @@ class ContentBasedRecs(base_recommender):
                     sim_sum += sim_item.similarity
 
                 if sim_sum > 0:
-                    recs[target] = { 'prediction': Decimal(user_mean) + pre/sim_sum,
-                                     'sim_items': [r.source for r in rated_items]}
+                    recs[target] = {'prediction': Decimal(user_mean) + pre / sim_sum,
+                                    'sim_items': [r.source for r in rated_items]}
 
         return sorted(recs.items(), key=lambda item: -float(item[1]['prediction']))[:num]
 

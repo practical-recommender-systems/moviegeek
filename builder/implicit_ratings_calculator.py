@@ -55,7 +55,7 @@ def calculate_implicit_ratings_w_timedecay(user_id):
 
     data = query_log_data_for_user(user_id)
 
-    weights = {{'buy': w1}, {'moredetails': w2}, {'details': w3} }
+    weights = {'buy': w1, 'moredetails': w2, 'details': w3 }
     ratings = dict()
 
     for entry in data:

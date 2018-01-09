@@ -2,12 +2,8 @@ import os
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "prs_project.settings")
 
-import decimal
 import pandas as pd
 
-from evaluator.evaluation_runner import EvaluationRunner
-from builder.item_similarity_calculator import ItemSimilarityMatrixBuilder
-from recs.neighborhood_based_recommender import NeighborhoodBasedRecs
 from builder.bpr_calculator import BayesianPersonalizationRanking
 import unittest
 
@@ -22,8 +18,8 @@ ALIEN = 'alien'
 DR_STRANGELOVE = 'doc.stra'
 JACQUES = 'jacques'
 
-class TestEvaluationRunner(unittest.TestCase):
 
+class TestEvaluationRunner(unittest.TestCase):
     def test_split_data(self):
         ratings = pd.DataFrame(
             [[1, STAR_WARS, 9, '2013-10-12 23:21:27+00:00'],
@@ -48,7 +44,7 @@ class TestEvaluationRunner(unittest.TestCase):
              [3, PIRATES_OF, 9, '2013-03-12 23:20:27+00:00'],
              [3, HARRY, 8, '2016-10-13 23:20:27+00:00'],
              [3, DR_STRANGELOVE, 10, '2016-09-12 23:20:27+00:00'],
-             ], columns=['user_id', 'movie_id', 'rating', 'rating_timestamp'] )
+             ], columns=['user_id', 'movie_id', 'rating', 'rating_timestamp'])
 
         bpr = BayesianPersonalizationRanking('')
         bpr.initialize_factors(ratings)

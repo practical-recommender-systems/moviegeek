@@ -12,7 +12,6 @@ import pandas as pd
 
 
 from recs.neighborhood_based_recommender import NeighborhoodBasedRecs
-from recommender.models import Similarity
 from builder.item_similarity_calculator import ItemSimilarityMatrixBuilder
 
 STAR_WARS = 'star wars'

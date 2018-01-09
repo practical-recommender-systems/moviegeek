@@ -1,18 +1,22 @@
 import os
-import pickle
+import logging
+
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "prs_project.settings")
-from tqdm import tqdm
-from datetime import datetime
-import logging
-import numpy as np
-from math import exp
-import random
-import pandas as pd
-from decimal import Decimal
-from collections import defaultdict
 import django
 django.setup()
+
+import pickle
+from tqdm import tqdm
+from datetime import datetime
+from math import exp
+
+import random
+import pandas as pd
+import numpy as np
+
+from decimal import Decimal
+from collections import defaultdict
 
 from analytics.models import Rating
 

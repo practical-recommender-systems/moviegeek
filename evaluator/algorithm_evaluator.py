@@ -1,15 +1,16 @@
 import os
-import time
-import logging
-from decimal import Decimal
-from tqdm import tqdm
-import numpy as np
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "prs_project.settings")
 
 import django
 
 django.setup()
+
+import logging
+from decimal import Decimal
+from tqdm import tqdm
+
+
 
 from analytics.models import Rating
 
@@ -43,7 +44,7 @@ class MeanAverageError(object):
             if len(this_test_ratings) > 0:
 
                 movie_ids = this_test_ratings['movie_id'].unique()
-                for item_id in movie_ids:
+                for item_id in tqdm(movie_ids):
                     actual_rating = this_test_ratings[this_test_ratings['movie_id'] == item_id].iloc[0]['rating']
                     predicted_rating = self.rec.predict_score_by_ratings(item_id, movies)
 
@@ -113,7 +114,8 @@ class PrecisionAtK(object):
                                 no_rec))
         return mean_average_precision, average_recall
 
-    def recall_at_k(self, recs, actual):
+    @staticmethod
+    def recall_at_k(recs, actual):
 
         if len(actual) == 0:
             return Decimal(0.0)
@@ -122,7 +124,8 @@ class PrecisionAtK(object):
 
         return Decimal(len(TP) / len(actual))
 
-    def average_precision_k(self, recs, actual):
+    @staticmethod
+    def average_precision_k(recs, actual):
         score = Decimal(0.0)
         num_hits = 0
 

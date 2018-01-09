@@ -1,12 +1,7 @@
-import decimal
-import os
-import sys
-import random
 import logging
-
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "prs_project.settings")
-
-import django
+import os
+import random
+import sys
 import pickle
 
 import numpy as np
@@ -15,6 +10,11 @@ from decimal import Decimal
 from collections import defaultdict
 import math
 from datetime import datetime
+
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "prs_project.settings")
+
+import django
+
 
 django.setup()
 

@@ -1,19 +1,15 @@
-from decimal import Decimal
+import collections
 import json
+import pickle
 
+import pandas as pd
 from django.db.models import Avg
 
-from recommender.models import Recs
 from analytics.models import Rating
 from recs.base_recommender import base_recommender
-import collections
-import numpy as np
-import pandas as pd
-import pickle
 
 
 class BPRRecs(base_recommender):
-
     def __init__(self, save_path='./models/bpr/'):
         self.save_path = save_path
         self.model_loaded = False
@@ -34,7 +30,6 @@ class BPRRecs(base_recommender):
         self.save_path = save_path
 
         self.load_model(save_path)
-
 
     def predict_score(self, user_id, item_id):
 
@@ -61,7 +56,6 @@ class BPRRecs(base_recommender):
                         for movie in active_user_items}
         recs = {}
         if str(user_id) in self.user_factors.columns:
-
             user = self.user_factors[str(user_id)]
 
             scores = self.item_factors.T.dot(user)

@@ -4,7 +4,6 @@ import time
 import argparse
 import logging
 from decimal import Decimal
-
 from collections import defaultdict
 import pandas as pd
 
@@ -65,7 +64,9 @@ class RecommenderCoverage(object):
         timestr = time.strftime("%Y%m%d-%H%M%S")
         logger.debug('writing cf coverage to file.')
         json.dump(self.items_in_rec, open('{}-{}_item_coverage.json'.format(timestr, recName), 'w'))
-        json.dump(self.user_recs, open('{}-{}_user_coverage.json'.format(timestr, recName), 'w'), cls=DecimalEncoder)
+        json.dump(self.user_recs,
+                  open('{}-{}_user_coverage.json'.format(timestr, recName), 'w')
+                  , cls=DecimalEncoder)
 
     def add_user_recs(self, inx, rec, user):
         self.user_recs.append({"userid": user,
@@ -73,7 +74,8 @@ class RecommenderCoverage(object):
                                "prediction": float(rec[1]['prediction']),
                                "inx": inx})
 
-    def load_all_ratings(self, min_ratings=1):
+    @staticmethod
+    def load_all_ratings(min_ratings=1):
         columns = ['user_id', 'movie_id', 'rating', 'type', 'rating_timestamp']
 
         ratings_data = Rating.objects.all().values(*columns)

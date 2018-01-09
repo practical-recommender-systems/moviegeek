@@ -3,11 +3,9 @@ import os
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "prs_project.settings")
 
 import django
-from django.db.models import Count
 django.setup()
 
 from collections import defaultdict
-
 from itertools import combinations
 from datetime import datetime
 

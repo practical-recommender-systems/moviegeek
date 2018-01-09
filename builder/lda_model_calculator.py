@@ -1,8 +1,7 @@
 import os
-import sys
+import sqlite3
 
 import psycopg2
-import sqlite3
 from scipy.sparse import coo_matrix
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "prs_project.settings")
@@ -12,7 +11,6 @@ from datetime import datetime
 from prs_project import settings
 
 import logging
-import json
 import numpy as np
 
 import pyLDAvis
@@ -22,7 +20,6 @@ import operator
 import math
 
 from nltk.tokenize import RegexpTokenizer
-from nltk.stem.porter import PorterStemmer
 from stop_words import get_stop_words
 from gensim import corpora, models, similarities
 
@@ -84,7 +81,8 @@ class LdaModel(object):
 
         self.build_lda_model(data, docs, NUM_TOPICS)
 
-    def tokenize(data):
+    @staticmethod
+    def tokenize(self, data):
         tokenizer = RegexpTokenizer(r'\w+')
 
         return [tokenizer.tokenize(d) for d in data]
@@ -130,7 +128,8 @@ class LdaModel(object):
         dictionary.save(self.lda_path + 'dict.lda')
         corpora.MmCorpus.serialize(self.lda_path + 'corpus.mm', corpus)
 
-    def remove_stopwords(self, tokenized_data):
+    @staticmethod
+    def remove_stopwords(tokenized_data):
 
         en_stop = get_stop_words('en')
 
@@ -221,7 +220,8 @@ class LdaModel(object):
         conn.commit()
         print('{} Similarity items saved, done in {} seconds'.format(no_saved, datetime.now() - start_time))
 
-    def get_conn(self):
+    @staticmethod
+    def get_conn():
         if settings.DATABASES['default']['ENGINE'] == 'django.db.backends.postgresql':
             dbUsername = settings.DATABASES['default']['USER']
             dbPassword = settings.DATABASES['default']['PASSWORD']

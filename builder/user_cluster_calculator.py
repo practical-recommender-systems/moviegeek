@@ -79,7 +79,8 @@ class UserClusterCalculator(object):
         return clusters
 
 
-    def save_clusters(self, clusters, user_ids):
+    @staticmethod
+    def save_clusters(clusters, user_ids):
         print("saving clusters")
         Cluster.objects.all().delete()
         for i, cluster_label in enumerate(clusters.labels_):
@@ -87,7 +88,8 @@ class UserClusterCalculator(object):
                 cluster_id=cluster_label,
                 user_id=user_ids[i]['user_id']).save()
 
-    def load_data(self):
+    @staticmethod
+    def load_data():
         print('loading data')
         user_ids = list(
             Rating.objects.values('user_id')

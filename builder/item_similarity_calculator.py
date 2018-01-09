@@ -69,7 +69,8 @@ class ItemSimilarityMatrixBuilder(object):
         conn.commit()
         print('{} Similarity items saved, done in {} seconds'.format(no_saved, datetime.now() - start_time))
 
-    def get_conn(self):
+    @staticmethod
+    def get_conn():
         if settings.DATABASES['default']['ENGINE'] == 'django.db.backends.postgresql':
             dbUsername = settings.DATABASES['default']['USER']
             dbPassword = settings.DATABASES['default']['PASSWORD']
