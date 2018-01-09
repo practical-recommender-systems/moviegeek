@@ -42,7 +42,7 @@ def calculate_support_confidence(transactions, min_sup=0.01):
     N = len(transactions)
 
     one_itemsets = calculate_itemsets_one(transactions, min_sup)
-    two_itemsets = calculate_itemsets_two(transactions, one_itemsets, min_sup)
+    two_itemsets = calculate_itemsets_two(transactions, one_itemsets)
 
     rules = calculate_association_rules(one_itemsets, two_itemsets, N)
 
@@ -69,7 +69,7 @@ def calculate_itemsets_one(transactions, min_sup=0.01):
     return one_itemsets
 
 
-def calculate_itemsets_two(transactions, one_itemsets, min_sup=0.01):
+def calculate_itemsets_two(transactions, one_itemsets):
     two_itemsets = defaultdict(int)
 
     for key, items in transactions.items():

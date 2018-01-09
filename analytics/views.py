@@ -1,19 +1,18 @@
 import decimal
+import json
+import time
+from datetime import datetime
 
-from django.shortcuts import render
+from django.db import connection
 from django.db.models import Count
 from django.http import JsonResponse
-from django.db import connection
+from django.shortcuts import render
+from gensim import models
 
-from datetime import datetime
-import time
-import json
-
+from analytics.models import Rating, Cluster
 from collector.models import Log
 from moviegeeks.models import Movie, Genre
-from analytics.models import Rating, Cluster
 from recommender.models import SeededRecs, Similarity
-from gensim import corpora, models
 
 def index(request):
     context_dict = {}
@@ -285,31 +284,6 @@ def dictfetchall(cursor):
         for row in cursor.fetchall()
         ]
 
-
-def user_evidence(request, userid):
-    cursor = connection.cursor()
-    cursor.execute('SELECT \
-                        user_id, \
-                        content_id,\
-                        mov.title,\
-                        count(case when event = \'buy\' then 1 end) as buys,\
-                        count(case when event = \'details\' then 1 end) as details,\
-                        count(case when event = \'moredetails\' then 1 end) as moredetails\
-                    FROM \
-                      public."collector_log" log\
-                    JOIN    public.movies mov \
-                    ON CAST(log.content_id AS VARCHAR(50)) = CAST(mov.id AS VARCHAR(50))\
-                    WHERE\
-                        user_id = \'%s\'\
-                    group by log.user_id, log.content_id, mov.title\
-                    order by log.user_id, log.content_id' % userid)
-    data = dictfetchall(cursor)
-    movie_ratings = Builder.generate_implicit_ratings(data)
-    Builder.save_ratings(userid, movie_ratings)
-
-    return JsonResponse(movie_ratings, safe=False)
-
-
 class movie_rating():
     title = ""
     rating = 0
@@ -317,17 +291,6 @@ class movie_rating():
     def __init__(self, title, rating):
         self.title = title
         self.rating = rating
-
-
-def top_content_by_eventtype(request):
-    event_type = request.GET.get_template('eventtype', 'buy')
-
-    data = Event.objects.filter(event=event_type) \
-               .values('content_id') \
-               .annotate(count_items=Count('user_id')) \
-               .order_by('-count_items')[:10]
-    return JsonResponse(list(data), safe=False)
-
 
 def monthdelta(date, delta):
     m, y = (date.month + delta) % 12, date.year + ((date.month) + delta - 1) // 12
