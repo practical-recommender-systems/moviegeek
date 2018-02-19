@@ -1,10 +1,8 @@
   language: python
-  virtualenv:
-    system_site_packages: true
   python:
     - "3.6"
   before_install:
-   - export PYTHONPATH=$HOME/builds/practical-recommender-systems/moviegeek
+   - export PYTHONPATH=$HOME/builds/practical-recommender-systems/moviegeek/
   install:
   - pip3 install -r requirements.txt
   script: python -m pytest ./test/
