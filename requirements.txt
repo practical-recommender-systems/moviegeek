@@ -21,5 +21,6 @@ sklearn==0.0
 smart-open==1.5.1
 stop-words==2015.2.23.1
 psycopg2==2.7.1
+tqdm==4.19.5
 
 
