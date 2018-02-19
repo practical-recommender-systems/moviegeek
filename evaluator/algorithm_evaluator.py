@@ -134,8 +134,8 @@ class PrecisionAtK(object):
             if TP:
                 num_hits += 1.0
             score += Decimal(num_hits / (i + 1.0))
-
-        score /= min(len(recs), len(actual))
+        if score > 0:
+            score /= min(len(recs), len(actual))
         return score
 
 
