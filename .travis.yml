@@ -3,6 +3,9 @@
     - "3.6"
   before_install:
    - export PYTHONPATH=$HOME/builds/practical-recommender-systems/moviegeek/
+   - python manage.py
   install:
   - pip install -r requirements.txt
-  script: python -m pytest ./test/
+  script:
+  - python manage.py migrate
+  - python -m pytest ./test/
