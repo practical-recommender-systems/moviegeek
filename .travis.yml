@@ -4,5 +4,5 @@
   before_install:
    - export PYTHONPATH=$HOME/builds/practical-recommender-systems/moviegeek/
   install:
-  - pip3 install -r requirements.txt
+  - pip install -r requirements.txt
   script: python -m pytest ./test/
