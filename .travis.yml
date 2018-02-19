@@ -3,7 +3,6 @@
     - "3.6"
   before_install:
    - export PYTHONPATH=$HOME/builds/practical-recommender-systems/moviegeek/
-   - python manage.py
   install:
   - pip install -r requirements.txt
   - pip install django==1.11 --quiet
