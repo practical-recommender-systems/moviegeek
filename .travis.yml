@@ -6,6 +6,8 @@
   install:
   - pip install -r requirements.txt
   - pip install django==1.11 --quiet
-  script:
+  before_script:
   - python manage.py migrate
+
+  script:
   - python -m pytest ./test/
