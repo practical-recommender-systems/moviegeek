@@ -36,7 +36,9 @@ def user(request, user_id):
     else:
         user_avg = 0
 
-    genres = {g['name']: 0 for g in Genre.objects.all().values('name').distinct()}
+    genres_ratings = {g['name']: 0 for g in Genre.objects.all().values('name').distinct()}
+    genres_count = {g['name']: 0 for g in Genre.objects.all().values('name').distinct()}
+
     for movie in movies:
         id = movie.movie_id
 
@@ -47,18 +49,25 @@ def user(request, user_id):
         movie_dtos.append(MovieDto(id, movie.title, r))
         for genre in movie.genres.all():
 
-            if genre.name in genres.keys():
-                genres[genre.name] += r - user_avg
+            if genre.name in genres_ratings.keys():
+                genres_ratings[genre.name] += r - user_avg
+                genres_count[genre.name] += 1
 
-    max_value = max(genres.values())
+    max_value = max(genres_ratings.values())
     max_value = max(max_value, 1)
+    max_count = max(genres_count.values())
 
-    genres = {key: value / max_value for key, value in genres.items()}
+    genres = []
+    for key, value in genres_ratings.items():
+        genres.append((key, 'rating', value/max_value))
+        genres.append((key, 'count', genres_count[key]/max_count))
+
     cluster_id = cluster.cluster_id if cluster else 'Not in cluster'
-    print(movie_dtos)
+
     context_dict = {
         'user_id': user_id,
         'avg_rating': user_avg,
+        'film_count': len(ratings),
         'movies': sorted(movie_dtos, key=lambda item: -float(item.rating))[:15],
         'genres': genres,
         'logs': list(log),
@@ -66,6 +75,8 @@ def user(request, user_id):
         'api_key': get_api_key(),
 
     }
+
+    print(genres)
     return render(request, 'analytics/user.html', context_dict)
 
 

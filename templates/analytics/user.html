@@ -333,7 +333,7 @@
     <h1>User Profile id: {{ user_id }} (in cluster: <a href="/analytics/cluster/{{cluster}}">{{ cluster }}</a>)</h1>
 
     <div>
-      Average rating: {{ avg_rating|floatformat:2 }} / 10
+      Average rating: {{ avg_rating|floatformat:2 }} / 10 - Rated {{ film_count }} movies
     </div>
 
   </div>
@@ -353,17 +353,20 @@
     <script type="text/javascript">
       var svg = dimple.newSvg("#chartContainer", 700, 400);
       var data = [
-        {% for key, value in genres.items %}
-          { "name": '{{key}}', "value": {{value}} },
+        {% for i in genres %}
+          { "name": '{{i.0}}', "type": '{{i.1}}', "value": {{i.2}} },
         {% endfor %}
       ];
       var chart = new dimple.chart(svg, data);
       chart.setBounds(50, 10, 600, 300);
 
-      x = chart.addCategoryAxis("x", "name");
+      x = chart.addCategoryAxis("x", ["name","type"] );
       y = chart.addMeasureAxis("y", "value");
-      chart.addSeries(null, dimple.plot.bar);
+      chart.addLegend(550, 30, 110, 20, "right");
+      chart.addSeries("type", dimple.plot.bar);
       x.addOrderRule("name")
+      x.title = "Genre"
+
       chart.draw();
     </script>
   </div>
