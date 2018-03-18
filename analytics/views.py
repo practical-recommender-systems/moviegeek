@@ -56,6 +56,7 @@ def user(request, user_id):
     max_value = max(genres_ratings.values())
     max_value = max(max_value, 1)
     max_count = max(genres_count.values())
+    max_count = max(max_count, 1)
 
     genres = []
     for key, value in genres_ratings.items():
@@ -283,7 +284,9 @@ def ratings_distribution(request):
     order by rating
     """)
     data = dictfetchall(cursor)
-    print(data)
+    for d in data:
+        d['rating'] = round(d['rating'])
+
     return JsonResponse(data, safe=False)
 
 
