@@ -40,5 +40,5 @@ class FunkSvdTest(unittest.TestCase):
         self.compare_recs(recs1, recs2)
 
     def compare_recs(self, recs1, recs2):
-        for i in range(len(recs1)):
-            self.assertEqual(recs1[i][0], recs2[i][0])
+        for i, rec in enumerate(recs1):
+            self.assertEqual(rec[0], recs2[i][0])
