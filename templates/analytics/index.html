@@ -14,7 +14,7 @@
 <script src="http://dimplejs.org/dist/dimple.v2.0.0.min.js"></script>
 <script>
 var margin = {top: 20, right: 0, bottom: 30, left: 50},
-    width = 300 - margin.left - margin.right,
+    width = 500 - margin.left - margin.right,
     height = 300 - margin.top - margin.bottom,
     maxHeight = height - 30,
     padding = 5;
@@ -66,7 +66,7 @@ function drawRatingChart(id, endpoint) {
     var x = myChart.addCategoryAxis("x", ["rating"] );
     myChart.addMeasureAxis("y", "count_items" );
     myChart.addSeries(null, dimple.plot.bar);
-    myChart.setBounds(30, 30, 180, 130);
+    myChart.setBounds(30, 30, width - 75, height -75);
     x.addOrderRule("rating");
     myChart.draw();
 
@@ -92,7 +92,7 @@ function drawChart(id, endpoint) {
     myChart.addMeasureAxis("y", "count_items" );
     myChart.addSeries("conversion", dimple.plot.bar);
     myChart.addLegend(110, 30, 110, 20, "right");
-    myChart.setBounds(30, 30, 180, 130);
+    myChart.setBounds(30, 30, width - 75, height -75);
     myChart.draw();
 
     canvas.append("text")
