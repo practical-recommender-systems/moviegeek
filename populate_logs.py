@@ -167,7 +167,7 @@ def select_film(user):
 
 
 def select_action(user):
-    actions = {'genreView': 15, 'details': 50, 'moredetails': 24, 'addToList': 10, 'buy': 1}
+    actions = {'genreView': 15, 'details': 50, 'moreDetails': 24, 'addToList': 10, 'buy': 1}
 
     return sample(actions)
 
