@@ -14,14 +14,14 @@ from recommender.models import SeededRecs
 
 
 def build_association_rules():
-    data = retrieve_transactions()
+    data = retrieve_buy_events()
     data = generate_transactions(data)
 
     data = calculate_support_confidence(data, 0.04)
     save_rules(data)
 
 
-def retrieve_transactions():
+def retrieve_buy_events():
     data = Log.objects.filter(event='buy').values()
     return data
 
