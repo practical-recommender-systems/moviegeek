@@ -1,6 +1,6 @@
 import os
 import sqlite3
-
+import tqdm
 import psycopg2
 from scipy.sparse import coo_matrix
 
@@ -91,7 +91,7 @@ class LdaModel(object):
 
         texts = []
         tokenizer = RegexpTokenizer(r'\w+')
-        for d in data:
+        for d in tqdm(data):
             raw = d.lower()
 
             tokens = tokenizer.tokenize(raw)
