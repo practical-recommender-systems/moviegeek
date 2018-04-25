@@ -14,10 +14,7 @@ NUMBER_OF_PAGES = 15760
 start_date = "1970-01-01"
 
 
-
 def get_descriptions():
-
-
 
     url = """https://api.themoviedb.org/3/discover/movie?primary_release_date.gte={}&api_key={}&page={}"""
     api_key = get_api_key()
