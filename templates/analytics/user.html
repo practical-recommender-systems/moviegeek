@@ -362,6 +362,8 @@
 
       x = chart.addCategoryAxis("x", ["name","type"] );
       y = chart.addMeasureAxis("y", "value");
+       y.overrideMax = 1;
+       y.overrideMin = -1;
       chart.addLegend(550, 30, 110, 20, "right");
       chart.addSeries("type", dimple.plot.bar);
       x.addOrderRule("name")

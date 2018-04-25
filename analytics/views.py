@@ -259,7 +259,7 @@ def get_statistics(request):
 def events_on_conversions(request):
     cursor = connection.cursor()
     cursor.execute('''select
-                            (case when c.conversion = 1 then \'buy\' else \'no buy\' end) as conversion,
+                            (case when c.conversion = 1 then \'Buy\' else \'No Buy\' end) as conversion,
                             event,
                                 count(*) as count_items
                               FROM

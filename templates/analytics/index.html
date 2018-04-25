@@ -71,7 +71,7 @@ function drawRatingChart(id, endpoint) {
     myChart.draw();
 
     canvas.append("text")
-          .attr("x", myChart._xPixels() + myChart._widthPixels()/2 -110)
+          .attr("x", myChart._xPixels() + myChart._widthPixels()/2 - 55)
           .attr("y", myChart._yPixels() - 20)
           .text("Rating distribution");
   });
@@ -91,9 +91,10 @@ function drawChart(id, endpoint) {
     var x = myChart.addCategoryAxis("x", ["event","conversion"] );
     myChart.addMeasureAxis("y", "count_items" );
     myChart.addSeries("conversion", dimple.plot.bar);
-    myChart.addLegend(110, 30, 110, 20, "right");
+    myChart.addLegend(310, 30, 110, 20, "right");
     myChart.setBounds(30, 30, width - 75, height -75);
     myChart.draw();
+    x.titleShape.text("Event/Conversion")
 
     canvas.append("text")
           .attr("x", myChart._xPixels() + myChart._widthPixels()/2 -110)
