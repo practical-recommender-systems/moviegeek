@@ -68,9 +68,12 @@ class NeighborhoodBasedRecs(base_recommender):
     def predict_score_by_ratings(self, item_id, movie_ids):
         top = Decimal(0.0)
         bottom = Decimal(0.0)
-
-        candidate_items = Similarity.objects.filter(source__in=movie_ids.keys()).filter(target=item_id)
-        candidate_items = candidate_items.distinct().order_by('-similarity')[:self.max_candidates]
+        ids = movie_ids.keys()
+        mc = self.max_candidates
+        candidate_items = (Similarity.objects.filter(source__in= ids)
+                                             .exclude(source=item_id)
+                                             .filter(target=item_id))
+        candidate_items = candidate_items.distinct().order_by('-similarity')[:mc]
 
         if len(candidate_items) == 0:
             return 0
