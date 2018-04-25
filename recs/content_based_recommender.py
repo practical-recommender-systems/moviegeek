@@ -10,6 +10,7 @@ lda_path = './lda/'
 
 
 class ContentBasedRecs(base_recommender):
+
     def __init__(self, min_sim=0.1):
 
         self.min_sim = min_sim
@@ -67,7 +68,9 @@ class ContentBasedRecs(base_recommender):
         return sorted(recs.items(), key=lambda item: -float(item[1]['prediction']))[:num]
 
     def predict_score(self, user_id, item_id):
-        user_items = Rating.objects.filter(user_id=user_id).order_by('-rating').values()[:100]
+        user_items = (Rating.objects.filter(user_id=user_id)
+                                    .exclude(movie_id=item_id)
+                                    .order_by('-rating').values()[:100])
 
         movie_ids = {movie['movie_id']: movie['rating'] for movie in user_items}
         user_mean = sum(movie_ids.values()) / len(movie_ids)
