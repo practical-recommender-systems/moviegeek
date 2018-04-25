@@ -51,9 +51,13 @@ that will be considerable faster if if you install postgres.
 
 #### The database
 If you dont have postgres running then you should start out installing it. 
-It's a free, and easy to install. 
+It's a free, and easy to install.
+
 Get it here [postgresql download](https://www.postgresql.org/download/) 
 and follow the instructions on the site.
+
+When it install and running, create a database. In the following the database is called moviegeek.
+You can do this using the admin tool (pgadmin)
 
 
 #### The database driver
@@ -92,7 +96,7 @@ you should update the NAME, USER, PASSWORD, HOST, PORT fields.
 If you have a database running on your machine I would encourage 
 you to connect it, by updating the settings in `prs_project/settings.py` (fx like shown above). 
 
-To set up another database is described in the Django docs [here](https://docs.djangoproject.com/en/1.10/ref/databases/)
+To set up another database is described in the Django docs [here](https://docs.djangoproject.com/en/2.0/ref/databases/)
 ```bash
 > python3 manage.py makemigrations
 > python3 manage.py migrate
