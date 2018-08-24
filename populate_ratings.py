@@ -3,6 +3,7 @@ import urllib.request
 import django
 import datetime
 import decimal
+from tqdm import tqdm
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'prs_project.settings')
 
@@ -28,10 +29,12 @@ def download_ratings():
     print('download finished')
     return data.decode('utf-8')
 
+
 def delete_db():
     print('truncate db')
     Rating.objects.all().delete()
     print('finished truncate db')
+
 
 def populate():
 
@@ -39,16 +42,11 @@ def populate():
 
     ratings = download_ratings()
 
-    count = 0
-    for rating in ratings.split(sep="\n"):
+    for rating in tqdm(ratings.split(sep="\n")):
         r = rating.split(sep="::")
         if len(r) == 4:
             create_rating(r[0], r[1], r[2], r[3])
-        if count > 500:
-            print('.')
-            count = 0
-        else:
-            count += 1
+
 
 if __name__ == '__main__':
     print("Starting MovieGeeks Population script...")
