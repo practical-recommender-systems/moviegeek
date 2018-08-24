@@ -1,5 +1,6 @@
 import os
 import urllib.request
+from tqdm import tqdm
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'prs_project.settings')
 
@@ -35,11 +36,13 @@ def download_movies():
     data = response.read()
     return data.decode('utf-8')
 
+
 def delete_db():
     print('truncate db')
     Movie.objects.all().delete()
     Genre.objects.all().delete()
     print('finished truncate db')
+
 
 def populate():
 
@@ -47,12 +50,11 @@ def populate():
 
     print('movie data downloaded')
 
-    for movie in movies.split(sep="\n"):
+    for movie in tqdm(movies.split(sep="\n")):
         m = movie.split(sep="::")
         if len(m) == 3:
 
             create_movie(m[0], m[1], m[2])
-
 
 
 if __name__ == '__main__':
