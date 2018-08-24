@@ -7,3 +7,5 @@ recommender/migrations
 collector/migrations
 .prs
 cluster.png
+*/__pycache__/*
+analytics/migrations/*
