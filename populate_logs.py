@@ -12,32 +12,7 @@ from collector.models import Log
 
 SEED = 0
 
-
-class User:
-    sessionId = 0
-    userId = 0
-    likes = {}
-    events = {}
-
-    def __init__(self, user_id, action, drama, comedy):
-        self.sessionId = random.randint(0, 1000000)
-        self.userId = user_id
-        self.likes = {'action': action, 'drama': drama, 'comedy': comedy}
-        self.events = {self.sessionId: []}
-
-    def get_session_id(self):
-        if random.randint(0, 100) > 90:
-            self.sessionId += 1
-            self.events[self.sessionId] = []
-
-        return self.sessionId
-
-    def select_genre(self):
-        return sample(self.likes)
-
-
-def select_film(user):
-    films = {'comedy':
+films = {'comedy':
                  [
                   '0475290'
                 ,'1289401'
@@ -159,10 +134,40 @@ def select_film(user):
             , '3949660'
             , '3410834'
         ,'2250912']}
+
+class User:
+    sessionId = 0
+    userId = 0
+    likes = {}
+    events = {}
+
+    def __init__(self, user_id, action, drama, comedy):
+        self.sessionId = random.randint(0, 1000000)
+        self.userId = user_id
+        self.likes = {'action': action, 'drama': drama, 'comedy': comedy}
+        self.events = {self.sessionId: []}
+
+    def get_session_id(self):
+        if random.randint(0, 100) > 90:
+            self.sessionId += 1
+            self.events[self.sessionId] = []
+
+        return self.sessionId
+
+    def select_genre(self):
+        return sample(self.likes)
+
+
+def select_film(user):
+
     genre = user.select_genre()
     interested_films = films[genre]
+    film_id = ''
+    while film_id == '':
+        film_candidate = interested_films[random.randint(0, len(interested_films) - 1)]
+        if film_candidate not in user.events[user.sessionId]:
+            film_id = film_candidate
 
-    film_id = interested_films[random.randint(0, len(interested_films) - 1)]
     return film_id
 
 
