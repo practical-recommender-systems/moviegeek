@@ -9,7 +9,7 @@ class Genre(models.Model):
 
 
 class Movie(models.Model):
-    movie_id = models.CharField(max_length=8, unique=True, primary_key=True)
+    movie_id = models.CharField(max_length=16, unique=True, primary_key=True)
     title = models.CharField(max_length=128)
     year = models.IntegerField(null=True)
     genres = models.ManyToManyField(Genre, related_name='movies', db_table='movie_genre')
