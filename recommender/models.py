@@ -1,8 +1,8 @@
 from django.db import models
 
 class MovieDescriptions(models.Model):
-    movie_id = models.CharField(max_length=8)
-    imdb_id = models.CharField(max_length=8)
+    movie_id = models.CharField(max_length=16)
+    imdb_id = models.CharField(max_length=16)
     title = models.CharField(max_length=512)
     description = models.CharField(max_length=1024)
     genres = models.CharField(max_length=512, default='')
@@ -48,8 +48,8 @@ class Similarity(models.Model):
 
 class SeededRecs(models.Model):
     created = models.DateTimeField()
-    source = models.CharField(max_length=8)
-    target = models.CharField(max_length=8)
+    source = models.CharField(max_length=16)
+    target = models.CharField(max_length=16)
     support = models.DecimalField(max_digits=10, decimal_places=8)
     confidence = models.DecimalField(max_digits=10, decimal_places=8)
     type = models.CharField(max_length=8)
@@ -66,7 +66,7 @@ class SeededRecs(models.Model):
 class Recs(models.Model):
 
     user = models.CharField(max_length=16)
-    item = models.CharField(max_length=8)
+    item = models.CharField(max_length=16)
     rating = models.FloatField()
     type = models.CharField(max_length=16)
 

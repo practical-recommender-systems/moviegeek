@@ -4,7 +4,7 @@ from django.db import models
 class Log(models.Model):
     created = models.DateTimeField('date happened')
     user_id = models.CharField(max_length=16)
-    content_id = models.CharField(max_length=8)
+    content_id = models.CharField(max_length=16)
     event = models.CharField(max_length=200)
     session_id = models.CharField(max_length=128)
 
