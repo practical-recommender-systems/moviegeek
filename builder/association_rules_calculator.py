@@ -17,7 +17,7 @@ def build_association_rules():
     data = retrieve_buy_events()
     data = generate_transactions(data)
 
-    data = calculate_support_confidence(data, 0.04)
+    data = calculate_support_confidence(data, 0.01)
     save_rules(data)
 
 
@@ -40,12 +40,13 @@ def generate_transactions(data):
 def calculate_support_confidence(transactions, min_sup=0.01):
 
     N = len(transactions)
-
+    print(N)
     one_itemsets = calculate_itemsets_one(transactions, min_sup)
+    print(one_itemsets)
     two_itemsets = calculate_itemsets_two(transactions, one_itemsets)
 
     rules = calculate_association_rules(one_itemsets, two_itemsets, N)
-
+    print(rules)
     return sorted(rules)
 
 
@@ -61,8 +62,11 @@ def calculate_itemsets_one(transactions, min_sup=0.01):
             inx = frozenset({item})
             temp[inx] += 1
 
+    print("temp:")
+    print(temp)
     # remove all items that is not supported.
     for key, itemset in temp.items():
+        print(f"{key}, {itemset}, {min_sup}, {min_sup * N}")
         if itemset > min_sup * N:
             one_itemsets[key] = itemset
 
