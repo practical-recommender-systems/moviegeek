@@ -23,15 +23,14 @@ pytz==2018.7
 requests==2.20.1
 s3transfer==0.1.13
 scipy==1.1.0
+seaborn==0.8.1
 six==1.11.0
+sklearn==0.0
 smart-open==1.7.1
+stop-words==2015.2.23.1
 tqdm==4.28.1
 urllib3==1.24.1
 pyLDAvis==2.1.1
-seaborn==0.8.1
-sklearn==0.0
-smart-open==1.5.1
-stop-words==2015.2.23.1
 psycopg2==2.7.6.1
 
 
