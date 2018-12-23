@@ -9,7 +9,7 @@ The book is still being written, and so this is still under construction.
 # installation guide:
 
 This site is using the [MovieTweetings](https://github.com/sidooms/MovieTweetings) dataset, and uses 
-[themoviedb.org](www.themoviedb.org) to get poster images. 
+[themoviedb.org](https://www.themoviedb.org) to get poster images. 
 A big thanks to both of them for all their work. Please go and visit them. 
  
 The dataset is used in the populate_moviegeek script which downloads it and imports the data 
