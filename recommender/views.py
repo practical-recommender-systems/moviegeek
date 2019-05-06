@@ -126,7 +126,7 @@ def similar_users(request, user_id, sim_method):
     for user in sim_users:
 
         func = switcher.get(sim_method, lambda: "nothing")
-        s = func(users, int(user_id), int(user['user_id']))
+        s = func(users, user_id, user['user_id'])
 
         if s > 0.2:
             similarity[user['user_id']] = round(s, 2)
