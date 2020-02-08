@@ -139,3 +139,7 @@ when you are finished running the project you can:
 ```bash
 > deactivate
 ```
+if running conda run instead:
+```bash
+conda deactivate
+```
