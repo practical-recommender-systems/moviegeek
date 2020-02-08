@@ -39,8 +39,11 @@ def download_movies():
 
 def delete_db():
     print('truncate db')
-    Movie.objects.all().delete()
-    Genre.objects.all().delete()
+    movie_count = Movie.objects.all().count()
+
+    if movie_count > 1:
+        Movie.objects.all().delete()
+        Genre.objects.all().delete()
     print('finished truncate db')
 
 
