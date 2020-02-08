@@ -2,33 +2,30 @@
 
 The MovieGEEKs is a movie site implemented to accompany my book
 ["Practical Recommender Systems"](https://www.manning.com/books/practical-recommender-systems).
-It is used in the book to show how recommender systems work, and how you can implement them. 
-
-The book is still being written, and so this is still under construction.
+It is used in the book to show how recommender systems work and how you can implement them. The book describes how the algorithms work, and provides more detail into how the site works.  
 
 # installation guide:
 
-This site is using the [MovieTweetings](https://github.com/sidooms/MovieTweetings) dataset, and uses 
-[themoviedb.org](https://www.themoviedb.org) to get poster images. 
-A big thanks to both of them for all their work. Please go and visit them. 
+This site would not be working if it wasnt for the  [MovieTweetings](https://github.com/sidooms/MovieTweetings) dataset, and the poster images provided by the  
+[themoviedb.org](https://www.themoviedb.org) API. A big thanks to both of them for all their work.
  
-The dataset is used in the populate_moviegeek script which downloads it and imports the data 
-into the database configured in Django. 
-
 ## Project Setup
-The following is expecting you to have python 3.x installed on your machine. I recommend
- looking that the [Hitchhikers guide to Python](http://docs.python-guide.org/en/latest/) if you 
- haven't.
+The following is expecting you to have python 3.x installed on your machine. I recommend looking at the [Hitchhikers guide to Python](http://docs.python-guide.org/en/latest/) if you haven't.
  
- For windows users it's a good idea to install the Anaconda package. Anaconda is the leading open 
- data science platform powered by Python (according to their homepage) [Anaconda](https://www.continuum.io/downloads)
+For *windows users* it's a good idea to install the Anaconda package. Anaconda is the leading open data science platform powered by Python (according to their homepage) [Anaconda](https://www.continuum.io/downloads)
  
 ### Download code
+Retrieve the source code either by downloading a zip-file (click the green button above that says `Clone or download`) or using git. 
+
+Using git, you can either clone this repository or create a fork in your github, and then clone that instead. The following command will create a copy on your computer. 
+
 ```bash
 > git clone https://github.com/practical-recommender-systems/moviegeek.git
 ```
 ### Create a virtual environment for the project 
-Look at the following guide for more details [guide](http://docs.python-guide.org/en/latest/dev/virtualenvs/#virtualenvironments-ref)
+Before running the code it is a good idea to create a virtual environment
+(Look at the following guide for more details [guide](http://docs.python-guide.org/en/latest/dev/virtualenvs/#virtualenvironments-ref)).
+Create the virtual env using the following commands (assumes that you have virtualenv installed)
  
 ```bash
 > cd moviegeek
@@ -36,42 +33,33 @@ Look at the following guide for more details [guide](http://docs.python-guide.or
 > source prs/bin/activate
 ```
 
-if you are running Anaconda you can also use conda virtual environment instead.
+Note: if you are running Anaconda you should conda virtual environment instead( ```conda create -n myenv python=3.6```)
 ### Get the required packages
-
+using Pip you can now install the required files:
 ```bash
 pip3 install -r requirements.txt
 ```
-
+Again it is slightly different for conda users, they should run (thanks to https://www.technologyscout.net/2017/11/how-to-install-dependencies-from-a-requirements-txt-file-with-conda/):
+``` 
+while read requirement; do conda install --yes $requirement; done < requirements.txt
+```
 ### [OPTIONAL] install and use PostGreSQL
 
 ## Database setup
-Django is setup to run with sqllite3 out of the box, and you can also use that when you run the site. However there are things 
-that will be considerable faster if if you install postgres.
+Django is setup to run with sqllite3 out of the box, which is enough to run everything. However, some things will be considerably faster if you install Postgres.
 
 #### The database
-If you dont have postgres running then you should start out installing it. 
-It's a free, and easy to install.
+If you don't have Postgres running, then you should start out installing it. 
+It's a free and easy to install.
 
 Get it here [postgresql download](https://www.postgresql.org/download/) 
 and follow the instructions on the site.
 
-When it install and running, create a database. In the following the database is called moviegeek.
-You can do this using the admin tool (pgadmin)
+When it installed and running, create a database. In the following, the database is called moviegeek. You can do this using the admin tool (pgadmin)
 
-
-#### The database driver
-When the database is spinning its time for the python driver. I recommend using the following 
-[http://initd.org/psycopg/](http://initd.org/psycopg/), 
-
-First download the driver, unzip (if zipped) then run
-```bash
-> python3 setup.py install
-```
-
-```bash
-> pip3 install psycopg2
-```
+#### The database driver (only if you are running Postgres)
+When the Postgres database is spinning its time for the python driver. I recommend using the following 
+[http://initd.org/psycopg/](http://initd.org/psycopg/). Follow the instructions on the site (https://www.psycopg.org/docs/install.html)
 
 #### Configuration
 
@@ -99,12 +87,12 @@ you to connect it, by updating the settings in `prs_project/settings.py` (fx lik
 To set up another database is described in the Django docs [here](https://docs.djangoproject.com/en/2.0/ref/databases/)
 ```bash
 > python3 manage.py makemigrations
-> python3 manage.py migrate
+> python3 manage.py migrate --run-syncdb
 ```
 ### Populate the db by running the following script. 
 (WARNING: this might take some time.)
 (WARNING: If you are using python >3.6 on a Mac then you need to run 
-"/Applications/Python\ 3.6/Install\ Certificates.command". More details [here](https://bugs.python.org/issue28150))
+"/Applications/Python\ 3.7/Install\ Certificates.command". More details [here](https://bugs.python.org/issue28150) and [here](https://timonweb.com/tutorials/fixing-certificate_verify_failed-error-when-trying-requests_html-out-on-mac/)
 ```bash
 > python3 populate_moviegeek.py
 > python3 populate_ratings.py

@@ -14,7 +14,7 @@ idna==2.7
 jmespath==0.9.3
 kiwisolver==1.0.1
 matplotlib==3.0.2
-numpy==1.15.4
+numpy==1.17.3
 pandas==0.23.4
 packaging==16.8
 pyparsing==2.3.0
