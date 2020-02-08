@@ -1,10 +1,10 @@
-# moviegeek
+# The MovieGEEK
 
-The MovieGEEKs is a movie site implemented to accompany my book
+The MovieGEEK is a movie site implemented to accompany my book
 ["Practical Recommender Systems"](https://www.manning.com/books/practical-recommender-systems).
 It is used in the book to show how recommender systems work and how you can implement them. The book describes how the algorithms work, and provides more detail into how the site works.  
 
-# installation guide:
+# Installation guide:
 
 This site would not be working if it wasnt for the  [MovieTweetings](https://github.com/sidooms/MovieTweetings) dataset, and the poster images provided by the  
 [themoviedb.org](https://www.themoviedb.org) API. A big thanks to both of them for all their work.
