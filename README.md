@@ -34,34 +34,40 @@ Create the virtual env using the following commands (assumes that you have virtu
 ```
 
 Note: if you are running Anaconda you should conda virtual environment instead( ```conda create -n myenv python=3.6```)
+
 ### Get the required packages
 using Pip you can now install the required files:
 ```bash
 pip3 install -r requirements.txt
 ```
 Again it is slightly different for conda users, they should run (thanks to https://www.technologyscout.net/2017/11/how-to-install-dependencies-from-a-requirements-txt-file-with-conda/):
-``` 
+```bash 
 while read requirement; do conda install --yes $requirement; done < requirements.txt
 ```
-### [OPTIONAL] install and use PostGreSQL
+
 
 ## Database setup
-Django is setup to run with sqllite3 out of the box, which is enough to run everything. However, some things will be considerably faster if you install Postgres.
+Django is setup to run with sqllite3 out of the box, which is enough to run everything. 
+However, some things will be considerably faster if you install Postgres.
 
-#### The database
-If you don't have Postgres running, then you should start out installing it. 
-It's a free and easy to install.
+If you are not installing Postgres, please jump to configuration. 
+
+### [OPTIONAL] install and use PostGreSQL
+
+#### The Postgres database
+You need a Postgres database running. It can be downloaded from the following site:
 
 Get it here [postgresql download](https://www.postgresql.org/download/) 
 and follow the instructions on the site.
 
-When it installed and running, create a database. In the following, the database is called moviegeek. You can do this using the admin tool (pgadmin)
+When it installed and running, create a database. 
+In the following, the database is called `moviegeek`. You can do this using the admin tool (pgadmin)
 
 #### The database driver (only if you are running Postgres)
 When the Postgres database is spinning its time for the python driver. I recommend using the following 
 [http://initd.org/psycopg/](http://initd.org/psycopg/). Follow the instructions on the site (https://www.psycopg.org/docs/install.html)
 
-#### Configuration
+### Configuration
 
 To update the database in MovieGEEKS go to in prs_project/settings.py 
 and update the following 
