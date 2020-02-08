@@ -67,7 +67,7 @@ In the following, the database is called `moviegeek`. You can do this using the 
 When the Postgres database is spinning its time for the python driver. I recommend using the following 
 [http://initd.org/psycopg/](http://initd.org/psycopg/). Follow the instructions on the site (https://www.psycopg.org/docs/install.html)
 
-### Configuration
+### Configuration of Django database connection
 
 To update the database in MovieGEEKS go to in prs_project/settings.py 
 and update the following 
@@ -86,16 +86,25 @@ DATABASES = {
 ```
 you should update the NAME, USER, PASSWORD, HOST, PORT fields.
 
-### Create the dbs. 
+### Create the dbs (for all databases)
 If you have a database running on your machine I would encourage 
 you to connect it, by updating the settings in `prs_project/settings.py` (fx like shown above). 
 
 To set up another database is described in the Django docs [here](https://docs.djangoproject.com/en/2.0/ref/databases/)
+
+When the database connection is configured you can now run the following commands. This will create the 
+databases the Django and this website needs to run. 
+
 ```bash
 > python3 manage.py makemigrations
 > python3 manage.py migrate --run-syncdb
 ```
+When the databases are created, its time to put some data in them. This is described in the following section:
+
 ### Populate the db by running the following script. 
+
+The following script will download the datasets used on the website. 
+
 (WARNING: this might take some time.)
 (WARNING: If you are using python >3.6 on a Mac then you need to run 
 "/Applications/Python\ 3.7/Install\ Certificates.command". More details [here](https://bugs.python.org/issue28150) and [here](https://timonweb.com/tutorials/fixing-certificate_verify_failed-error-when-trying-requests_html-out-on-mac/)
@@ -105,6 +114,8 @@ To set up another database is described in the Django docs [here](https://docs.d
 ```
 
 ### Create a themoviedb.org id
+To be allowed to use themoviedb.org's pictures you need to create an account there. 
+
 * go to [https://www.themoviedb.org/account/signup](https://www.themoviedb.org/account/signup) and create an api_key
 * create a file in the root of the directory called "`.prs`" and add 
 `{ "themoviedb_apikey": <INSERT YOUR APIKEY HERE>}`.
