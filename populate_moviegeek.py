@@ -30,8 +30,7 @@ def create_movie(movie_id, title, genres):
     return movie
 
 
-def download_movies():
-    URL = 'https://raw.githubusercontent.com/sidooms/MovieTweetings/master/latest/movies.dat'
+def download_movies(URL = 'https://raw.githubusercontent.com/sidooms/MovieTweetings/master/latest/movies.dat'):
     response = urllib.request.urlopen(URL)
     data = response.read()
     return data.decode('utf-8')
@@ -51,6 +50,10 @@ def populate():
 
     movies = download_movies()
 
+    if len(movies) == 0:
+        print('The latest dataset seems to be empty. Older movie list downloaded.')
+        print('Please have a look at https://github.com/sidooms/MovieTweetings/issues and see if there is an issue')
+        movies = download_movies('https://raw.githubusercontent.com/sidooms/MovieTweetings/master/snapshots/100K/movies.dat')
     print('movie data downloaded')
 
     for movie in tqdm(movies.split(sep="\n")):
