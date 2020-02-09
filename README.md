@@ -112,13 +112,13 @@ Use PostGreSQL’s admin tool pgadmin to create a database. Name it `moviegeek`.
 
 #### [PostGreSQL] Install the Python database driver 
 
-Once the PostGreSQL database is spinning, it’s time for the Python driver. 
-I recommend using [Psycopg](https://www.psycopg.org/). Download it [here](https://pypi.org/project/psycopg2/). 
+Once the PostGreSQL database is spinning, it’s time for the Python driver, which enables Django to talk with the 
+database. I recommend using [Psycopg](https://www.psycopg.org/). Download it [here](https://pypi.org/project/psycopg2/). 
 Install it following these [instructions](https://www.psycopg.org/docs/install.html). 
 
 #### [PostGreSQL] Configure the Django database connection
 
-If you use a database other than the default one, configure the Django database connection for MovieGEEKS, follow 
+If you use a PostGreSQL (or another db) you need to configure the Django database connection for MovieGEEKS, follow 
 these steps. Refer to Django docs here if you need more details. 
 
 Open `prs_project/settings.py` 
@@ -191,9 +191,12 @@ Running the server like this will make the website available [http://127.0.0.1:8
 WARNING: Other applications also use this port so you might need to try out 8001 instead.
 
 ## Closing down
-When you are finished running the project you can:
+When you are finished running the project you can close it down doing the following steps, or simply close the 
+terminal where the server is running. 
+
 * Close down the server by pressing -c
 * Exit the virtual environment
+
 Non-Anaconda users
 ```bash
 >  deactivate
