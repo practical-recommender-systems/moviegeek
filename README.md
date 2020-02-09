@@ -192,6 +192,7 @@ To start the development server, run this command:
 > python3 manage.py runserver 127.0.0.1:8000
 ```
 Running the server like this will make the website available [http://127.0.0.1:8000](http://127.0.0.1:8000) 
+
 WARNING: Other applications also use this port so you might need to try out 8001 instead.
 
 ## Closing down
@@ -208,4 +209,24 @@ Non-Anaconda users
 Anaconda users
 ```bash
 > conda deactivate
+```
+
+## Restart
+
+To restart the project again do the following:
+
+*   *Non-Anaconda users*:
+    ```bash
+    > cd moviegeek
+    > source prs/bin/activate
+    ```
+*   *Anaconda users*:
+    ```bash
+    > cd moviegeek
+    > conda activate prs
+    ```
+    
+Start the web server again by running the following command:
+```bash
+> python3 manage.py runserver 127.0.0.1:8000
 ```
