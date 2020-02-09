@@ -87,36 +87,36 @@ There are Anaconda specific instructions for this step, too; be sure to use thos
     ```bash
     > while read requirement; do conda install --yes $requirement; done < requirements.txt    
     ```
+    
 ## Database setup
-Django is setup to run with sqllite3 out of the box, which is enough to run everything. However, some 
+
+Django is setup to run with Sqllite3 out of the box, which is enough to run everything. However, some 
 things will be considerably faster if you install PostGreSQL. 
 
 *   If you do want to install Postgres, follow the Postgres installation steps before you create the databases. 
-    These are indicated with [PostGreSQL] at the beginning of the step. Then create the databases by following 
-    the [Create Databases] steps.
-*   If you don’t want to install Postgres, do not do the [PostGreSQL] steps. Only do the [Create Databases] steps.
+*   If you don’t want to install Postgres, jump to *Create and populate the MovieGEEKS databases* section.
 
-### [PostGreSQL] Install and use PostGreSQL
+### [[PostGreSQL-OPTIONAL]] Install and use PostGreSQL
 
 Django comes with a database that enables you to run the website without an external database. However, using another 
 database makes it faster. I had good experiences using the PostGreSQL db.
  
-#### [PostGreSQL] Install and run PostGreSQL
+####  Install and run PostGreSQL
 First, install Postgres and run it. 
 Download the correct postgresql version for your operating system [here](https://www.postgresql.org/download/),
  and follow the instructions on from the download page to install and run it. 
 
-#### [PostGreSQL] Create the database for MovieGEEK 
+#### Create the database for MovieGEEK 
 
 Use PostGreSQL’s admin tool pgadmin to create a database. Name it `moviegeek`.
 
-#### [PostGreSQL] Install the Python database driver 
+#### Install the Python database driver 
 
 Once the PostGreSQL database is spinning, it’s time for the Python driver, which enables Django to talk with the 
 database. I recommend using [Psycopg](https://www.psycopg.org/). Download it [here](https://pypi.org/project/psycopg2/). 
 Install it following these [instructions](https://www.psycopg.org/docs/install.html). 
 
-#### [PostGreSQL] Configure the Django database connection
+####  Configure the Django database connection
 
 If you use a PostGreSQL (or another db) you need to configure the Django database connection for MovieGEEKS, follow 
 these steps. Refer to Django docs here if you need more details. 
@@ -141,10 +141,10 @@ you should update the NAME, USER, PASSWORD, HOST, PORT fields.
 
 For more information please refer to the Django documentation [link](https://docs.djangoproject.com/en/2.2/ref/databases/)
 
-### [Create Databases] Create and populate the MovieGEEKS databases
+### Create and populate the MovieGEEKS databases
 Everyone must follow these steps, whether or not you are using PostGreSQL.
 
-#### [Create Databases] Create the MovieGEEKS databases
+#### Create the MovieGEEKS databases
 
 When the database connection is configured, you can run the following commands to create the databases that Django 
 and this website need to run.
@@ -154,7 +154,7 @@ and this website need to run.
 > python3 manage.py migrate --run-syncdb
 ```
 
-#### [Create Databases] Populate the database 
+#### Populate the database 
 Run the following script to download the datasets for the MovieGEEKS website. 
 
 WARNING: Mac users running Python 3.7 or higher, before you populate the databases, you need to run this command. 
@@ -168,7 +168,7 @@ Everyone, run these commands to populate the databases.
 ```
 WARNING: This might take some time.
 
-### [Create Databases] Create an ID for themoviedb.org
+###  Create an ID for themoviedb.org
 
 You have to create an ID with themoviedb.org to use its pictures.
 
@@ -182,7 +182,7 @@ Then you’ll see settings on the left.
 Remember to remove the "<" and ">" When you are finished, the file contents should look something like 
 {"themoviedb_apikey": "6d88c9a24b1bc9a60b374d3fe2cd92ac"}
 
-### [Create Databases] Start the web server
+### Start the web server
 To start the development server, run this command:
 ```bash
 > python3 manage.py runserver 127.0.0.1:8000
