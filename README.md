@@ -75,9 +75,9 @@ commands (Anaconda users, please use the Anaconda-specific commands):
 There are Anaconda specific instructions for this step, too; be sure to use those if they apply!
 
 
-*   *Non-Anaconda users: 
+*   *Non-Anaconda users* 
 
-    Use pip to install the required files*:
+    Use pip to install the required files:
     ```bash
     > pip3 install -r requirements.txt
     ```
