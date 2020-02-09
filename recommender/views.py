@@ -53,8 +53,13 @@ def chart(request, take=10):
 
     ms = {m['movie_id']: m['title'] for m in
           Movie.objects.filter(movie_id__in=ids).values('title', 'movie_id')}
-    sorted_items = [{'movie_id': i['content_id'],
-                      'title': ms[i['content_id']]} for i in sorted_items]
+
+    if len(ms) > 0:
+        sorted_items = [{'movie_id': i['content_id'],
+                          'title': ms[i['content_id']]} for i in sorted_items]
+    else:
+        print("No data for chart found. This can either be because of missing data, or missing movie data")
+        sorted_items = []
     data = {
         'data': sorted_items
     }
