@@ -181,7 +181,7 @@ You have to create an ID with themoviedb.org to use its pictures.
 * Login, go to your account settings and [create an API](https://www.themoviedb.org/settings/api). You can access 
 settings by clicking the avatar in the upper right-hand corner (the default is a blue circle with a white logo in it). 
 Then you’ll see settings on the left. 
-* Create a file in the root directory called ".prs" 
+* Create a file in the moviegeek directory called ".prs" 
 * Open .prs and add { "themoviedb_apikey": <INSERT YOUR APIKEY HERE>}
 Remember to remove the "<" and ">" When you are finished, the file contents should look something like 
 {"themoviedb_apikey": "6d88c9a24b1bc9a60b374d3fe2cd92ac"}
