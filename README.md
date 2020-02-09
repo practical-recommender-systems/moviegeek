@@ -108,7 +108,7 @@ Download the correct postgresql version for your operating system [here](https:/
 
 #### Create the database for MovieGEEK 
 
-Use PostGreSQL’s admin tool pgadmin to create a database. Name it `moviegeek`, you should write down which username and password is used to create the database, as it should be inserted in the django settings.
+Use PostGreSQL’s admin tool pgadmin to create a database. Name it `moviegeek`. Write down which username and password you usd to create the database. You will use that information in two steps from now when you change the Django settings.
 
 #### Install the Python database driver 
 
@@ -137,7 +137,11 @@ DATABASES = {
     }
 }
 ```
-you should update the USER, PASSWORD, HOST, PORT fields. db_user and db_user_password refer to the ones used when creating the database. And host is most likely localhost, if you have have installed it on your private machine. And the default port is 5432.
+Update the USER, PASSWORD, HOST, and PORT fields:
+* USER(db_user): Use the user name you created with the MovieGEEK database
+* PASSWORD(db_user_password): Use the password you created with the MovieGEEK database
+* HOST (db_host): localhost (if you have have installed it on your private machine)
+* PORT (db_port_number): 5432 (the default port)
 
 For more information please refer to the Django documentation [link](https://docs.djangoproject.com/en/2.2/ref/databases/)
 
