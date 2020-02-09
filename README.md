@@ -14,7 +14,6 @@ I wish to extend a big thanks to both of them for all their work.
 
 ## Project Setup
 
-
 ### Install Python 3.x
  
 The MovieGEEK website requires that you have Python 3.x installed. Practical Recommender Systems does not teach you 
@@ -47,8 +46,9 @@ You have two choices for downloading the source code – downloading a zip file 
 ## Create a virtual environment for the project
 
 Before you run the code, create a virtual environment. The Hitchhiker’s Guide provides a 
-[good overview](https://docs.python-guide.org/dev/virtualenvs/#lower-level-virtualenv) 
-if you want more information. Verify that you have virtualenv installed, and if not, read more here. 
+[good overview](https://docs.python-guide.org/dev/virtualenvs) 
+if you want more information. Verify that you have virtualenv installed, and if not, read more 
+[here](https://docs.python-guide.org/dev/virtualenvs/#lower-level-virtualenv). 
 If you followed the Hitchhiker’s Guide or used Anaconda, it should already be installed, though. Use 
 this command to verify it’s installed:
 
