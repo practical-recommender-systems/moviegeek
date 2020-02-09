@@ -52,7 +52,7 @@ if you want more information. Verify that you have virtualenv installed, and if 
 If you followed the Hitchhiker’s Guide or used Anaconda, it should already be installed, though. Use 
 this command to verify it’s installed:
 
-```python
+```bash
 > virtualenv --version
 ```
 
