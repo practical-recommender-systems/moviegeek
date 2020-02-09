@@ -60,13 +60,13 @@ Once you have confirmed you have virtualenv installed, create the virtual enviro
 commands (Anaconda users, please use the Anaconda-specific commands):
 
 *   *Non-Anaconda users*:
-    ``` 
+    ```bash
     > cd moviegeek
     > virtualenv -p python3 prs
     > source prs/bin/activate
     ```
 *   *Anaconda users*:
-    ```python
+    ```bash
     > cd moviegeek > conda create -n prs python=3.6 > conda activate prs
     ```
     Note that 3.6 should be replaced with 3.x, with x representing the version you are using. 
