@@ -111,8 +111,9 @@ conda deactivate
 ```
 
 ### [OPTIONAL] install and use PostGreSQL
-Django runs on most databases, I had good experiences using PostGreSQL db. The following step shows 
-how it install it. 
+Django comes with a database, enabling you to run the website without an external database.
+However, using another database makes it faster. I had good experiences using PostGreSQL db. 
+The following step shows how it install it. 
 
 #### The Postgres database
 You need a Postgres database running. It can be downloaded from the following site:
