@@ -52,40 +52,6 @@ However, some things will be considerably faster if you install Postgres.
 
 If you are not installing Postgres, please jump to configuration. 
 
-### [OPTIONAL] install and use PostGreSQL
-
-#### The Postgres database
-You need a Postgres database running. It can be downloaded from the following site:
-
-Get it here [postgresql download](https://www.postgresql.org/download/) 
-and follow the instructions on the site.
-
-When it installed and running, create a database. 
-In the following, the database is called `moviegeek`. You can do this using the admin tool (pgadmin)
-
-#### The database driver (only if you are running Postgres)
-When the Postgres database is spinning its time for the python driver. I recommend using the following 
-[http://initd.org/psycopg/](http://initd.org/psycopg/). Follow the instructions on the site (https://www.psycopg.org/docs/install.html)
-
-### Configuration of Django database connection
-
-To update the database in MovieGEEKS go to in prs_project/settings.py 
-and update the following 
-
-```bash
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'db_name',                      
-        'USER': 'db_user',
-        'PASSWORD': 'db_user_password',
-        'HOST': '',
-        'PORT': 'db_port_number',
-    }
-}
-```
-you should update the NAME, USER, PASSWORD, HOST, PORT fields.
-
 ### Create the dbs (for all databases)
 If you have a database running on your machine I would encourage 
 you to connect it, by updating the settings in `prs_project/settings.py` (fx like shown above). 
@@ -143,3 +109,39 @@ if running conda run instead:
 ```bash
 conda deactivate
 ```
+
+### [OPTIONAL] install and use PostGreSQL
+Django runs on most databases, I had good experiences using PostGreSQL db. The following step shows 
+how it install it. 
+
+#### The Postgres database
+You need a Postgres database running. It can be downloaded from the following site:
+
+Get it here [postgresql download](https://www.postgresql.org/download/) 
+and follow the instructions on the site.
+
+When it installed and running, create a database. 
+In the following, the database is called `moviegeek`. You can do this using the admin tool (pgadmin)
+
+#### The database driver (only if you are running Postgres)
+When the Postgres database is spinning its time for the python driver. I recommend using the following 
+[http://initd.org/psycopg/](http://initd.org/psycopg/). Follow the instructions on the site (https://www.psycopg.org/docs/install.html)
+
+### Configuration of Django database connection
+
+To update the database in MovieGEEKS go to in prs_project/settings.py 
+and update the following 
+
+```bash
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'db_name',                      
+        'USER': 'db_user',
+        'PASSWORD': 'db_user_password',
+        'HOST': '',
+        'PORT': 'db_port_number',
+    }
+}
+```
+you should update the NAME, USER, PASSWORD, HOST, PORT fields.
