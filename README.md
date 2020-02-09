@@ -96,7 +96,7 @@ things will be considerably faster if you install PostGreSQL.
 *   If you do want to install Postgres, follow the Postgres installation steps before you create the databases. 
 *   If you don’t want to install Postgres, jump to *Create and populate the MovieGEEKS databases* section.
 
-### [[PostGreSQL-OPTIONAL]] Install and use PostGreSQL
+### [PostGreSQL-OPTIONAL] Install and use PostGreSQL
 
 Django comes with a database that enables you to run the website without an external database. However, using another 
 database makes it faster. I had good experiences using the PostGreSQL db.
@@ -116,7 +116,7 @@ Once the PostGreSQL database is spinning, it’s time for the Python driver, whi
 database. I recommend using [Psycopg](https://www.psycopg.org/). Download it [here](https://pypi.org/project/psycopg2/). 
 Install it following these [instructions](https://www.psycopg.org/docs/install.html). 
 
-####  Configure the Django database connection
+####  Configure the Django database connection to connect to PostGreSql
 
 If you use a PostGreSQL (or another db) you need to configure the Django database connection for MovieGEEKS, follow 
 these steps. Refer to Django docs here if you need more details. 
@@ -129,15 +129,15 @@ Update the following:
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'db_name',                      
+        'NAME': 'moviegeek',                      
         'USER': 'db_user',
         'PASSWORD': 'db_user_password',
-        'HOST': '',
+        'HOST': 'db_host',
         'PORT': 'db_port_number',
     }
 }
 ```
-you should update the NAME, USER, PASSWORD, HOST, PORT fields. 
+you should update the USER, PASSWORD, HOST, PORT fields.
 
 For more information please refer to the Django documentation [link](https://docs.djangoproject.com/en/2.2/ref/databases/)
 
