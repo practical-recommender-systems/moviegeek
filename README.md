@@ -67,7 +67,9 @@ commands (Anaconda users, please use the Anaconda-specific commands):
     ```
 *   *Anaconda users*:
     ```bash
-    > cd moviegeek > conda create -n prs python=3.6 > conda activate prs
+    > cd moviegeek
+    > conda create -n prs python=3.6
+    > conda activate prs
     ```
     Note that 3.6 should be replaced with 3.x, with x representing the version you are using. 
 
