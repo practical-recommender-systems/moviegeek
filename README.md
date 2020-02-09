@@ -54,7 +54,7 @@ If you are not installing Postgres, please jump to configuration.
 
 ### Create the dbs (for all databases)
 If you have a database running on your machine I would encourage 
-you to connect it, by updating the settings in `prs_project/settings.py` (fx like shown above). 
+you to connect it, by updating the settings in `prs_project/settings.py` (fx like shown below). 
 
 To set up another database is described in the Django docs [here](https://docs.djangoproject.com/en/2.0/ref/databases/)
 
@@ -145,4 +145,5 @@ DATABASES = {
     }
 }
 ```
-you should update the NAME, USER, PASSWORD, HOST, PORT fields.
+you should update the NAME, USER, PASSWORD, HOST, PORT fields. 
+For more information please refer to the Django documentation [link](https://docs.djangoproject.com/en/3.0/ref/databases/)
