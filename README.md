@@ -1,139 +1,131 @@
-# The MovieGEEK
+# The MovieGEEK Installation Guide
 
-The MovieGEEK is a movie site implemented to accompany my book
-["Practical Recommender Systems"](https://www.manning.com/books/practical-recommender-systems).
-It is used in the book to show how recommender systems work and how you can implement them. The book describes how the algorithms work, and provides more detail into how the site works.  
+The MovieGEEK is a website implemented to accompany my book, Practical Recommender Systems. 
+It is used in the book to show how recommender systems work and how you can implement them. 
+The book describes how the algorithms work and provides more detail into how the site works.
 
-# Installation guide:
+The website is not intended as a standalone tutorial or a plug-and-play website for you to install 
+and use for your own content. 
 
-This site would not be working if it wasnt for the  [MovieTweetings](https://github.com/sidooms/MovieTweetings) dataset, and the poster images provided by the  
-[themoviedb.org](https://www.themoviedb.org) API. A big thanks to both of them for all their work.
- 
+## Thanks!
+This site would not be working if it wasn’t for the [MovieTweetings](https://github.com/sidooms/MovieTweetings) 
+dataset and the poster images provided by the [themoviedb.org](https://www.themoviedb.org) API. 
+I wish to extend a big thanks to both of them for all their work.
+
 ## Project Setup
-The following is expecting you to have python 3.x installed on your machine. I recommend looking at the [Hitchhikers guide to Python](http://docs.python-guide.org/en/latest/) if you haven't.
- 
-For *windows users* it's a good idea to install the Anaconda package. Anaconda is the leading open data science platform powered by Python (according to their homepage) [Anaconda](https://www.continuum.io/downloads)
- 
-### Download code
-Retrieve the source code either by downloading a zip-file (click the green button above that says `Clone or download`) or using git. 
 
-Using git, you can either clone this repository or create a fork in your github, and then clone that instead. The following command will create a copy on your computer. 
 
-```bash
-> git clone https://github.com/practical-recommender-systems/moviegeek.git
+### Install Python 3.x
+ 
+The MovieGEEK website requires that you have Python 3.x installed. Practical Recommender Systems does not teach you 
+Python, though. You’ll need to be able to read Python code to understand the algorithms, and, of course, programming 
+experience makes it easier to implement the website. 
+
+The [Hitchhikers guide to Python](http://docs.python-guide.org/en/latest/) provides “both novice and expert Python 
+developers a best practice handbook to the installation, configuration, and usage of Python on a daily basis.” 
+Mac and Linux users should follow instructions in this guide. 
+
+Windows users, because installing Python and its packages can be tricky for you, I recommend using the 
+[Anaconda](https://www.anaconda.com/distribution/) package for the simplest install. 
+If you want to, you can use the Windows instructions in the Hitchhiker’s Guide, 
+but I have always used the Anaconda package.
+
+## Download source code
+You have two choices for downloading the source code – downloading a zip file of the source code or using Git. 
+
+* *Downloading a zip file*
+ 
+   From the main [MovieGEEK directory on GitHub](https://github.com/practical-recommender-systems/moviegeek), 
+   click the green “Clone or download” button and choose to download a zip file to your computer.
+   
+* *Using Git*
+
+   Clone this repository or create a fork in your GitHub, and then clone that instead. The following command 
+   will create a copy on your computer.
+   `> git clone https://github.com/practical-recommender-systems/moviegeek.git`
+
+## Create a virtual environment for the project
+
+Before you run the code, create a virtual environment. The Hitchhiker’s Guide provides a 
+[good overview](https://docs.python-guide.org/dev/virtualenvs/#lower-level-virtualenv) 
+if you want more information. Verify that you have virtualenv installed, and if not, read more here. 
+If you followed the Hitchhiker’s Guide or used Anaconda, it should already be installed, though. Use 
+this command to verify it’s installed:
+
+```python
+> virtualenv --version
 ```
-### Create a virtual environment for the project 
-Before running the code it is a good idea to create a virtual environment
-(Look at the following guide for more details [guide](http://docs.python-guide.org/en/latest/dev/virtualenvs/#virtualenvironments-ref)).
-Create the virtual env using the following commands (assumes that you have virtualenv installed)
- 
-```bash
-> cd moviegeek
-> virtualenv -p python3 prs
-> source prs/bin/activate
-```
 
-Note: if you are running Anaconda you should conda virtual environment instead( ```conda create -n myenv python=3.6```)
+Once you have confirmed you have virtualenv installed, create the virtual environment using the following 
+commands (Anaconda users, please use the Anaconda-specific commands):
+
+*   *Non-Anaconda users*:
+    ``` 
+    > cd moviegeek
+    > virtualenv -p python3 prs
+    > source prs/bin/activate
+    ```
+*   *Anaconda users*:
+    ```python
+    > cd moviegeek > conda create -n prs python=3.6 > conda activate prs
+    ```
+    Note that 3.6 should be replaced with 3.x, with x representing the version you are using. 
 
 ### Get the required packages
-using Pip you can now install the required files:
-```bash
-pip3 install -r requirements.txt
-```
-Again it is slightly different for conda users, they should run (thanks to https://www.technologyscout.net/2017/11/how-to-install-dependencies-from-a-requirements-txt-file-with-conda/):
-```bash 
-while read requirement; do conda install --yes $requirement; done < requirements.txt
-```
+There are Anaconda specific instructions for this step, too; be sure to use those if they apply!
 
 
+*   *Non-Anaconda users: 
+
+    Use pip to install the required files*:
+    ```bash
+    > pip3 install -r requirements.txt
+    ```
+*   *Anaconda users*
+
+    Thanks, TechnologyScout.net for these instructions:
+    ```bash
+    > while read requirement; do conda install --yes $requirement; done < requirements.txt    
+    ```
 ## Database setup
-Django is setup to run with sqllite3 out of the box, which is enough to run everything. 
-However, some things will be considerably faster if you install Postgres.
+Django is setup to run with sqllite3 out of the box, which is enough to run everything. However, some 
+things will be considerably faster if you install PostGreSQL. 
 
-If you are not installing Postgres, please jump to configuration. 
+*   If you do want to install Postgres, follow the Postgres installation steps before you create the databases. 
+    These are indicated with [PostGreSQL] at the beginning of the step. Then create the databases by following 
+    the [Create Databases] steps.
+*   If you don’t want to install Postgres, do not do the [PostGreSQL] steps. Only do the [Create Databases] steps.
 
-### Create the dbs (for all databases)
-If you have a database running on your machine I would encourage 
-you to connect it, by updating the settings in `prs_project/settings.py` (fx like shown below). 
+### [PostGreSQL] Install and use PostGreSQL
 
-To set up another database is described in the Django docs [here](https://docs.djangoproject.com/en/2.0/ref/databases/)
+Django comes with a database that enables you to run the website without an external database. However, using another 
+database makes it faster. I had good experiences using the PostGreSQL db.
+ 
+#### [PostGreSQL] Install and run PostGreSQL
+First, install Postgres and run it. 
+Download the correct postgresql version for your operating system [here](https://www.postgresql.org/download/),
+ and follow the instructions on from the download page to install and run it. 
 
-When the database connection is configured you can now run the following commands. This will create the 
-databases the Django and this website needs to run. 
+#### [PostGreSQL] Create the database for MovieGEEK 
 
-```bash
-> python3 manage.py makemigrations
-> python3 manage.py migrate --run-syncdb
-```
-When the databases are created, its time to put some data in them. This is described in the following section:
+Use PostGreSQL’s admin tool pgadmin to create a database. Name it `moviegeek`.
 
-### Populate the db by running the following script. 
+#### [PostGreSQL] Install the Python database driver 
 
-The following script will download the datasets used on the website. 
+Once the PostGreSQL database is spinning, it’s time for the Python driver. 
+I recommend using [Psycopg](https://www.psycopg.org/). Download it [here](https://pypi.org/project/psycopg2/). 
+Install it following these [instructions](https://www.psycopg.org/docs/install.html). 
 
-(WARNING: this might take some time.)
-(WARNING: If you are using python >3.6 on a Mac then you need to run 
-"/Applications/Python\ 3.7/Install\ Certificates.command". More details [here](https://bugs.python.org/issue28150) and [here](https://timonweb.com/tutorials/fixing-certificate_verify_failed-error-when-trying-requests_html-out-on-mac/)
-```bash
-> python3 populate_moviegeek.py
-> python3 populate_ratings.py
-```
+#### [PostGreSQL] Configure the Django database connection
 
-### Create a themoviedb.org id
-To be allowed to use themoviedb.org's pictures you need to create an account there. 
+If you use a database other than the default one, configure the Django database connection for MovieGEEKS, follow 
+these steps. Refer to Django docs here if you need more details. 
 
-* go to [https://www.themoviedb.org/account/signup](https://www.themoviedb.org/account/signup) and create an api_key
-* create a file in the root of the directory called "`.prs`" and add 
-`{ "themoviedb_apikey": <INSERT YOUR APIKEY HERE>}`.
-(remember to remove the "<" and ">") 
-When you are finished, the file contents should look something like 
-```{"themoviedb_apikey": "6d88c9a24b1bc9a60b374d3fe2cd92ac"}```
+Open `prs_project/settings.py` 
 
-### Start the web server
- To start the development server run:
-```bash
-> python3 manage.py runserver 127.0.0.1:8000
-```
-Running the server like this, will make the website available 
-[http://127.0.0.1:8000](http://127.0.0.1:8000) other applications also use this port
-so you might need to try out 8001 instead. 
+Update the following:
 
-### Closing down.
-when you are finished running the project you can:
-* Close down the server by pressing <CLTR>-c  
-* exit the virtual env:
-```bash
-> deactivate
-```
-if running conda run instead:
-```bash
-conda deactivate
-```
-
-### [OPTIONAL] install and use PostGreSQL
-Django comes with a database, enabling you to run the website without an external database.
-However, using another database makes it faster. I had good experiences using PostGreSQL db. 
-The following step shows how it install it. 
-
-#### The Postgres database
-You need a Postgres database running. It can be downloaded from the following site:
-
-Get it here [postgresql download](https://www.postgresql.org/download/) 
-and follow the instructions on the site.
-
-When it installed and running, create a database. 
-In the following, the database is called `moviegeek`. You can do this using the admin tool (pgadmin)
-
-#### The database driver (only if you are running Postgres)
-When the Postgres database is spinning its time for the python driver. I recommend using the following 
-[http://initd.org/psycopg/](http://initd.org/psycopg/). Follow the instructions on the site (https://www.psycopg.org/docs/install.html)
-
-### Configuration of Django database connection
-
-To update the database in MovieGEEKS go to in prs_project/settings.py 
-and update the following 
-
-```bash
+```python
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -146,4 +138,67 @@ DATABASES = {
 }
 ```
 you should update the NAME, USER, PASSWORD, HOST, PORT fields. 
-For more information please refer to the Django documentation [link](https://docs.djangoproject.com/en/3.0/ref/databases/)
+
+For more information please refer to the Django documentation [link](https://docs.djangoproject.com/en/2.2/ref/databases/)
+
+### [Create Databases] Create and populate the MovieGEEKS databases
+Everyone must follow these steps, whether or not you are using PostGreSQL.
+
+#### [Create Databases] Create the MovieGEEKS databases
+
+When the database connection is configured, you can run the following commands to create the databases that Django 
+and this website need to run.
+
+```bash
+> python3 manage.py makemigrations
+> python3 manage.py migrate --run-syncdb
+```
+
+#### [Create Databases] Populate the database 
+Run the following script to download the datasets for the MovieGEEKS website. 
+
+WARNING: Mac users running Python 3.7 or higher, before you populate the databases, you need to run this command. 
+`/Applications/Python\ 3.7/Install\ Certificates.command`. More details [here](https://bugs.python.org/issue28150)
+ and [here](https://timonweb.com/tutorials/fixing-certificate_verify_failed-error-when-trying-requests_html-out-on-mac/).
+
+Everyone, run these commands to populate the databases.
+```bash
+> python3 populate_moviegeek.py
+> python3 populate_ratings.py
+```
+WARNING: This might take some time.
+
+### [Create Databases] Create an ID for themoviedb.org
+
+You have to create an ID with themoviedb.org to use its pictures.
+
+* Go to [https://www.themoviedb.org/account/signup](https://www.themoviedb.org/account/signup) 
+* Sign up
+* Login, go to your account settings and [create an API](https://www.themoviedb.org/settings/api). You can access 
+settings by clicking the avatar in the upper right-hand corner (the default is a blue circle with a white logo in it). 
+Then you’ll see settings on the left. 
+* Create a file in the root directory called ".prs" 
+* Open .prs and add { "themoviedb_apikey": <INSERT YOUR APIKEY HERE>}
+Remember to remove the "<" and ">" When you are finished, the file contents should look something like 
+{"themoviedb_apikey": "6d88c9a24b1bc9a60b374d3fe2cd92ac"}
+
+### [Create Databases] Start the web server
+To start the development server, run this command:
+```bash
+> python3 manage.py runserver 127.0.0.1:8000
+```
+Running the server like this will make the website available [http://127.0.0.1:8000](http://127.0.0.1:8000) 
+WARNING: Other applications also use this port so you might need to try out 8001 instead.
+
+## Closing down
+When you are finished running the project you can:
+* Close down the server by pressing -c
+* Exit the virtual environment
+Non-Anaconda users
+```bash
+>  deactivate
+```
+Anaconda users
+```bash
+> conda deactivate
+```
