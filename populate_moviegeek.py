@@ -59,7 +59,6 @@ def populate():
     for movie in tqdm(movies.split(sep="\n")):
         m = movie.split(sep="::")
         if len(m) == 3:
-
             create_movie(m[0], m[1], m[2])
 
 

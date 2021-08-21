@@ -1,18 +1,20 @@
-version: "3.3"
+version: "3"
 
 services:
   db:
     image: postgres
-    volumes:
-      - ./data/db:/var/lib/postgresql/data
     environment:
-      - POSTGRES_DB=postgres
+      - POSTGRES_DB=moviegeek
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
+      - POSTGRES_HOST_AUTH_METHOD=trust
+
+    ports:
+      - "5432:5432"
 
   web:
     build: .
-    command: python manage.py runserver 0.0.0.0:8000
+    command: bash -c "python manage.py makemigrations && python manage.py migrate --run-syncdb && python populate_moviegeek.py && python populate_ratings.py python manage.py runserver 0.0.0.0:8000"
     volumes:
       - .:/code
     ports:

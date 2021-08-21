@@ -49,5 +49,5 @@ def populate():
 
 
 if __name__ == '__main__':
-    print("Starting MovieGeeks Population script...")
+    print("Starting MovieGeeks Rating Population script...")
     populate()

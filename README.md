@@ -232,3 +232,7 @@ Start the web server again by running the following command:
 ```bash
 > python3 manage.py runserver 127.0.0.1:8000
 ```
+
+
+docker-compose exec app python manage.py makemigrations
+~$ docker-compose exec app python manage.py migrate
