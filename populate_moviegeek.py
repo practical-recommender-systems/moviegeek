@@ -56,6 +56,8 @@ def populate():
         movies = download_movies('https://raw.githubusercontent.com/sidooms/MovieTweetings/master/snapshots/100K/movies.dat')
     print('movie data downloaded')
 
+
+    print('Loading movie data into tables')
     for movie in tqdm(movies.split(sep="\n")):
         m = movie.split(sep="::")
         if len(m) == 3:

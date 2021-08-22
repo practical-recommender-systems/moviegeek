@@ -1,4 +1,5 @@
 import os
+import logging.config
 
 
 # Database
@@ -21,7 +22,6 @@ DATABASES = {
         'PORT': 5432
     }
 }
-
 
 
 # Static files (CSS, JavaScript, Images)

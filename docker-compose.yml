@@ -14,7 +14,7 @@ services:
 
   web:
     build: .
-    command: bash -c "python manage.py makemigrations && python manage.py migrate --run-syncdb && python populate_moviegeek.py && python populate_ratings.py python manage.py runserver 0.0.0.0:8000"
+    command: bash -c "python manage.py makemigrations && python manage.py migrate --run-syncdb && python populate_moviegeek.py && python populate_ratings.py && python manage.py runserver 0.0.0.0:8000"
     volumes:
       - .:/code
     ports:

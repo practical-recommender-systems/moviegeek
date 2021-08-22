@@ -42,6 +42,7 @@ def populate():
 
     ratings = download_ratings()
 
+    print("Inserting MovieGeeks Ratings into table...")
     for rating in tqdm(ratings.split(sep="\n")):
         r = rating.split(sep="::")
         if len(r) == 4:
