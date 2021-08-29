@@ -38,5 +38,5 @@ __
 
 To restart the project again do the following:
 
-`docker-compose down`
+`docker-compose run web sh` Starts the web services and allows us to see progress on tqdm 
 `docker-compose up`
