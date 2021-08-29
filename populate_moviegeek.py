@@ -1,7 +1,7 @@
 import os
 import requests
 from tqdm import tqdm
-from django.db import transaction
+
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'prs_project.settings')
 
@@ -44,6 +44,11 @@ def download_movies()->list:
     return movie_metadata
 
 def populate(movie_metadata):
+    '''
+    Create movie metadata tables and associate ratings (many-to-many relationship
+    :param movie_metadata:
+    :return: None
+    '''
 
     mm = []
 
@@ -54,7 +59,6 @@ def populate(movie_metadata):
             title_and_year = m[1].split(sep="(")
             title = title_and_year[0]
             year = title_and_year[1][:-1]
-            genres = m[2]
 
             meta = Movie(movie_id=movie_id, title=title, year=year)
             mm.append(meta)
@@ -68,9 +72,7 @@ def populate(movie_metadata):
             if genres:
                 for genre in genres.split(sep="|"):
                     g = Genre.objects.get_or_create(name=genre)[0]
-                    Movie.genres.add(g)
                     g.save()
-
 
 if __name__ == '__main__':
     print("Starting metadata script...")
