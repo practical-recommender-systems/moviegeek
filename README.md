@@ -34,7 +34,6 @@ The project runs through docker-compose, which downloads all the dependencies an
 that talk to each other on your local machine at `http://0.0.0.0:8000/`.
 
 To start the server, run `docker-compose up`. 
-__
 
 ## Closing Down and Restart
 
