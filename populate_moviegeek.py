@@ -50,29 +50,26 @@ def populate(movie_metadata):
     :return: None
     '''
 
-    mm = []
-
     for row in tqdm(movie_metadata,mininterval=1, maxinterval=10):
+        print(row)
         m = row.split(sep="::")
         if len(m) == 3:
             movie_id = m[0]
+            movie = Movie.objects.get_or_create(movie_id=movie_id)[0]
             title_and_year = m[1].split(sep="(")
-            title = title_and_year[0]
-            year = title_and_year[1][:-1]
-
-            meta = Movie(movie_id=movie_id, title=title, year=year)
-            mm.append(meta)
-
-    Movie.objects.bulk_create(mm)
-
-    for row in movie_metadata:
-        m = row.split(sep="::")
-        if len(m) == 3:
+            movie.title = title_and_year[0]
+            movie.year = title_and_year[1][:-1]
             genres = m[2]
+
             if genres:
                 for genre in genres.split(sep="|"):
+                    # genre_object = Genre(name=genre)
+                    # genre_list.append(genre_object)
                     g = Genre.objects.get_or_create(name=genre)[0]
+                    movie.genres.add(g)
                     g.save()
+
+            movie.save()
 
 if __name__ == '__main__':
     print("Starting metadata script...")
@@ -86,4 +83,5 @@ if __name__ == '__main__':
 
     print("populate movie metadata...")
     populate(movies)
+
     print("movie metadata populated...")
