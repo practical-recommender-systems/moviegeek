@@ -13,17 +13,24 @@ dataset and the poster images provided by the [themoviedb.org](https://www.themo
 I wish to extend a big thanks to both of them for all their work.
 
 
-###  First, Create an ID for themoviedb.org to use their API assets
+# Install Instructions
+
+1.  Fork or clone the moviegeek repo locally through git
+2. First, Create an ID for themoviedb.org to use their API assets
 
 You have to create an ID with themoviedb.org to use its pictures.
 
 * Go to [https://www.themoviedb.org/account/signup](https://www.themoviedb.org/account/signup) 
 * Sign up
-* Login, go to your account settings and [create an API](https://www.themoviedb.org/settings/api). You can access 
-settings by clicking the avatar in the upper right-hand corner (the default is a blue circle with a white logo in it). 
+* Login, go to your account settings and [create an API](https://www.themoviedb.org/settings/api). You'll
+need to put in some basic information about your app name and personal details but you can fill in dummy ones, 
+the most important part is to make sure your email is correct.  You can access settings by clicking the avatar in the upper right-hand corner (the default is a blue circle with a white logo in it). 
 Then you’ll see settings on the left. 
-* Create a file in the moviegeek directory called ".prs" 
-* Open .prs and add { "themoviedb_apikey": <INSERT YOUR APIKEY HERE>}
+
+
+* Within the moviegeek repo, create a file in the moviegeek directory called ".prs" 
+
+3. Open .prs and add { "themoviedb_apikey": <INSERT YOUR APIKEY HERE>}
 Remember to remove the "<" and ">" When you are finished, the file contents should look something like 
 {"themoviedb_apikey": "6d88c9a24b1bc9a60b374d3fe2cd92ac"}
 
@@ -33,7 +40,11 @@ Remember to remove the "<" and ">" When you are finished, the file contents shou
 The project runs through docker-compose, which downloads all the dependencies and starts up a Django web and Postgres server
 that talk to each other on your local machine at `http://0.0.0.0:8000/`.
 
-To start the server, run `docker-compose up`. 
+To start the server, cd into the repo and run `docker-compose up`. An install process will start. 
+The process will take about 5 minutes and install all database components, dependencies, download 
+data locally, and populate the database. 
+
+Once the containers are up, you can access the app here `http://0.0.0.0:8000/`
 
 ## Closing Down and Restart
 
