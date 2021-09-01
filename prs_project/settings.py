@@ -1,9 +1,14 @@
 import os
-import logging.config
+
+# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+TEMPLATE_DIR = os.path.join(BASE_DIR, 'templates')
+STATIC_DIR = os.path.join(BASE_DIR, 'static')
 
 
-# Database
-# https://docs.djangoproject.com/en/1.9/ref/settings/#databases
+# Quick-start development settings - unsuitable for production
+# See https://docs.djangoproject.com/en/1.9/howto/deployment/checklist/
+
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = '2jak@usd23kz0&+kxh2%mx24mw2zw5692s-#y0s$30*9z2y2+x'
 
@@ -12,34 +17,6 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'moviegeeks',
-        'USER': 'postgres',
-        'PASSWORD': 'postgres',
-        'HOST': 'db',
-        'PORT': 5432
-    }
-}
-
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/1.9/howto/static-files/
-
-# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-TEMPLATE_DIR = os.path.join(BASE_DIR, 'templates')
-STATIC_DIR = os.path.join(BASE_DIR, 'static')
-
-STATIC_URL = '/static/'
-
-STATICFILES_DIRS = [STATIC_DIR, ]
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/1.9/howto/deployment/checklist/
-
-ROOT_URLCONF = 'prs_project.urls'
 
 # Application definition
 
@@ -57,6 +34,18 @@ INSTALLED_APPS = [
     'recommender',
 ]
 
+MIDDLEWARE = [
+    'django.middleware.security.SecurityMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+]
+
+ROOT_URLCONF = 'prs_project.urls'
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -73,20 +62,23 @@ TEMPLATES = [
     },
 ]
 
-
-MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
-]
-
-ALLOWED_HOSTS = ['0.0.0.0']
-
 WSGI_APPLICATION = 'prs_project.wsgi.application'
+
+
+# Database
+# https://docs.djangoproject.com/en/1.9/ref/settings/#databases
+
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'moviegeeks',
+        'USER': 'postgres',
+        'PASSWORD': 'postgres',
+        'HOST': 'db',
+        'PORT': 5432
+    }
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/1.9/ref/settings/#auth-password-validators
@@ -119,3 +111,11 @@ USE_I18N = True
 USE_L10N = True
 
 USE_TZ = False
+
+
+# Static files (CSS, JavaScript, Images)
+# https://docs.djangoproject.com/en/1.9/howto/static-files/
+
+STATIC_URL = '/static/'
+
+STATICFILES_DIRS = [STATIC_DIR, ]

@@ -43,7 +43,7 @@ def download_movies()->list:
 
     return movie_metadata
 
-def populate(movie_metadata):
+def populate(movie_metadata)->None:
     '''
     Create movie metadata tables and associate ratings (many-to-many relationship
     :param movie_metadata:
@@ -51,7 +51,7 @@ def populate(movie_metadata):
     '''
 
     for row in tqdm(movie_metadata,mininterval=1, maxinterval=10):
-        print(row)
+        print(row) # output to Docker logs
         m = row.split(sep="::")
         if len(m) == 3:
             movie_id = m[0]
@@ -63,8 +63,6 @@ def populate(movie_metadata):
 
             if genres:
                 for genre in genres.split(sep="|"):
-                    # genre_object = Genre(name=genre)
-                    # genre_list.append(genre_object)
                     g = Genre.objects.get_or_create(name=genre)[0]
                     movie.genres.add(g)
                     g.save()
