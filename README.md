@@ -13,7 +13,7 @@ dataset and the poster images provided by the [themoviedb.org](https://www.themo
 I wish to extend a big thanks to both of them for all their work.
 
 
-###  Create an ID for themoviedb.org
+###  First, Create an ID for themoviedb.org to use their API assets
 
 You have to create an ID with themoviedb.org to use its pictures.
 
@@ -30,13 +30,19 @@ Remember to remove the "<" and ">" When you are finished, the file contents shou
 
 ## Project Setup
 
-The project runs through docker-compose, which downloads all the dependencies and starts up a Djano web and Postgres server.
-To start the server, run `docker-compose up`
+The project runs through docker-compose, which downloads all the dependencies and starts up a Django web and Postgres server
+that talk to each other on your local machine at `http://0.0.0.0:8000/`.
+
+To start the server, run `docker-compose up`. 
 __
 
 ## Closing Down and Restart
 
 To restart the project again do the following:
+`docker-compose down &&docker-compose up`
 
-`docker-compose run web sh` Starts the web services and allows us to see progress on tqdm 
-`docker-compose up`
+To rebuild the docker image and restart the server, do the following: 
+`docker-compose down && docker-compose build --pull && docker-compose up`
+
+To check out any additional server logs, use 
+`docker-compose logs`
