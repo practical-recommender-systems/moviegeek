@@ -1,0 +1,49 @@
+version: '3'
+
+services:
+  db:
+    image: postgres
+    expose:
+      -  "5432"
+    networks:
+      - djangonetwork
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=pw1234
+      - POSTGRES_DB=moviegeeks
+  web:
+    restart: always
+    build: .
+    command: python manage.py runserver 0.0.0.0:8010
+    volumes:
+      - .:/code
+    ports:
+      - "8010:8010"
+    networks:
+      - djangonetwork
+    links:
+      - db:db
+    depends_on:
+      - db
+
+  build-recs:
+    build: .
+    command: python -m builder.bpr_calculator
+    
+  evaluate:
+    restart: always
+    build: .
+    command: python -m evaluator.evaluation_runner -ltr
+    volumes:
+      - .:/code
+    depends_on:
+      - db
+  notebook:
+    build: .
+    command: jupyter notebook
+    ports:
+      - "8888:8888"
+
+networks:
+    djangonetwork:
+      driver: bridge

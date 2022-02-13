@@ -14,15 +14,15 @@ idna==2.7
 jmespath==0.9.3
 kiwisolver==1.0.1
 matplotlib==3.0.2
-numpy==1.17.3
-pandas==0.23.4
+numpy==1.22.2
+pandas==1.4.1
 packaging==16.8
 pyparsing==2.3.0
-python-dateutil==2.7.5
-pytz==2018.7
+python-dateutil==2.8.2
+pytz==2021.3
 requests==2.20.1
 s3transfer==0.1.13
-scipy==1.1.0
+scipy==1.8.0
 seaborn==0.8.1
 six==1.11.0
 sklearn==0.0
@@ -31,6 +31,6 @@ stop-words==2015.2.23.1
 tqdm==4.28.1
 urllib3==1.24.2
 pyLDAvis==2.1.1
-psycopg2==2.7.6.1
+
 
 
