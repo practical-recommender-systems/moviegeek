@@ -29,8 +29,8 @@ sklearn==0.0
 smart-open==1.7.1
 stop-words==2015.2.23.1
 tqdm==4.28.1
-urllib3==1.26.5
+urllib3==1.22
 pyLDAvis==2.1.1
-
-
+psycopg2-binary==2.9.3
+nltk==3.5
 
