@@ -90,7 +90,7 @@ def calculate_implicit_ratings_for_user(user_id):
     ratings = dict()
     for k, v in agg_data .items():
 
-        rating = w1 * v['buy'] + w2 * v['details'] + w3 * v['moredetails']
+        rating = w1 * v['buy'] + w3 * v['details'] + w2 * v['moredetails']
         max_rating = max(max_rating, rating)
 
         ratings[k] = rating
