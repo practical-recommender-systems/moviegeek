@@ -28,7 +28,7 @@ six==1.11.0
 sklearn==0.0
 smart-open==1.7.1
 stop-words==2015.2.23.1
-tqdm==4.28.1
+tqdm==4.66.3
 urllib3==1.26.5
 pyLDAvis==2.1.1
 
